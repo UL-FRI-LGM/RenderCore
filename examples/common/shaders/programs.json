@@ -1,0 +1,114 @@
+{
+    "custom_renderDepth": {
+        "description": "Render depth texture.",
+        "shaders": {
+            "vertex": "renderDepth/renderDepth.vert",
+            "fragment": "renderDepth/renderDepth.frag"
+        }
+    },
+    "custom_valueNoiseGenerator": {
+        "description": "Outputs value noise generated texture.",
+        "shaders": {
+            "vertex": "noiseGenerator/noiseGenerator.vert",
+            "fragment": "noiseGenerator/valueNoiseGenerator.frag"
+        }
+    },
+    "custom_valueNoiseGeneratorColor": {
+        "description": "Outputs value noise generated texture with color for terrain.",
+        "shaders": {
+            "vertex": "noiseGenerator/noiseGenerator.vert",
+            "fragment": "noiseGenerator/valueNoiseGeneratorColor.frag"
+        }
+    },
+    "custom_phongTerrainDisplacmentShading": {
+        "description": "Phong shading with terrain displacment.",
+        "shaders": {
+            "vertex": "customPhong/TerrainDisplacment/customPhongTerrainDisplacment.vert",
+            "fragment": "customPhong/TerrainDisplacment/customPhongTerrainDisplacment.frag"
+        }
+    },
+    "custom_phongMultiTexturingDifAndSpec": {
+        "description": "Phong shading with multitexturing for diffuse and specular shading.",
+        "shaders": {
+            "vertex": "customPhong/MultiTexturing/DifAndSpec/phongDifAndSpec.vert",
+            "fragment": "customPhong/MultiTexturing/DifAndSpec/phongDifAndSpec.frag"
+        }
+    },
+    "custom_phongMultiTexturingNormalMapping": {
+        "description": "Phong shading with multitexturing for normal mapping.",
+        "shaders": {
+            "vertex": "customPhong/MultiTexturing/normalMapping/phongNormalMapping.vert",
+            "fragment": "customPhong/MultiTexturing/normalMapping/phongNormalMapping.frag"
+        }
+    },
+    "custom_gBuffer": {
+        "description": "Generates gBuffer for deffered rendering.",
+        "shaders": {
+            "vertex": "deffered/gBuffer.vert",
+            "fragment": "deffered/gBuffer.frag"
+        }
+    },
+    "custom_lightingDeffered": {
+        "description": "Performs shading on gBuffer information.",
+        "shaders": {
+            "vertex": "deffered/lightingDeffered.vert",
+            "fragment": "deffered/lightingDeffered.frag"
+        }
+    },
+    "custom_erosionNoiseGenerator": {
+        "description": "Generates noise with water height levels and suspended sediment amount.",
+        "shaders": {
+            "vertex": "erosionSimulation/texturePassThrough.vert",
+            "fragment": "erosionSimulation/erosionNoiseGenerator.frag"
+        }
+    },
+    "custom_waterGenerator": {
+        "description": "Generates water on terrain.",
+        "shaders": {
+            "vertex": "erosionSimulation/texturePassThrough.vert",
+            "fragment": "erosionSimulation/waterGenerator.frag"
+        }
+    },
+    "custom_outFlowFluxComputation": {
+        "description": "Compute outflow flux.",
+        "shaders": {
+            "vertex": "erosionSimulation/texturePassThrough.vert",
+            "fragment": "erosionSimulation/outFlowFluxComputation.frag"
+        }
+    },
+    "custom_updateWaterAndVelField": {
+        "description": "Update water level and generate velocity field based on outflow flux.",
+        "shaders": {
+            "vertex": "erosionSimulation/texturePassThrough.vert",
+            "fragment": "erosionSimulation/updateWaterAndVelField.frag"
+        }
+    },
+    "custom_erosionSimulation": {
+        "description": "Simulate errosion and decomposition baded on velocity field.",
+        "shaders": {
+            "vertex": "erosionSimulation/texturePassThrough.vert",
+            "fragment": "erosionSimulation/erosionSimulation.frag"
+        }
+    },
+    "custom_sedimentTransportationAndEvaporateWater": {
+        "description": "Simulate sediment transport and water evaporation.",
+        "shaders": {
+            "vertex": "erosionSimulation/texturePassThrough.vert",
+            "fragment": "erosionSimulation/sedimentTransportationAndEvaporateWater.frag"
+        }
+    },
+    "custom_displayTexture": {
+        "description": "Display texture on screen projected quad.",
+        "shaders": {
+            "vertex": "displayTexture/displayTexture.vert",
+            "fragment": "displayTexture/displayTexture.frag"
+        }
+    },
+    "custom_dummy": {
+        "description": "Dummy pass needed for feedback",
+        "shaders": {
+            "vertex": "dummy/dummy.vert",
+            "fragment": "dummy/dummy.frag"
+        }
+    }
+}

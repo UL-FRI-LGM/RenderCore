@@ -1,0 +1,411 @@
+{
+    "lambert-FLAT": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "lambert/lambert-FLAT.vert",
+            "fragment": "lambert/lambert-FLAT.frag"
+        }
+    },
+    "lambert-GOURAUD": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "lambert/lambert-GOURAUD.vert",
+            "fragment": "lambert/lambert-GOURAUD.frag"
+        }
+    },
+
+    "phong": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "phong/phong_template.vert",
+            "fragment": "phong/phong_template.frag"
+        }
+    },
+    "phong-FLAT": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "phong/phong_template-FLAT.vert",
+            "fragment": "phong/phong_template-FLAT.frag"
+        }
+    },
+
+    "basic": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "basic/basic_template.vert",
+            "fragment": "basic/basic_template.frag"
+        }
+    },
+    "basic-FLAT": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "basic/basic_template-FLAT.vert",
+            "fragment": "basic/basic_template-FLAT.frag"
+        }
+    },
+
+    "basic_sprite": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "basic/basic_sprite_template.vert",
+            "fragment": "basic/basic_sprite_template.frag"
+        }
+    },
+
+    "basic_stripe": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "basic/basic_stripe_template.vert",
+            "fragment": "basic/basic_stripe_template.frag"
+        }
+    },
+    "basic_stripes": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "basic/basic_stripes_template.vert",
+            "fragment": "basic/basic_stripes_template.frag"
+        }
+    },
+
+    "basic_skybox2": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "basic/basic_skybox2_template.vert",
+            "fragment": "basic/basic_skybox2_template.frag"
+        }
+    },
+
+    "custom_testProgram": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/testProgram_template.vert",
+            "fragment": "custom/testProgram_template.frag"
+        }
+    },
+
+    "custom_deferredGBuffer": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/deferred/gBuffer_template.vert",
+            "fragment": "custom/deferred/gBuffer_template.frag"
+        }
+    },
+
+    "custom_deferredLightning": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/deferred/lightning_template.vert",
+            "fragment": "custom/deferred/lightning_template.frag"
+        }
+    },
+
+    "custom_drawOnTexture": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/drawToTexture/drawing_template.vert",
+            "fragment": "custom/drawToTexture/drawing_template.frag"
+        }
+    },
+
+    "custom_redrawOnTexture": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/drawToTexture/redrawing_template.vert",
+            "fragment": "custom/drawToTexture/redrawing_template.frag"
+        }
+    },
+
+    "custom_copyTexture": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/drawToTexture/copy_texture_template.vert",
+            "fragment": "custom/drawToTexture/copy_texture_template.frag"
+        }
+    },
+
+    "custom_overlayTextures": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/overlay/overlayTextures.vert",
+            "fragment": "custom/overlay/overlayTextures.frag"
+        }
+    },
+
+    "basicVolume": {
+        "description": "Default volume.",
+        "shaders": {
+            "vertex": "volume/volume_basic_template.vert",
+            "fragment": "volume/volume_basic_template.frag"
+        }
+    },
+
+
+    "colorPicker": {
+        "description": "Color picker.",
+        "shaders": {
+            "vertex": "color_picker/color_picker.vert",
+            "fragment": "color_picker/color_picker.frag"
+        }
+    },
+    "custom_colorPicker_particle": {
+        "description": "Color picker particle.",
+        "shaders": {
+            "vertex": "color_picker/color_picker_particle.vert",
+            "fragment": "color_picker/color_picker_particle.frag"
+        }
+    },
+    "custom_colorPicker_hit": {
+        "description": "Color picker hit.",
+        "shaders": {
+            "vertex": "color_picker/color_picker_hit.vert",
+            "fragment": "color_picker/color_picker_hit.frag"
+        }
+    },
+    "custom_colorPicker_track_width": {
+        "description": "Color picker TW.",
+        "shaders": {
+            "vertex": "color_picker/color_picker_track_width.vert",
+            "fragment": "color_picker/color_picker_track_width.frag"
+        }
+    },
+    "custom_colorPicker_POINTS": {
+        "description": "Color picker POINTS.",
+        "shaders": {
+            "vertex": "color_picker/color_picker_POINTS.vert",
+            "fragment": "color_picker/color_picker_POINTS.frag"
+        }
+    },
+    "custom_colorPicker_TRIANGLES": {
+        "description": "Color picker TRIANGLES.",
+        "shaders": {
+            "vertex": "color_picker/color_picker_TRIANGLES.vert",
+            "fragment": "color_picker/color_picker_TRIANGLES.frag"
+        }
+    },
+    "custom_colorPicker_stripe": {
+        "description": "Color picker Stripe.",
+        "shaders": {
+            "vertex": "color_picker/color_picker_stripe.vert",
+            "fragment": "color_picker/color_picker_stripe.frag"
+        }
+    },
+
+    "custom_multi": {
+        "description": "Multi.",
+        "shaders": {
+            "vertex": "custom/post_process/multi.vert",
+            "fragment": "custom/post_process/multi.frag"
+        }
+    },
+    "custom_outline": {
+        "description": "Outline.",
+        "shaders": {
+            "vertex": "custom/post_process/outline.vert",
+            "fragment": "custom/post_process/outline.frag"
+        }
+    },
+
+    "custom_gaussBlur": {
+        "description": "Gaussian Blur.",
+        "shaders": {
+            "vertex": "custom/post_process/gaussBlur.vert",
+            "fragment": "custom/post_process/gaussBlur.frag"
+        }
+    },
+
+    "custom_highPass": {
+        "description": "High Pass Filter.",
+        "shaders": {
+            "vertex": "custom/post_process/highPass.vert",
+            "fragment": "custom/post_process/highPass.frag"
+        }
+    },
+
+    "custom_bloom": {
+        "description": "Bloom.",
+        "shaders": {
+            "vertex": "custom/post_process/bloom.vert",
+            "fragment": "custom/post_process/bloom.frag"
+        }
+    },
+
+    "custom_lumaConversion": {
+        "description": "Luma.",
+        "shaders": {
+            "vertex": "custom/post_process/lumaConversion.vert",
+            "fragment": "custom/post_process/lumaConversion.frag"
+        }
+    },
+    "custom_FXAA": {
+        "description": "FXAA.",
+        "shaders": {
+            "vertex": "custom/post_process/FXAA.vert",
+            "fragment": "custom/post_process/FXAA.frag"
+        }
+    },
+    "custom_SSAA": {
+        "description": "SSAA.",
+        "shaders": {
+            "vertex": "custom/post_process/SSAA.vert",
+            "fragment": "custom/post_process/SSAA.frag"
+        }
+    },
+    "custom_fog": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/post_process/fog.vert",
+            "fragment": "custom/post_process/fog.frag"
+        }
+    },
+    "custom_volumetricLight": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/post_process/VolumetricLight.vert",
+            "fragment": "custom/post_process/VolumetricLight.frag"
+        }
+    },
+    "custom_ToneMapping": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/post_process/ToneMapping.vert",
+            "fragment": "custom/post_process/ToneMapping.frag"
+        }
+    },
+    "custom_SSAO": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/post_process/SSAO.vert",
+            "fragment": "custom/post_process/SSAO.frag"
+        }
+    },
+    "custom_simpleBlur": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/post_process/simpleBlur.vert",
+            "fragment": "custom/post_process/simpleBlur.frag"
+        }
+    },
+    "custom_DoF": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/post_process/DoF.vert",
+            "fragment": "custom/post_process/DoF.frag"
+        }
+    },
+    "custom_dilation": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/post_process/dilation.vert",
+            "fragment": "custom/post_process/dilation.frag"
+        }
+    },
+    "custom_chromaticAberration": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/post_process/chromaticAberration.vert",
+            "fragment": "custom/post_process/chromaticAberration.frag"
+        }
+    },
+    "custom_pixelization": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/post_process/pixelization.vert",
+            "fragment": "custom/post_process/pixelization.frag"
+        }
+    },
+
+    "custom_directionalShadow": {
+        "description": "Shadow.",
+        "shaders": {
+            "vertex": "custom/shadows/directionalShadow.vert",
+            "fragment": "custom/shadows/directionalShadow.frag"
+        }
+    },
+    "custom_pointShadow": {
+        "description": "Point shadow.",
+        "shaders": {
+            "vertex": "custom/shadows/pointShadow.vert",
+            "fragment": "custom/shadows/pointShadow.frag"
+        }
+    },
+    
+    "custom_vertexNormal": {
+        "description": "Vertex normal.",
+        "shaders": {
+            "vertex": "custom/vertex_normal.vert",
+            "fragment": "custom/vertex_normal.frag"
+        }
+    },
+
+
+    "custom_text2D": {
+        "description": "Text2D.",
+        "shaders": {
+            "vertex": "custom/text/text2D.vert",
+            "fragment": "custom/text/text2D.frag"
+        }
+    },
+
+
+    "custom_grid": {
+        "description": "Grid.",
+        "shaders": {
+            "vertex": "custom/grid.vert",
+            "fragment": "custom/grid.frag"
+        }
+    },
+
+
+    "custom_pointcloud": {
+        "description": "Pointcloud program",
+        "shaders": {
+            "vertex": "custom/pointcloud.vert",
+            "fragment": "custom/pointcloud.frag"
+        }
+    },
+
+    "custom_nearestNeighbour": {
+        "description": "Pointcloud nearest neighbour program",
+        "shaders": {
+            "vertex": "custom/nearestNeighbour.vert",
+            "fragment": "custom/nearestNeighbour.frag"
+        }
+    },
+
+    "custom_weightedDistance": {
+        "description": "Pointcloud weighted distance program",
+        "shaders": {
+            "vertex": "custom/weightedDistance.vert",
+            "fragment": "custom/weightedDistance.frag"
+        }
+    },
+
+    "custom_jumpFlooding": {
+        "description": "Pointcloud jump flooding program",
+        "shaders": {
+            "vertex": "custom/jumpFlooding.vert",
+            "fragment": "custom/jumpFlooding.frag"
+        }
+    },
+    "custom_jumpFloodingLayers": {
+        "description": "Pointcloud jump flooding layers program",
+        "shaders": {
+            "vertex": "custom/jumpFloodingLayers.vert",
+            "fragment": "custom/jumpFloodingLayers.frag"
+        }
+    },
+    "custom_jumpFloodingLayersPrep": {
+        "description": "Pointcloud jump flooding layers preparation program",
+        "shaders": {
+            "vertex": "custom/jumpFloodingLayers.vert",
+            "fragment": "custom/jumpFloodingLayersPrep.frag"
+        }
+    },
+    "custom_jumpFloodingLayersFinal": {
+        "description": "Pointcloud jump flooding layers final program",
+        "shaders": {
+            "vertex": "custom/jumpFloodingLayers.vert",
+            "fragment": "custom/jumpFloodingLayersFinal.frag"
+        }
+    }
+}
