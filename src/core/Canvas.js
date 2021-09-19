@@ -29,6 +29,12 @@ export class Canvas {
 	set uuid(uuid){
 		this._uuid = uuid;
 	}
+	set width(width){
+		this._canvasDOM.width = width;
+	}
+	set height(height){
+		this._canvasDOM.height = height;
+	}
 
 	get canvasDOM(){
 		return this._canvasDOM;
@@ -38,6 +44,12 @@ export class Canvas {
 	}
 	get uuid(){
 		return this._uuid;
+	}
+	get width(){
+		return this._canvasDOM.width;
+	}
+	get height(){
+		return this._canvasDOM.height;
 	}
 
 	//FUNC
