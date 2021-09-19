@@ -34,6 +34,7 @@ struct SLight {
 #fi
 
 struct Material {
+    vec3 emissive;
     vec3 diffuse;
     #if (TEXTURE)
         #for I_TEX in 0 to NUM_TEX
@@ -177,7 +178,7 @@ void main() {
 
 
     // Calculate combined light contribution
-    vec3 combined = ambient;
+    vec3 combined = ambient + material.emissive;
 
     #if (DLIGHTS)
         #for lightIdx in 0 to NUM_DLIGHTS

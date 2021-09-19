@@ -17,9 +17,22 @@ export class MeshBasicMaterial extends Material {
 
 		this.type = "MeshBasicMaterial";
 
-		this._color = new Color(Math.random() * 0xffffff); // emissive
+		this._emissive = new Color(Math.random() * 0xffffff);
+		this._color = new Color(Math.random() * 0xffffff);
 
 		this.programName = "basic";
+	}
+
+	set emissive(val) {
+		if (!val.equals(this._emissive)) {
+			this._emissive = val;
+
+			// Notify onChange subscriber
+			if (this._onChangeListener) {
+				var update = {uuid: this._uuid, changes: {emissive: this._emissive.getHex()}};
+				this._onChangeListener.materialUpdate(update)
+			}
+		}
 	}
 
 	/**
@@ -38,6 +51,8 @@ export class MeshBasicMaterial extends Material {
 			}
 		}
 	}
+
+	get emissive() { return this._emissive; }
 
 	/**
 	 * Get color of the material.
@@ -76,6 +91,7 @@ export class MeshBasicMaterial extends Material {
 	toJson() {
 		var obj = super.toJson();
 
+		obj.emissive = this._emissive.getHex();
 		obj.color = this._color.getHex();
 
 		return obj;
@@ -94,6 +110,7 @@ export class MeshBasicMaterial extends Material {
 		material = super.fromJson(obj, material);
 
 		// MeshBasicMaterial properties
+		material._emissive = new Color(obj.emissive);
 		material._color = new Color(obj.color);
 
 		return material;
@@ -109,6 +126,10 @@ export class MeshBasicMaterial extends Material {
 
 		for (var prop in data) {
 			switch (prop) {
+				case "emissive":
+					this._emissive = data.emissive;
+					delete data.color;
+					break;
 				case "color":
 					this._color = data.color;
 					delete data.color;
