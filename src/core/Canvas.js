@@ -4,44 +4,59 @@
 
 import {_Math} from '../math/Math.js';
 
+
 export class Canvas {
 	//CONST
-	constructor(canvas = undefined, id = "rc-canvas") {
-		this._canvas = null;
-		if(canvas !== undefined){
-			this._canvas = canvas;
-		}else {
-			this._canvas = this.generateCanvas(id);
-		}
+	constructor(parentDOM) {
+		this._canvasDOM = this.generateCanvasDOM();
+		this._parentDOM = (parentDOM !== undefined) ? parentDOM.appendChild(this._canvasDOM).parentElement : null;
 
 		this._uuid = _Math.generateUUID();
+
+		this.updateSize();
 	}
 
 	//SET GET
-	set canvas(canvas){
-		this._canvas = canvas;
+	set canvasDOM(canvasDOM){
+		this._canvasDOM = canvasDOM;
+	}
+	set parentDOM(parentDOM){
+		this._parentDOM = parentDOM.appendChild(this._canvasDOM).parentElement;
+		console.error(parentDOM);
+		canvasDOM.width = parentDOM.clientWidth;
+		canvasDOM.height = parentDOM.clientHeight;
 	}
 	set uuid(uuid){
 		this._uuid = uuid;
 	}
 
-	get canvas(){
-		return this._canvas;
+	get canvasDOM(){
+		return this._canvasDOM;
+	}
+	get parentDOM(){
+		return this._parentDOM;
 	}
 	get uuid(){
 		return this._uuid;
 	}
 
 	//FUNC
-	generateCanvas(id){
-		let canvas = document.createElement("canvas");
-		canvas.id = id;
-		canvas.width = document.body.clientWidth;
-		canvas.height = document.body.clientHeight;
-		canvas.style.padding = '0';
-		canvas.style.margin = '0';
-		//canvas.style.border = "1px solid";
+	generateCanvasDOM(id = "rc-canvas"){
+		const canvasDOM = document.createElement("canvas");
+		canvasDOM.id = id;
 
-		return canvas;
+		//make it visually fill the positioned parent
+		canvasDOM.style.width ="100%";
+		canvasDOM.style.height="100%";
+		canvasDOM.style.padding = '0';
+		canvasDOM.style.margin = '0';
+		//canvasDOM.style.border = "1px solid";
+
+		return canvasDOM;
+	}
+	updateSize(){
+		//set the internal size to match
+		this._canvasDOM.width = this._canvasDOM.clientWidth;
+		this._canvasDOM.height = this._canvasDOM.clientHeight;
 	}
 }
