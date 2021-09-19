@@ -15,20 +15,20 @@ export class Geometry {
 	/**
 	 * Create new Geometry object.
 	 */
-	constructor() {
+	constructor(args = {}) {
 		this._uuid = _Math.generateUUID();
 		this.type = "Geometry";
 
 		// Buffers
-		this._indices = null;
-		this._vertices = null;
-		this._normals = null;
-		this._tangents = null;
-		this._bitangents = null;
-		this._vertColor = null;
-		this._uv = null;
-		this._wireframeIndices = null;
-		this._MMat = null;
+		this._indices = (args.indices !== undefined) ? args.indices : null;
+		this._vertices = (args.vertices !== undefined) ? args.vertices : null;
+		this._normals = (args.normals !== undefined) ? args.normals : null;
+		this._tangents = (args.tangents !== undefined) ? args.tangents : null;
+		this._bitangents = (args.bitangents !== undefined) ? args.bitangents : null;
+		this._vertColor = (args.vertColor !== undefined) ? args.vertColor : null;
+		this._uv = (args.uv !== undefined) ? args.uv : null;
+		this._wireframeIndices = (args.wireframeIndices !== undefined) ? args.wireframeIndices : null;
+		this._MMat = (args.MMat !== undefined) ? args.MMat : null;
 
 		// Bounding
 		this._boundingBox = null;
@@ -605,7 +605,7 @@ export class Geometry {
 
 		var indices = this._indices.array;
 
-	   for (var i = start, i_end = start + count; i < i_end; i += 3 ) {
+		for (var i = start, i_end = start + count; i < i_end; i += 3 ) {
 			vA = indices[i] * 3;
 			vB = indices[i + 1] * 3;
 			vC = indices[i + 2] * 3;
@@ -696,12 +696,12 @@ export class Geometry {
 	/**
 	 * Set range for triangle mesh rendering or lines. ??
 	 */
-   setDrawRange(start, count) {
+   	setDrawRange(start, count) {
 		if ( ! this._indices) { console.error('Geometry error: setDrawRange called before indices were set.'); return; }
 		this._indexStart = start; this._indexCount = count; this._drawRangeSet = true;
 	}
-   get indexStart() { return this._drawRangeSet ? this._indexStart : 0; }
-   get indexCount() { return this._drawRangeSet ? this._indexCount : this.indices.count(); }
+   	get indexStart() { return this._drawRangeSet ? this._indexStart : 0; }
+   	get indexCount() { return this._drawRangeSet ? this._indexCount : this.indices.count(); }
 
 	// region GETTERS
 	/**
