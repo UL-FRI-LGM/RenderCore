@@ -29,7 +29,7 @@ export class GLManager {
 		// Try to fetch GL context
 		for (var i = 0; i < glKeys.length; i++) {
 			try {
-				this._gl = canvas.getContext(glKeys[i], optionalContextAttributes);
+				this._gl = canvas.canvasDOM.getContext(glKeys[i], optionalContextAttributes);
 			} catch (e){
 				console.error(e);
 			}

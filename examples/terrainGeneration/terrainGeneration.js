@@ -6,8 +6,11 @@ let manager, loaderObj, loaderTexture;
 let keyboardRotation, keyboardTranslation, keyboardInput;
 
 function init() {
+  const canvas = new RC.Canvas();
+  canvas.canvasDOM = document.getElementById("canvas");
+
   // Initialize renderer
-  renderer = new RC.MeshRenderer(document.getElementById("canvas"), RC.WEBGL2);
+  renderer = new RC.MeshRenderer(canvas, RC.WEBGL2);
   renderer.clearColor = "#000000FF";
   renderer.addShaderLoaderUrls("../../src/shaders");
 

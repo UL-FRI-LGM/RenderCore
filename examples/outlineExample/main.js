@@ -69,7 +69,7 @@ const CoreControl = {
         this.canvas = this.initializeCanvas();
         this.canvasManager = this.initializeCanvasManager(this.canvas);
 
-        this.renderer = this.initializeRenderer(this.canvas.canvas);
+        this.renderer = this.initializeRenderer(this.canvas);
         this.renderQueue = this.initializeRenderQueue(this.renderer);
         this.rendererManager = this.initializeRendererManager(this.renderer);
         this.renderQueueManager = this.initializeRenderQueueManager(this.renderQueue);
@@ -77,22 +77,15 @@ const CoreControl = {
         this.scene = this.createDefaultScene();
         this.sceneManager = this.createSceneManager(this.scene);
 
-        this.camera = this.createDefaultCamera(this.canvas.canvas);
+        this.camera = this.createDefaultCamera(this.canvas);
         this.cameraManager = this.createCameraManager(this.camera, this.keyMap);
     },
 
     initializeCanvas: function(){
-        const canvasDOM = document.createElement("canvas");
-        canvasDOM.id = "rc-canvas-main";
-        canvasDOM.width = predef_width;
-        canvasDOM.height = predef_height;
-        canvasDOM.style.padding = '0';
-        canvasDOM.style.margin = '0';
-
-        return new RC.Canvas(canvasDOM);
+        return new RC.Canvas(document.body);
     },
     initializeCanvasManager(canvas){
-        const canvasManager = new RC.CanvasManager(document.getElementsByTagName("body")[0]);
+        const canvasManager = new RC.CanvasManager(document.body);
         canvasManager.addCanvas(canvas);
         canvasManager.activeCanvas = canvas;
 
@@ -295,22 +288,18 @@ window.onload = function(){
 
 
 const resizeFunction = function () {
-    // Make the canvas the same size
-    CoreControl.canvasManager.activeCanvas.canvas.width = document.body.clientWidth;
-    CoreControl.canvasManager.activeCanvas.canvas.height = document.body.clientHeight;
+    const activeCanvas = CoreControl.canvasManager.activeCanvas;
+
+    // Update canvas size
+    activeCanvas.updateSize();
 
     // Update camera aspect ratio and renderer viewport
-    if (CoreControl.cameraManager.activeCamera) {
-        CoreControl.cameraManager.activeCamera.aspect = CoreControl.canvasManager.activeCanvas.canvas.width / CoreControl.canvasManager.activeCanvas.canvas.height;
-    }
-    if(CoreControl.rendererManager.activeRenderer){
-        CoreControl.rendererManager.activeRenderer.updateViewport(CoreControl.canvasManager.activeCanvas.canvas.width, CoreControl.canvasManager.activeCanvas.canvas.height);
-    }
-    if(CoreControl.renderQueueManager.activeRenderQueue){
-        const RQs = CoreControl.renderQueueManager.activeRenderQueue._renderQueue;
-        for(let RQ = 0; RQ < RQs.length; RQ++){
-            RQs[RQ].viewport = { width: document.body.clientWidth, height: document.body.clientHeight };
-        }
+    CoreControl.cameraManager.activeCamera.aspect = activeCanvas.width / activeCanvas.height;
+    CoreControl.rendererManager.activeRenderer.updateViewport(activeCanvas.width, activeCanvas.height);
+
+    const RQs = CoreControl.renderQueueManager.activeRenderQueue._renderQueue;
+    for(let RQ = 0; RQ < RQs.length; RQ++){
+        RQs[RQ].viewport = { width: activeCanvas.width, height: activeCanvas.height };
     }
 };
 

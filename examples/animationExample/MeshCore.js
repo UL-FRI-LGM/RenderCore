@@ -11,7 +11,7 @@ export default class MeshCore{
         window.app = this;
         this._canvas = new RC.Canvas(undefined, "rc-canvas-mesh");
 
-        this._camera = new RC.PerspectiveCamera(75, this._canvas.canvas.width/this._canvas.canvas.height, 0.0625, 8192);
+        this._camera = new RC.PerspectiveCamera(75, this._canvas.width/this._canvas.height, 0.0625, 8192);
         this._camera.position = new RC.Vector3(0, 0, 8);
         this._camera.lookAt(new RC.Vector3(0, 0, 0), new RC.Vector3(0, 1, 0));
 
@@ -29,7 +29,7 @@ export default class MeshCore{
         this._scene.add(this._ANIMATION_OBJECT);
         this._populateScene(this._scene, this._OBJECTS, this._ANIMDATA, onFinish);
 
-        this._renderer = new RC.MeshRenderer(this._canvas.canvas, RC.WEBGL2, {antialias: false, stencil: true});
+        this._renderer = new RC.MeshRenderer(this._canvas, RC.WEBGL2, {antialias: false, stencil: true});
         this._renderer.clearColor = "#ffffffff";
         this._renderer.addShaderLoaderUrls(shaderPath);
 

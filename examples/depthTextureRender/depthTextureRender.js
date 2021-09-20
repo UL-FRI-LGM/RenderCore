@@ -19,7 +19,10 @@ class App {
 
     this.canvas = canvas;
 
-    this.renderer = new RC.MeshRenderer(document.getElementById("canvas"), RC.WEBGL2);
+    const cnv = new RC.Canvas();
+    cnv.canvasDOM = document.getElementById("canvas");
+
+    this.renderer = new RC.MeshRenderer(cnv, RC.WEBGL2);
     this.renderer.clearColor = "#000000FF";
     this.renderer.addShaderLoaderUrls("../../src/shaders");
     this.renderer.addShaderLoaderUrls("../common/shaders");

@@ -3,7 +3,7 @@ import * as RC from "../../src/RenderCore.js";
 
 const canvas = new RC.Canvas(document.body);
 
-const renderer = new RC.MeshRenderer(canvas.canvasDOM, RC.WEBGL2);
+const renderer = new RC.MeshRenderer(canvas, RC.WEBGL2);
 renderer.addShaderLoaderUrls("../../src/shaders");
 
 const scene = new RC.Scene();

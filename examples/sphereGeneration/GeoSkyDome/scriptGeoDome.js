@@ -16,7 +16,10 @@ class App {
 		this.camera.position = new RC.Vector3(0, 0, 1000);
 		this.camera.position.z = 0;
         
-		this.renderer = new RC.MeshRenderer(this.canvas, RC.WEBGL2, {antialias: true});
+		const cnv = new RC.Canvas();
+		cnv.canvasDOM = canvas;
+
+		this.renderer = new RC.MeshRenderer(cnv, RC.WEBGL2, {antialias: true});
 		this.renderer.clearColor = '#336699ff';
 		this.renderer.addShaderLoaderUrls('../../../src/shaders');
 		

@@ -10,7 +10,7 @@ The example code below show a simple way how to set up a scene for rendering a t
 ```js
 const canvas = new RC.Canvas(document.body);
 
-const renderer = new RC.MeshRenderer(canvas.canvasDOM, RC.WEBGL2);
+const renderer = new RC.MeshRenderer(canvas, RC.WEBGL2);
 renderer.addShaderLoaderUrls(shaderLocation);
 
 const scene = new RC.Scene();

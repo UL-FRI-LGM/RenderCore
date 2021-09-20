@@ -2,21 +2,21 @@
  * Created by Sebastien.
  */
 
-export class CanvasManager {
+ export class CanvasManager {
 	//CONST
-	constructor(documentBody) {
-		this._documentBody = documentBody;
+	constructor(parentDOM) {
+		this._parentDOM = (parentDOM !== undefined) ? parentDOM : null;
 
 		// Currently selected canvas
 		this._activeCanvas = null;
 
-		// List of all of all canvases
+		// List of all canvases
 		this._canvases = {};
 	}
 
 	//SET GET
-	set documentBody(documentBody){
-		this._documentBody = documentBody;
+	set parentDOM(parentDOM){
+		this._parentDOM = parentDOM;
 	}
 	set activeCanvas(canvas){
 		this.swapCanvas(this._activeCanvas, canvas);
@@ -28,8 +28,8 @@ export class CanvasManager {
 		this._renderers = canvases;
 	}
 
-	get documentBody(){
-		return this._documentBody;
+	get parentDOM(){
+		return this._parentDOM;
 	}
 	get activeCanvas(){
 		return this._activeCanvas;
@@ -47,19 +47,19 @@ export class CanvasManager {
 
 	swapCanvas(previousCanvas, newCanvas){
 		if(this._activeCanvas !== null) {
-			/*let canvasesInBody = this._documentBody.getElementsByTagName("canvas");
+			/*let canvasesInBody = this._parentDOM.getElementsByTagName("canvas");
 
 			for (let c = 0; c < canvasesInBody.length; c++) {
-				if (canvasesInBody[c].id === previousCanvas.canvas.id) {
-					//canvasesInBody[c] = newCanvas.canvas;
-					canvasesInBody[c].parentNode.replaceChild(newCanvas.canvas, canvasesInBody[c]);
+				if (canvasesInBody[c].id === previousCanvas.canvasDOM.id) {
+					//canvasesInBody[c] = newCanvas.canvasDOM;
+					canvasesInBody[c].parentNode.replaceChild(newCanvas.canvasDOM, canvasesInBody[c]);
 					return;
 				}
 			}*/
 
-			this._documentBody.replaceChild(newCanvas.canvas, previousCanvas.canvas);
+			this._parentDOM.replaceChild(newCanvas.canvasDOM, previousCanvas.canvasDOM);
 		}else{
-			this._documentBody.appendChild(newCanvas.canvas);
+			this._parentDOM.appendChild(newCanvas.canvasDOM);
 		}
 	}
 

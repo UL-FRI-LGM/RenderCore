@@ -22,7 +22,6 @@ export class Canvas {
 	}
 	set parentDOM(parentDOM){
 		this._parentDOM = parentDOM.appendChild(this._canvasDOM).parentElement;
-		console.error(parentDOM);
 		canvasDOM.width = parentDOM.clientWidth;
 		canvasDOM.height = parentDOM.clientHeight;
 	}

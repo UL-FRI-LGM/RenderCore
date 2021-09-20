@@ -10,8 +10,11 @@ let aLight, dLight;
 init();
 
 function init() {
+  const canvas = new RC.Canvas();
+  canvas.canvasDOM = document.getElementById("canvas");
+
   // Initialize renderer
-  renderer = new RC.MeshRenderer(document.getElementById("canvas"), RC.WEBGL2);
+  renderer = new RC.MeshRenderer(canvas, RC.WEBGL2);
   renderer.clearColor = "#000000FF";
   renderer.addShaderLoaderUrls("../../src/shaders");
 
@@ -120,7 +123,7 @@ function updateObjectPosition() {
 function updateParameters() {
   dLight.intensity = effectController.lIntensity;
   dLight.color = new RC.Color(effectController.lColor);
-  dLight.position = new RC.Vector3(effectController.lX, effectController.lY, effectController.lZ);
+  dLight.direction = new RC.Vector3(effectController.lX, effectController.lY, effectController.lZ);
 
   objects[0].material.color = new RC.Color(effectController.mColor);
   objects[0].material.shininess = effectController.mShininess;
