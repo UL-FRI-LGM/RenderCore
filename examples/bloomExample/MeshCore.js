@@ -40,6 +40,7 @@ export default class MeshCore{
         let dLight = new RC.DirectionalLight(new RC.Color("#FFFFFF"), 1);
         let pLight = new RC.PointLight(new RC.Color("#FFFFFF"), 1);
 
+        dLight.position = new RC.Vector3(-32, 64, 0);
         pLight.position = new RC.Vector3(0, 4, 0);
 
         scene.add(aLight);
@@ -164,9 +165,13 @@ export default class MeshCore{
             scene.add(cube_i_object);
         }
 
-        const l_cube = new RC.Mesh(cube_n_geometry);
-        l_cube.color = pLight.color;
-        pLight.add(l_cube);
+        const pl_cube = new RC.Mesh(cube_n_geometry);
+        pl_cube.color = pLight.color;
+        pLight.add(pl_cube);
+
+        const dl_cube = new RC.Mesh(cube_n_geometry);
+        dl_cube.color = dLight.color;
+        dLight.add(new RC.Mesh(dl_cube));
         
 
 
@@ -179,7 +184,7 @@ export default class MeshCore{
         plane.material.transparent = false;
         plane.material.opacity = 0.5;
         plane.translateY(-4);
-        plane.rotateX(Math.PI/2);
+        plane.rotateX(-Math.PI/2);
         scene.add(plane);
 
     }
