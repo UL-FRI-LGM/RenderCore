@@ -2,17 +2,22 @@
  * Created by Sebastien.
  */
 import {Mesh} from './Mesh.js';
-import {MeshBasicMaterial} from '../materials/MeshBasicMaterial.js';
 import {Float32Attribute} from '../core/BufferAttribute.js';
 import {POINTS} from "../constants.js";
 import {PickingShaderMaterial} from "../materials/PickingShaderMaterial.js";
 import {FRONT_SIDE} from "../constants.js";
+import { Geometry } from './Geometry.js';
+import { PointBasicMaterial } from '../RenderCore.js';
 
 
 export class Point extends Mesh {
-    constructor(geometry, material = new MeshBasicMaterial(), pickingMaterial = new PickingShaderMaterial("POINTS", {pointSize: 1.0})) {
-        // Super RC.Mesh
-        super(geometry, material, pickingMaterial);
+    constructor(args = {}) {
+        //DEFAULTS
+        const geometry = args.geometry ? args.geometry : new Geometry({vertices: new Float32Attribute([0, 0, 0], 3)});
+        const material = args.material ? args.material : new PointBasicMaterial();
+
+        //SUPER
+        super(geometry, material, new PickingShaderMaterial("POINTS", {pointSize: 1.0}));
 
 
         this.type = "Point";
@@ -31,7 +36,7 @@ export class Point extends Mesh {
     set points(points) {
         this.geometry.vertices = Float32Attribute(points, 3);
     }
-    get points(){
+    get points() {
         return this.geometry.vertices;
     }
 
