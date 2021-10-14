@@ -171,7 +171,7 @@ export default class MeshCore{
 
         const dl_cube = new RC.Mesh(cube_n_geometry);
         dl_cube.color = dLight.color;
-        dLight.add(new RC.Mesh(dl_cube));
+        dLight.add(dl_cube);
         
 
 
