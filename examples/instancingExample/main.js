@@ -81,7 +81,6 @@ function prepaireCluster(mult = 4, step = 1.0){
     
     const cubeInstances = new Array();
     const cubePositions = new Array();
-    let cubeInstanceCount = 0;
 
     for(let i = -step*mult; i <= step*mult; i+=step){
         for(let j = -step*mult; j <= step*mult; j+=step){
@@ -96,7 +95,6 @@ function prepaireCluster(mult = 4, step = 1.0){
                 cubeInstance.updateMatrix();
                 cubeInstances.push(cubeInstance);
                 cubePositions.push(new RC.Vector3().copy(cubeInstance.position));
-                cubeInstanceCount++;
             }
         }
     }
@@ -122,7 +120,7 @@ function prepaireCluster(mult = 4, step = 1.0){
     cubeObject.position.set(0.0, 0.0, 0.0);
     cubeObject.scale.set(0.1, 0.1, 0.1);
     cubeObject.instanced = true;
-    cubeObject.instanceCount = cubeInstanceCount;
+    cubeObject.instanceCount = cubeInstances.length;
 
     return {object: cubeObject, instances: cubeInstances, positions: cubePositions};
 }
