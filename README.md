@@ -130,6 +130,31 @@ initRenderQueue() {
 }
 ```
 
+### [Instancing](https://ul-fri-lgm.github.io/RenderCore/examples/instancingExample/instancingExample.html)
+This example show how to draw a lot of models with same set of vertex data. 
+
+```js
+const geometry = new RC.Geometry();
+geometry.vertices = new RC.Float32Attribute(cubeVertices, 3);
+geometry.vertices.divisor = 0;
+geometry.computeVertexNormals();
+geometry.normals.divisor = 0;
+
+geometry.MMat = new RC.Float32Attribute(instances.reduce((acc, x) => {acc.push(...x.matrix.elements); return acc;}, new Array()), 16);
+geometry.MMat.divisor = 1;
+geometry.MMat.drawType = RC.BufferAttribute.DRAW_TYPE.DYNAMIC;
+
+const material = new RC.MeshBasicMaterial();
+cubeMaterial.emissive.set(0.0, 0.0, 0.0);
+
+const object = new RC.Mesh(geometry, material);
+object.position.set(0.0, 0.0, 0.0);
+object.scale.set(0.1, 0.1, 0.1);
+object.instanced = true;
+object.instanceCount = instances.length;
+
+scene.add(cubeObject);
+```
 
 
 ## External sources
