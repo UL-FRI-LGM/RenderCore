@@ -2,7 +2,13 @@
  * Created by Ziga, Primoz & Sebastien on 1.4.2016.
  */
 
-export class BufferAttribute {
+ export class BufferAttribute {
+	static DRAW_TYPE = {
+		STATIC: 0,
+		STREAMING: 1,
+		DYNAMIC: 2
+	};
+
 
 	/**
 	 * Create new BufferAttribute object.
@@ -19,6 +25,9 @@ export class BufferAttribute {
 
 		//Divisor used by instancing
 		this._divisor = 0;
+
+		this._drawType = BufferAttribute.DRAW_TYPE.STATIC;
+		this._update = false;
 	}
 
 	/**
@@ -59,6 +68,10 @@ export class BufferAttribute {
 		this._dirty = val;
 	}
 
+	set drawType(drawType){
+		this._drawType = drawType;
+	}
+
 	/**
 	 * Get the array of items.
 	 *
@@ -82,6 +95,12 @@ export class BufferAttribute {
 
 	get divisor() { return this._divisor; }
 	set divisor(divisor) { this._divisor = divisor; }
+
+	get drawType() { return this._drawType; }
+
+	update(){
+		this._update = true;
+	}
 };
 
 export function Int8Attribute (array, itemSize) {

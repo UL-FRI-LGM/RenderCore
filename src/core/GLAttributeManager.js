@@ -1,3 +1,6 @@
+import { BufferAttribute } from "./BufferAttribute.js";
+
+
 /**
  * Created by Primoz on 24.4.2016.
  */
@@ -9,6 +12,14 @@ export class GLAttributeManager {
 	constructor (gl) {
 		this._gl = gl;
 		this._cached_buffers = new Map();
+
+		this.DRAW_TYPE = new Map(
+			[
+				[BufferAttribute.DRAW_TYPE.STATIC, gl.STATIC_DRAW], 
+				[BufferAttribute.DRAW_TYPE.STREAMING, gl.STREAM_DRAW], 
+				[BufferAttribute.DRAW_TYPE.DYNAMIC, gl.DYNAMIC_DRAW]
+			]
+		);
 	}
 
 
@@ -19,12 +30,11 @@ export class GLAttributeManager {
 	 * @param bufferType WebGL buffer type
 	 */
 	updateAttribute (attribute, bufferType) {
-		// Check if this attribute is already defined in the global properties
-		let cachedBuffer = this.getCachedBuffer(attribute);
-
 		// If the WebGL buffer property is undefined, create a new buffer (attribute not found in properties)
 		if (attribute.dirty) {
-			this.createBuffer(attribute, cachedBuffer, bufferType);
+			this.createBuffer(attribute, bufferType);
+		}else if (attribute._update){
+			this.updateBuffer(attribute, bufferType);
 		}
 	}
 
@@ -34,14 +44,24 @@ export class GLAttributeManager {
 	 * @param buffer Object WebGLBuffer
 	 * @param bufferType Type of WebGL buffer that is to be created
 	 */
-	createBuffer (attribute, buffer, bufferType) {
+	createBuffer (attribute, bufferType) {
+		// Check if this attribute is already defined in the global properties
+		const buffer = this.getCachedBuffer(attribute);
+
 		this._gl.bindBuffer(bufferType, buffer);
+		this._gl.bufferData(bufferType, attribute.array, this.DRAW_TYPE.get(attribute.drawType)); // Write the data to buffer
 
-		// Write the data to buffer
-		this._gl.bufferData(bufferType, attribute.array, this._gl.STATIC_DRAW);
+		attribute.dirty = false; // Mark attribute not dirty
+	}
 
-		// Mark attribute not dirty
-		attribute.dirty = false;
+	updateBuffer (attribute, bufferType) {
+		// Check if this attribute is already defined in the global properties
+		const buffer = this.getCachedBuffer(attribute);
+
+		this._gl.bindBuffer(bufferType, buffer);
+		this._gl.bufferSubData(bufferType, 0, attribute.array);
+
+		attribute._update = false;
 	}
 
 	/**
