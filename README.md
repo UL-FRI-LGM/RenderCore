@@ -75,6 +75,27 @@ scene.add(dLight);
 ...
 ```
 
+### [Light casters](https://ul-fri-lgm.github.io/RenderCore/examples/lightCasters/lightCasters.html)
+This example demonstrates how to use different types lights.
+
+```js
+const aLight = new RC.AmbientLight(new RC.Color("#FFFFFF"), 0.1);
+scene.add(aLight);
+
+const dLight = new RC.DirectionalLight(new RC.Color("#FF0000"), 0.5);
+dLight.rotation = new RC.Euler(-1.3, -1.2, 0.0);
+scene.add(dLight);
+
+const pLight = new RC.PointLight(new RC.Color("#0000FF"), 0.5);
+pLight.position = new RC.Vector3(0.0, 1.0, 1.0);
+scene.add(pLight);
+
+constsLight = new RC.SpotLight(new RC.Color("#FFFFFF"), 0.5);
+sLight.position = new RC.Vector3(0.0, 1.5, 0.0);
+sLight.rotation = new RC.Euler(-Math.PI/2, 0.0, 0.0);
+scene.add(sLight);
+```
+
 ### [Multipass rendering](https://ul-fri-lgm.github.io/RenderCore/examples/multiPassRendering/multiPassRendering.html)
 The example demonstrates how to use ambient and directional light. The example also shows how to link keyboard interaction.
 
