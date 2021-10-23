@@ -47,7 +47,7 @@ class App {
 		this.secondLight.position = new RC.Vector3(1,0,0);
 
 		this.quad = new RC.Quad(new RC.Vector2(-2.0, -2.0), new RC.Vector2(2.0, 2.0), new RC.MeshBasicMaterial(), undefined, true);
-		this.quad.translateX(5.0);
+		// this.quad.translateX(5.0);
 		// this.secondScene.add(this.secondLight);
 		this.secondScene.add(this.quad);
 
