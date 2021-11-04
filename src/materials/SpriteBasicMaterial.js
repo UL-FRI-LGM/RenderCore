@@ -18,8 +18,7 @@ export class SpriteBasicMaterial extends CustomShaderMaterial {
 
         this._spriteSize = new Vector2(1, 1);//deprecated
         this.setUniform("spriteSize", args.spriteSize ? args.spriteSize : [1.0, 1.0]);
-        this.setUniform("aspect", args.aspect ? args.aspect : window.innerWidth/window.innerHeight);
-        this.setUniform("viewport", args.viewport ? args.viewport : [window.innerWidth, window.innerHeight]);
+        // Uniforms aspect and viewport set by MeshRenderer based on actual viewport
         this.setUniform("MODE", args.mode ? args.mode : SPRITE_SPACE_SCREEN);
         this.setAttribute("deltaOffset", args.baseGeometry ? SpriteBasicMaterial._setupDeltaDirections(args.baseGeometry) : null);
     }

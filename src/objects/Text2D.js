@@ -29,8 +29,7 @@ export class Text2D extends Mesh{
             this.geometry = this.setText2D(this._text, this._xPos, this._yPos, this._fontSize);
             this.material = new Text2DMaterial();
             this.material.setAttribute("deltaOffset", []);
-            this.material.setUniform("aspect", window.innerWidth/window.innerHeight);
-            this.material.setUniform("viewport", [window.innerWidth, window.innerHeight]);
+            // Uniforms aspect and viewport set by MeshRenderer based on actual viewport
             this.material.setUniform("MODE", TEXT2D_SPACE_SCREEN);
 
             this.material.addMap(this._fontTexture);
@@ -158,8 +157,7 @@ export class Text2D extends Mesh{
         const material = new Text2DMaterial();
 
         material.setAttribute("deltaOffset", Text2D._setupDeltaDirections(args.text, args.fontSize, args.offset));
-        material.setUniform("aspect", window.innerWidth/window.innerHeight);
-        material.setUniform("viewport", [window.innerWidth, window.innerHeight]);
+        // Uniforms aspect and viewport set by MeshRenderer based on actual viewport
         material.setUniform("MODE", args.mode);
 
         return material;
