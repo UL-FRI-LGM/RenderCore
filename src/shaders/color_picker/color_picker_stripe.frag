@@ -2,11 +2,11 @@
 precision mediump float;
 
 
-uniform vec3 pickingColor;
+uniform vec4 pickingColor;
 
 out vec4 color;
 
 
 void main() {
-    color = vec4(pickingColor, 1.0);
+    color = pickingColor;
 }
