@@ -9,6 +9,7 @@ export class StripeBasicMaterial extends CustomShaderMaterial {
         this.type = "StripeBasicMaterial";
         this.programName = "basic_stripe";
         this._color = new Color(Math.random() * 0xffffff);
+        this._emissive = new Color(Math.random() * 0xffffff);
         this._lineWidth = 1.0;
     }
 
@@ -34,7 +35,18 @@ export class StripeBasicMaterial extends CustomShaderMaterial {
             this._onChangeListener.materialUpdate(update)
         }
     }
+    get emissive() { return this._emissive; }
+    set emissive(val) {
+        if (!val.equals(this._emissive)) {
+            this._emissive = val;
 
+            // Notify onChange subscriber
+            if (this._onChangeListener) {
+                var update = {uuid: this._uuid, changes: {emissive: this._emissive.getHex()}};
+                this._onChangeListener.materialUpdate(update)
+            }
+        }
+    }
 
     update(data) {
         super.update(data);
@@ -44,6 +56,10 @@ export class StripeBasicMaterial extends CustomShaderMaterial {
                 case "color":
                     this._color = data.color;
                     delete data.color;
+                    break;
+                case "emissive":
+                    this._emissive = data.emissive;
+                    delete data.emissive;
                     break;
                 case "lineWidth":
                     this._lineWidth = data.lineWidth;
