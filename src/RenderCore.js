@@ -119,7 +119,8 @@ export {TerrainPlane} from './objects/TerrainPlane.js';
 export {Volume} from './objects/Volume.js';
 export {PointCloud} from './objects/PointCloud.js';
 export {Sprite} from './objects/Sprite.js';
-export {SpriteGeometry} from './objects/SpriteGeometry.js'
+export {Cone} from './objects/Cone.js';
+export {ConeGeometry} from './objects/ConeGeometry.js';
 export {SkyBox} from './objects/SkyBox.js';
 export {SkyBox2} from './objects/SkyBox2.js';
 export {SkyDome} from './objects/SkyDome.js'
