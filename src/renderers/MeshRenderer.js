@@ -538,11 +538,9 @@ export class MeshRenderer extends Renderer {
 			uniformSetter["pickingColor"].set(object.colorID.toArray());
 		}
 		if (uniformSetter["aspect"] !== undefined) {
-			console.log ("MeshRenderer: Setting aspect", this._viewport.width / this._viewport.height);
 			uniformSetter["aspect"].set(this._viewport.width / this._viewport.height);
 		}
 		if (uniformSetter["viewport"] !== undefined) {
-			console.log ("MeshRenderer: Setting viewport", this._viewport.width, this._viewport.height);
 			uniformSetter["viewport"].set([ this._viewport.width, this._viewport.height ]);
 		}
 		if (uniformSetter["scale"] !== undefined) {
