@@ -90,7 +90,7 @@ const pLight = new RC.PointLight(new RC.Color("#0000FF"), 0.5);
 pLight.position = new RC.Vector3(0.0, 1.0, 1.0);
 scene.add(pLight);
 
-constsLight = new RC.SpotLight(new RC.Color("#FFFFFF"), 0.5);
+const sLight = new RC.SpotLight(new RC.Color("#FFFFFF"), 0.5);
 sLight.position = new RC.Vector3(0.0, 1.5, 0.0);
 sLight.rotation = new RC.Euler(-Math.PI/2, 0.0, 0.0);
 scene.add(sLight);
