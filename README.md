@@ -151,6 +151,49 @@ initRenderQueue() {
 }
 ```
 
+### [Picking](https://ul-fri-lgm.github.io/RenderCore/examples/pickingExample/pickingExample.html)
+Here we demonstrates a technique to get a unique identifier of a clicked rendered object.
+
+```js
+const canvas = new RC.Canvas(document.body);
+
+const renderer = new RC.MeshRenderer(canvas, RC.WEBGL2);
+renderer.addShaderLoaderUrls(shaderLocation);
+const renderQueue = new RC.RenderQueue(renderer);
+
+const scene = new RC.Scene();
+const camera = new RC.PerspectiveCamera(75, canvas.width/canvas.height, 0.125, 128);
+
+const picker = new RC.PickerFX(
+    renderer, 
+    {scene: scene, camera: camera},
+    {},
+    new RC.FX.output("color_picker")
+);
+renderQueue.pushRenderQueue(picker);
+
+const MainPass = new RC.RenderPass(
+    // Rendering pass type
+    RC.RenderPass.BASIC,
+    // Initialize function
+    (textureMap, additionalData) => { },
+    // Preprocess function
+    (textureMap, additionalData) => { return { scene: scene, camera: camera }; },
+    // PostprocesWs function
+    (textureMap, additionalData) => { },
+    // Target
+    RC.RenderPass.SCREEN,
+    // Viewport
+    { width: canvas.width, height: canvas.height },
+    // Bind depth texture to this ID
+    "depth_main",
+    // Outputs
+    [{id: "color_main", textureConfig: RC.RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG}]
+);
+renderQueue.pushRenderPass(MainPass);
+```
+
+
 ### [Instancing](https://ul-fri-lgm.github.io/RenderCore/examples/instancingExample/instancingExample.html)
 This example show how to draw a lot of models with same set of vertex data. 
 
