@@ -178,7 +178,9 @@ Object.assign(Texture, {
 	R16F : 17,
 	R8: 17.1,
 	RED: 17.2,
-
+	R32F : 17.3,
+	R32I : 17.4,
+	R32UI : 17.5,
 
 // WRAPPING
 	RepeatWrapping : 18,
@@ -190,7 +192,8 @@ Object.assign(Texture, {
 	UNSIGNED_SHORT : 22,		// Depth (default)
 	UNSIGNED_INT : 23,
 	HALF_FLOAT : 24,
-	FLOAT : 25
+	FLOAT : 25,
+	INT : 26
 
 /** NOTE
  * Only following formats can be added as color attachments

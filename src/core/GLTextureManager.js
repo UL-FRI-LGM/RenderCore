@@ -267,6 +267,15 @@ export class GLTextureManager {
 			case Texture.R16F:
 				return this._gl.R16F;
 				break;
+			case Texture.R32F:
+				return this._gl.R32F;
+				break;
+			case Texture.R32I:
+				return this._gl.R32I;
+				break;
+			case Texture.R32UI:
+				return this._gl.R32UI;
+				break;
 			default:
 				console.warn("----------------------------------------------");
 				console.warn("Warning: Received unsupported texture format: [" + format + "]!");

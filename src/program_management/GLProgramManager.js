@@ -373,7 +373,9 @@ export class GLProgramManager {
 					};
 					break;
 				case self._gl.SAMPLER_2D:
-					uniformSetter[info.name]['set'] = function (texture, index) {
+				case self._gl.INT_SAMPLER_2D:
+				case self._gl.UNSIGNED_INT_SAMPLER_2D:
+						uniformSetter[info.name]['set'] = function (texture, index) {
 						self._gl.activeTexture(self._gl.TEXTURE0 + index);
 						self._gl.bindTexture(self._gl.TEXTURE_2D, texture);
 						self._gl.uniform1i(location, index);
