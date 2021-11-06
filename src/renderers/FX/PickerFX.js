@@ -80,7 +80,7 @@ export class PickerFX extends FX {
             "depth_color_picker",
 
             [
-                {id: OUTPUTS.color.name, textureConfig: RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG},
+                {id: OUTPUTS.color.name, textureConfig: RenderPass.DEFAULT_R32UI_TEXTURE_CONFIG},
             ]
         );
 

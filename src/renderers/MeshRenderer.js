@@ -165,8 +165,9 @@ export class MeshRenderer extends Renderer {
 
 	_renderPickingObjects(opaqueObjects, transparentObjects, opaqueObjectsWithOutline, transparentObjectsWithOutline, camera){
 		// Default background can be other than black - we need it black here.
-		this._gl.clearColor(0, 0, 0, 0);
-		this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
+		// Plus we need these special clear calls for uint color buffer.
+		this._gl.clearBufferuiv(this._gl.COLOR, 0, new Uint32Array([0, 0, 0, 0]));
+		this._gl.clearBufferfi(this._gl.DEPTH_STENCIL, 0, 1.0, 0);
 
 		if (this._pickObject3D) {
 			this._pickLUA = [];
@@ -178,12 +179,11 @@ export class MeshRenderer extends Renderer {
 		this._renderPickableObjects(opaqueObjectsWithOutline, camera);
 		this._renderPickableObjects(transparentObjectsWithOutline, camera);
 
-		let r = new Uint8Array(4);
-		this._gl.readPixels(this._pickCoordinateX, this._canvas.height - this._pickCoordinateY, 1, 1, this._gl.RGBA, this._gl.UNSIGNED_BYTE, r);
-		this._pickedID = r[0] + (r[1] << 8) + (r[2] << 16) + (r[3] << 24 >>> 0);
-		console.log("Pick RGBA:", r[0], r[1], r[2], r[3], ", pickedID:", this._pickedID);
+		let r = new Uint32Array(1);
+		this._gl.readPixels(this._pickCoordinateX, this._canvas.height - this._pickCoordinateY, 1, 1, this._gl.RED_INTEGER, this._gl.UNSIGNED_INT, r);
+		this._pickedID = r[0];
+		console.log("MeshRenderer pickID:", this._pickedID);
 
-		this._glManager.clear(true, true, true);
 		this._pickEnabled = false;
 
 		if (this._pickObject3D) {
@@ -564,8 +564,8 @@ export class MeshRenderer extends Renderer {
 		if (globalClippingPlanes !== undefined && uniformSetter["globalClippingPlanes"] !== undefined) {
 			uniformSetter["globalClippingPlanes"].set(globalClippingPlanes.elements);
 		}
-		if (uniformSetter["pickingColor"] !== undefined) {
-			uniformSetter["pickingColor"].set(object.pickID);
+		if (uniformSetter["pickingID"] !== undefined) {
+			uniformSetter["pickingID"].set(object.pickID >>> 0);
 		}
 		if (uniformSetter["scale"] !== undefined) {
 			uniformSetter["scale"].set(object.scale.toArray());

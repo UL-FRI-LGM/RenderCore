@@ -228,6 +228,9 @@ export class GLTextureManager {
 			case Texture.RED:
 				return this._gl.RED;
 				break;
+			case Texture.RED_INTEGER:
+				return this._gl.RED_INTEGER;
+				break;
 			case Texture.RGBA:
 				return this._gl.RGBA;
 				break;

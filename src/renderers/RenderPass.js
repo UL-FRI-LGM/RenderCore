@@ -171,7 +171,7 @@ RenderPass.DEFAULT_R32UI_TEXTURE_CONFIG = {
 	minFilter: Texture.LinearFilter,
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.R32UI,
-	format: Texture.RED,
+	format: Texture.RED_INTEGER,
 	type: Texture.UNSIGNED_INT
 };
 RenderPass.DEFAULT_RGB_TEXTURE_CONFIG = {

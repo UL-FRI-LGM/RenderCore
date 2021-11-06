@@ -178,6 +178,7 @@ Object.assign(Texture, {
 	R16F : 17,
 	R8: 17.1,
 	RED: 17.2,
+	RED_INTEGER: 17.25,
 	R32F : 17.3,
 	R32I : 17.4,
 	R32UI : 17.5,

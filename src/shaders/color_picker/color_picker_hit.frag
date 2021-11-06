@@ -3,10 +3,9 @@ precision mediump float;
 precision highp int;
 
 
-uniform vec4 pickingColor;
+uniform uint pickingID;
 
-
-out vec4 color;
+layout(location = 0) out uint objID;
 
 
 void main() {
@@ -18,5 +17,5 @@ void main() {
     }
 
 
-    color = pickingColor;
+    objID = pickingID;
 }

@@ -130,15 +130,7 @@ export class Mesh extends Object3D {
 	}
 
 	set pickID(pid) {
-		if (typeof pid === 'number') {
-			this._pickID = [];
-			for (let i = 0; i < 4; ++i) {
-				this._pickID.push((pid & 255) / 255);
-				pid = pid >>> 8;
-			}
-		} else {
-			this._pickID = pid;
-		}
+		this._pickID = pid;
 	}
 	set outline(outline) {
 		this.remove(this._outline);	//remove current outline

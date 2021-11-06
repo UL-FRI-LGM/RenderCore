@@ -72,9 +72,9 @@ export class RenderTarget {
 				Texture.ClampToEdgeWrapping,
 				Texture.NearestFilter,
 				Texture.NearestFilter,
-				Texture.DEPTH_COMPONENT24,
+				Texture.DEPTH_COMPONENT32F,
 				Texture.DEPTH_COMPONENT,
-				Texture.UNSIGNED_INT,
+				Texture.FLOAT,
 				this._width,
 				this._height
 			);
