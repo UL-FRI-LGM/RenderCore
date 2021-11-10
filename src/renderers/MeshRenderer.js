@@ -537,6 +537,12 @@ export class MeshRenderer extends Renderer {
 		if (uniformSetter["pickingColor"] !== undefined) {
 			uniformSetter["pickingColor"].set(object.colorID.toArray());
 		}
+		if (uniformSetter["aspect"] !== undefined) {
+			uniformSetter["aspect"].set(this._viewport.width / this._viewport.height);
+		}
+		if (uniformSetter["viewport"] !== undefined) {
+			uniformSetter["viewport"].set([ this._viewport.width, this._viewport.height ]);
+		}
 		if (uniformSetter["scale"] !== undefined) {
 			uniformSetter["scale"].set(object.scale.toArray());
 		}
