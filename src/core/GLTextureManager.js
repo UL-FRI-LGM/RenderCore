@@ -228,6 +228,9 @@ export class GLTextureManager {
 			case Texture.RED:
 				return this._gl.RED;
 				break;
+			case Texture.RED_INTEGER:
+				return this._gl.RED_INTEGER;
+				break;
 			case Texture.RGBA:
 				return this._gl.RGBA;
 				break;
@@ -266,6 +269,15 @@ export class GLTextureManager {
 				break;
 			case Texture.R16F:
 				return this._gl.R16F;
+				break;
+			case Texture.R32F:
+				return this._gl.R32F;
+				break;
+			case Texture.R32I:
+				return this._gl.R32I;
+				break;
+			case Texture.R32UI:
+				return this._gl.R32UI;
 				break;
 			default:
 				console.warn("----------------------------------------------");

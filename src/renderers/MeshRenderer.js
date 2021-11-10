@@ -66,9 +66,12 @@ export class MeshRenderer extends Renderer {
 
 		//picking
 		this._pickEnabled = false;
+		this._pickDoNotRender = false; // If true, exit render() after picking.
+		this._pickObject3D = false; // Use internal IDs to select Mesh that was picked. When false, user must set pickID.
 		this._pickCoordinateX = 0;
 		this._pickCoordinateY = 0;
-		this._pickedColor = new Uint8Array(4);
+		this._pickedID = 0;
+		this._pickedObject3D = null;
 		this._pickCallback = null;
 		this.used = false;
 	}
@@ -76,7 +79,10 @@ export class MeshRenderer extends Renderer {
 
 	//SET GET
 	set selectedRenderer(selectedRenderer) { this._selectedRenderer = selectedRenderer; }
-	get pickedColor() { return this._pickedColor; }
+	set pickDoNotRender(pdnr) { this._pickDoNotRender = pdnr; }
+	set pickObject3D   (po3d) { this._pickObject3D = po3d; }
+	get pickedID() { return this._pickedID; }
+	get pickedObject3D() { return this._pickedObject3D; }
 
 
 	/**
@@ -140,6 +146,8 @@ export class MeshRenderer extends Renderer {
 		// Render picking objects
 		if(this._pickEnabled) {
 			this._renderPickingObjects(this._renderArrayManager.opaqueObjects, this._renderArrayManager.transparentObjects, this._renderArrayManager.opaqueObjectsWithOutline, this._renderArrayManager.transparentObjectsWithOutline, camera);
+			if (this._pickDoNotRender)
+				return;
 		}
 
 		// Render opaque objects
@@ -156,19 +164,36 @@ export class MeshRenderer extends Renderer {
 	}
 
 	_renderPickingObjects(opaqueObjects, transparentObjects, opaqueObjectsWithOutline, transparentObjectsWithOutline, camera){
+		// Default background can be other than black - we need it black here.
+		// Plus we need these special clear calls for uint color buffer.
+		this._gl.clearBufferuiv(this._gl.COLOR, 0, new Uint32Array([0, 0, 0, 0]));
+		this._gl.clearBufferfi(this._gl.DEPTH_STENCIL, 0, 1.0, 0);
+
+		if (this._pickObject3D) {
+			this._pickLUA = [];
+			this._pickAutoID = 0;
+		}
+
 		this._renderPickableObjects(opaqueObjects, camera);
 		this._renderPickableObjects(transparentObjects, camera);
 		this._renderPickableObjects(opaqueObjectsWithOutline, camera);
 		this._renderPickableObjects(transparentObjectsWithOutline, camera);
 
+		let r = new Uint32Array(1);
+		this._gl.readPixels(this._pickCoordinateX, this._canvas.height - this._pickCoordinateY, 1, 1, this._gl.RED_INTEGER, this._gl.UNSIGNED_INT, r);
+		this._pickedID = r[0];
+		console.log("MeshRenderer pickID:", this._pickedID);
 
-		//const pixelColor = new Uint8Array(4);
-		this._gl.readPixels(this._pickCoordinateX, this._canvas.height-this._pickCoordinateY, 1, 1, this._gl.RGBA, this._gl.UNSIGNED_BYTE, this._pickedColor);
-
-
-		this._glManager.clear(true, true, true);
 		this._pickEnabled = false;
-		this._pickCallback(this._pickedColor);
+
+		if (this._pickObject3D) {
+			this._pickedObject3D = (this._pickedID > 0 && this._pickedID <= this._pickAutoID) ? this._pickLUA[ this._pickedID - 1] : null;
+			delete this._pickLUA;
+			delete this._pickAutoID;
+			if (this._pickCallback) this._pickCallback(this._pickedObject3D);
+		} else {
+			if (this._pickCallback) this._pickCallback(this._pickedID);
+		}
 	}
 	_renderOutlinedObjects(opaqueObjectsWithOutline, transparentObjectsWithOutline, camera){
 		if (opaqueObjectsWithOutline.length + transparentObjectsWithOutline.length > 0) {
@@ -346,6 +371,11 @@ export class MeshRenderer extends Renderer {
 			const object = objects.get(i);
 
 			if(!object.pickable) continue;
+
+			if (this._pickObject3D) {
+				object.pickID = ++this._pickAutoID;
+				this._pickLUA.push(object);
+			}
 
 			//SET PROGRAM
 			this._setupProgram(object, camera, object.pickingMaterial.requiredProgram(this).programID);
@@ -534,8 +564,8 @@ export class MeshRenderer extends Renderer {
 		if (globalClippingPlanes !== undefined && uniformSetter["globalClippingPlanes"] !== undefined) {
 			uniformSetter["globalClippingPlanes"].set(globalClippingPlanes.elements);
 		}
-		if (uniformSetter["pickingColor"] !== undefined) {
-			uniformSetter["pickingColor"].set(object.colorID.toArray());
+		if (uniformSetter["pickingID"] !== undefined) {
+			uniformSetter["pickingID"].set(object.pickID >>> 0);
 		}
 		if (uniformSetter["aspect"] !== undefined) {
 			uniformSetter["aspect"].set(this._viewport.width / this._viewport.height);
@@ -1226,7 +1256,7 @@ export class MeshRenderer extends Renderer {
 	}
 
 
-	pick(x, y, callback){
+	pick(x, y, callback=null){
 		this._pickEnabled = true;
 		this._pickCoordinateX = x;
 		this._pickCoordinateY = y;

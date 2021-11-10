@@ -321,6 +321,22 @@ export class GLProgramManager {
 					}
 					break;
 
+				case self._gl.UNSIGNED_INT:
+					if (info.size > 1) {
+						// Array
+						uniformSetter[info.name]['set'] = function (value) {
+							self._gl.uniform1uiv(location, value);
+							uniformSetter.__validation.uniforms[info.name] = true;
+						};
+					}
+					else {
+						uniformSetter[info.name]['set'] = function (value) {
+							self._gl.uniform1ui(location, value);
+							uniformSetter.__validation.uniforms[info.name] = true;
+						};
+					}
+					break;
+
 				case self._gl.INT_VEC2:
 					if (info.size > 1) {
 						// Array
@@ -373,6 +389,8 @@ export class GLProgramManager {
 					};
 					break;
 				case self._gl.SAMPLER_2D:
+				case self._gl.INT_SAMPLER_2D:
+				case self._gl.UNSIGNED_INT_SAMPLER_2D:
 					uniformSetter[info.name]['set'] = function (texture, index) {
 						self._gl.activeTexture(self._gl.TEXTURE0 + index);
 						self._gl.bindTexture(self._gl.TEXTURE_2D, texture);

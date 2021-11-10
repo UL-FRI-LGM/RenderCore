@@ -156,6 +156,24 @@ RenderPass.DEFAULT_R8_TEXTURE_CONFIG = {
 	format: Texture.RED,
 	type: Texture.UNSIGNED_BYTE
 };
+RenderPass.DEFAULT_R32I_TEXTURE_CONFIG = {
+	wrapS: Texture.ClampToEdgeWrapping,
+	wrapT: Texture.ClampToEdgeWrapping,
+	minFilter: Texture.LinearFilter,
+	magFilter: Texture.LinearFilter,
+	internalFormat: Texture.R32I,
+	format: Texture.RED,
+	type: Texture.INT
+};
+RenderPass.DEFAULT_R32UI_TEXTURE_CONFIG = {
+	wrapS: Texture.ClampToEdgeWrapping,
+	wrapT: Texture.ClampToEdgeWrapping,
+	minFilter: Texture.LinearFilter,
+	magFilter: Texture.LinearFilter,
+	internalFormat: Texture.R32UI,
+	format: Texture.RED_INTEGER,
+	type: Texture.UNSIGNED_INT
+};
 RenderPass.DEFAULT_RGB_TEXTURE_CONFIG = {
 	wrapS: Texture.ClampToEdgeWrapping,
 	wrapT: Texture.ClampToEdgeWrapping,
@@ -266,4 +284,13 @@ RenderPass.FULL_FLOAT_RGB_NEAREST_TEXTURE_CONFIG = {
 	type: Texture.FLOAT
 };
 
-
+//32F
+RenderPass.FULL_FLOAT_R32F_TEXTURE_CONFIG = {
+	wrapS: Texture.ClampToEdgeWrapping,
+	wrapT: Texture.ClampToEdgeWrapping,
+	minFilter: Texture.LinearFilter,
+	magFilter: Texture.LinearFilter,
+	internalFormat: Texture.R32F,
+	format: Texture.RED,
+	type: Texture.FLOAT
+};

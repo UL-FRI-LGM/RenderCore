@@ -18,6 +18,8 @@ import {Mesh} from "../objects/Mesh.js";
 
 export class Object3D {
 
+	static sDefaultPickable = true;
+
 	constructor() {
 
 		// Self reference for callbacks
@@ -81,7 +83,7 @@ export class Object3D {
 		this._isStatic = false;
 		this._staticStateDirty = true;
 		this._renderingPrimitive = TRIANGLES;	//default rendering primitive
-		this._pickable = true;
+		this._pickable = Object3D.sDefaultPickable;
 		this._zVector = new Vector3();
 		this._boundingSphere = new Sphere(new Vector3(0, 0, 0), Infinity);
 	}
