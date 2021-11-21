@@ -146,38 +146,47 @@ const CoreControl = {
         const cube1 = new RC.Cube(1.9, new RC.Color().setColorName("purple"));
         cube1.position.set(-4, 4, 0);
         cube1.material = new RC.MeshPhongMaterial();
+        cube1.material.emissive = new RC.Color(0, 0, 0);
         scene.add(cube1);
         const cube2 = new RC.Cube(1.9, new RC.Color().setColorName("purple"));
         cube2.position.set(0, 4, 0);
         cube2.material = new RC.MeshPhongMaterial();
+        cube2.material.emissive = new RC.Color(0, 0, 0);
         scene.add(cube2);
         const cube3 = new RC.Cube(1.9, new RC.Color().setColorName("purple"));
         cube3.position.set(4, 4, 0);
         cube3.material = new RC.MeshPhongMaterial();
+        cube3.material.emissive = new RC.Color(0, 0, 0);
         scene.add(cube3);
         const cube4 = new RC.Cube(1.9, new RC.Color().setColorName("purple"));
         cube4.position.set(-4, 0, 0);
         cube4.material = new RC.MeshPhongMaterial();
+        cube4.material.emissive = new RC.Color(0, 0, 0);
         scene.add(cube4);
         const cube5 = new RC.Cube(1.9, new RC.Color().setColorName("purple"));
         cube5.position.set(0, 0, 0);
         cube5.material = new RC.MeshPhongMaterial();
+        cube5.material.emissive = new RC.Color(0, 0, 0);
         scene.add(cube5);
         const cube6 = new RC.Cube(1.9, new RC.Color().setColorName("purple"));
         cube6.position.set(4, 0, 0);
         cube6.material = new RC.MeshPhongMaterial();
+        cube6.material.emissive = new RC.Color(0, 0, 0);
         scene.add(cube6);
         const cube7 = new RC.Cube(1.9, new RC.Color().setColorName("purple"));
         cube7.position.set(-4, -4, 0);
         cube7.material = new RC.MeshPhongMaterial();
+        cube7.material.emissive = new RC.Color(0, 0, 0);
         scene.add(cube7);
         const cube8 = new RC.Cube(1.9, new RC.Color().setColorName("purple"));
         cube8.position.set(0, -4, 0);
         cube8.material = new RC.MeshPhongMaterial();
+        cube8.material.emissive = new RC.Color(0, 0, 0);
         scene.add(cube8);
         const cube9 = new RC.Cube(1.9, new RC.Color().setColorName("purple"));
         cube9.position.set(4, -4, 0);
         cube9.material = new RC.MeshPhongMaterial();
+        cube9.material.emissive = new RC.Color(0, 0, 0);
         scene.add(cube9);
 
                 
@@ -421,8 +430,9 @@ const RenderPass_MainMulti = new RC.RenderPass(
 
     [
         {id: "depth", textureConfig: RC.RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG},
-        {id: "normal", textureConfig: RC.RenderPass.DEFAULT_RGB_TEXTURE_CONFIG},
-        {id: "viewDir", textureConfig: RC.RenderPass.DEFAULT_RGB_TEXTURE_CONFIG},
+        {id: "position", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
+        {id: "normal", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
+        {id: "viewDir", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
         {id: "camDist", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
     ]
 );

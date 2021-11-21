@@ -22,9 +22,9 @@ export class OutlineFX extends FX {
         this.inputs.scene = this.inputs.scene ? this.inputs.scene : undefined;
         this.inputs.camera = this.inputs.camera ? this.inputs.camera : undefined;
         this.inputs.color = this.inputs.color ? this.inputs.color : new FX.input("color_in");
-        this.inputs.depth = this.inputs.depth ? this.inputs.depth : new FX.input("depthGB");
-        this.inputs.normal = this.inputs.normal ? this.inputs.normal : new FX.input("normal");
-        this.inputs.viewDir = this.inputs.viewDir ? this.inputs.viewDir : new FX.input("viewDir");
+        this.inputs.depth = this.inputs.depth ? this.inputs.depth : new FX.input("depthGB_outline");
+        this.inputs.normal = this.inputs.normal ? this.inputs.normal : new FX.input("normal_outline");
+        this.inputs.viewDir = this.inputs.viewDir ? this.inputs.viewDir : new FX.input("viewDir_outline");
 
         this.outputs.color = this.outputs.color ? this.outputs.color : new FX.output("color_outline");
 
@@ -56,9 +56,8 @@ export class OutlineFX extends FX {
                     visibility[object._uuid] = object.visible;
                     origiMats[object._uuid] = object.material;
 
-                    const multi = new CustomShaderMaterial("multi");
-                    multi.side = FRONT_AND_BACK_SIDE;
-                    multiMats[object._uuid] = multi;
+                    multiMats[object._uuid] = new CustomShaderMaterial("multi");
+                    multiMats[object._uuid].side = FRONT_AND_BACK_SIDE;
                 });
             },
             // Preprocess function
@@ -70,9 +69,8 @@ export class OutlineFX extends FX {
                         visibility[object._uuid] = object.visible;
                         origiMats[object._uuid] = object.material;
 
-                        const multi = new CustomShaderMaterial("multi");
-                        multi.side = FRONT_AND_BACK_SIDE;
-                        multiMats[object._uuid] = multi;
+                        multiMats[object._uuid] = new CustomShaderMaterial("multi");
+                        multiMats[object._uuid].side = FRONT_AND_BACK_SIDE;
                     }
 
                     if(object.drawOutline) {
@@ -93,9 +91,8 @@ export class OutlineFX extends FX {
                         visibility[object._uuid] = object.visible;
                         origiMats[object._uuid] = object.material;
 
-                        const multi = new CustomShaderMaterial("multi");
-                        multi.side = FRONT_AND_BACK_SIDE;
-                        multiMats[object._uuid] = multi;
+                        multiMats[object._uuid] = new CustomShaderMaterial("multi");
+                        multiMats[object._uuid].side = FRONT_AND_BACK_SIDE;
                     }
 
                     if(object.drawOutline) {
@@ -114,14 +111,14 @@ export class OutlineFX extends FX {
             { width: predef_width, height: predef_height },
 
             // Bind depth texture to this ID
-            "depthGB",
+            "depthGB_outline",
 
             [
-                {id: "depth", textureConfig: RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG},
-                {id: "normal", textureConfig: RenderPass.DEFAULT_RGB_TEXTURE_CONFIG},
-                {id: "viewDir", textureConfig: RenderPass.DEFAULT_RGB_TEXTURE_CONFIG},
-                {id: "camDist", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
-                {id: "vertexPos", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
+                {id: "depth_outline", textureConfig: RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG},
+                {id: "vertexPos_outline", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
+                {id: "normal_outline", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
+                {id: "viewDir_outline", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
+                {id: "camDist_outline", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
             ]
         );
 

@@ -1,21 +1,23 @@
 #version 300 es
-precision highp float;
+precision mediump float;
 
 
-uniform float near;
-uniform float far;
+//UIO
+//**********************************************************************************************************************//
+// uniform float u_Near;
+// uniform float u_Far;
 
-in vec3 fragVPos;
-in vec3 fragVNorm;
-in vec3 vViewDirection;
-in float fragVDistanceToCamera;
+in vec3 v_position_viewspace;
+in vec3 v_normal_viewspace;
+in vec3 v_ViewDirection_viewspace;
+in float v_distanceToCamera_viewspace;
 
 //out vec4 color[3];
-layout (location = 0) out vec4 de;
-layout (location = 1) out vec3 no;
-layout (location = 2) out vec3 vd;
-layout (location = 3) out vec4 dc;
-layout (location = 4) out vec3 vp;
+layout (location = 0) out vec4 de_viewspace;
+layout (location = 1) out vec4 vp_viewspace;
+layout (location = 2) out vec4 vn_viewspace;
+layout (location = 3) out vec4 vd_viewspace;
+layout (location = 4) out vec4 dc_viewspace;
 
 
 #if (CLIPPING_PLANES)
@@ -26,27 +28,30 @@ layout (location = 4) out vec3 vp;
 
     uniform ClippingPlane clippingPlanes[##NUM_CLIPPING_PLANES];
 
-    in vec3 vViewPosition;
+    in vec3 v_ViewPosition;
 #fi
 
 
-
-
+//FUNC
+//**********************************************************************************************************************
 // float linearizeDepth_1(float depth){
-//     return (-depth - near) / (far - near); //linearizaiton [0-1]
+//     return (-depth - u_Near) / (u_Far - u_Near); //linearizaiton [0-1]
 // }
 // float linearizeDepth_2(float depth) {
 //     float z_NDC = depth * 2.0 - 1.0; // back to NDC 
 
-//     return (2.0 * near * far) / (far + near - z_NDC * (far - near));	
+//     return (2.0 * u_Near * u_Far) / (u_Far + u_Near - z_NDC * (u_Far - u_Near));	
 // }
 
+
+//MAIN
+//**********************************************************************************************************************//
 void main() {
 
     #if (CLIPPING_PLANES)
         bool clipped = true;
         for(int i = 0; i < ##NUM_CLIPPING_PLANES; i++){
-                clipped = ( dot( vViewPosition, clippingPlanes[i].normal ) > clippingPlanes[i].constant ) && clipped;
+                clipped = ( dot( v_ViewPosition, clippingPlanes[i].normal ) > clippingPlanes[i].constant ) && clipped;
         }
         if ( clipped ) discard;
     #fi
@@ -62,22 +67,21 @@ void main() {
     #fi
 
 
-
-
-
+    //******************************************************************************************************************//
     float depth = gl_FragCoord.z;
     //depth = linearizeDepth_1(fragVPos.z);
-    //depth = linearizeDepth_2(gl_FragCoord.z) / far;
+    //depth = linearizeDepth_2(gl_FragCoord.z) / u_Far;
+    de_viewspace = vec4(depth, 0.0, 0.0, 1.0);
 
+    //vp_viewspace = vec4(v_position_viewspace * 0.5 + 0.5, 1.0);
+    vp_viewspace = vec4(v_position_viewspace, 1.0);
 
-    //color[0] = vec4(vec3(depth), 1.0);
-    de = vec4(depth, 0.0, 0.0, 1.0);
-    //color[1] = vec4(fragVNorm, 1.0);
-    //no = normalize(fragVNorm) * 0.5 + 0.5;
-    no = fragVNorm;
-    //color[2] = vec4(normalize(vViewDirection), 1.0);
-    //vd = normalize(vViewDirection) * 0.5 + 0.5;
-    vd = vViewDirection;
-    dc = vec4(fragVDistanceToCamera, 0.0, 0.0, 1.0);
-    vp = fragVPos;
+    //vn_viewspace = vec4(normalize(v_normal_viewspace) * 0.5 + 0.5, 0.0);
+    vn_viewspace = vec4(v_normal_viewspace, 0.0);
+
+    //vd_viewspace = vec4(normalize(v_ViewDirection_viewspace) * 0.5 + 0.5, 0.0);
+    vd_viewspace = vec4(v_ViewDirection_viewspace, 0.0);
+
+    dc_viewspace = vec4(v_distanceToCamera_viewspace, 0.0, 0.0, 1.0);
+    //******************************************************************************************************************//
 }

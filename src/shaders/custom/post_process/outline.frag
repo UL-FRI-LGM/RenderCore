@@ -64,6 +64,10 @@ void main() {
         float depthBR = texture(material.texture0, bottomRightUV).r;
 
         // Sample normals
+        // vec3 normalTL = texture(material.texture1, topLeftUV).rgb * 2.0 - 1.0;
+        // vec3 normalTR = texture(material.texture1, topRightUV).rgb * 2.0 - 1.0;
+        // vec3 normalBL = texture(material.texture1, bottomLeftUV).rgb * 2.0 - 1.0; //"central" sample
+        // vec3 normalBR = texture(material.texture1, bottomRightUV).rgb * 2.0 - 1.0;
         vec3 normalTL = texture(material.texture1, topLeftUV).rgb;
         vec3 normalTR = texture(material.texture1, topRightUV).rgb;
         vec3 normalBL = texture(material.texture1, bottomLeftUV).rgb; //"central" sample
@@ -76,11 +80,11 @@ void main() {
         float edgeDepth = sqrt(pow(depthDiffTLBR, 2.0) + pow(depthDiffTRBL, 2.0)) * 100.0;
 
         // Enhancement VIEWDIR
-        //vec3 fragNormal = normalBL * 2.0 - 1.0;
         vec3 fragNormal = normalBL;
         //vec3 viewDir = texture(material.texture2, bottomLeftUV).rgb  * 2.0 - 1.0;
+        //float NdotV = 1.0 - dot(fragNormal, -viewDir);
         vec3 viewDir = texture(material.texture2, bottomLeftUV).rgb;
-        float NdotV = 1.0 - dot(fragNormal, -viewDir);
+        float NdotV = 1.0 - dot(fragNormal, viewDir);
         float normalThreshold01 = clamp((NdotV - _DepthNormalThreshold) / (1.0 - _DepthNormalThreshold), 0.0, 1.0);
         float normalThreshold = normalThreshold01 * _DepthNormalThresholdScale + 1.0; 
 
@@ -109,7 +113,8 @@ void main() {
 		//color = vec4(vec3(edge), 1.0);
         //color = vec4(texture(material.texture0, fragUV).rrr, 1.0); //DEPTH
         //color = vec4(texture(material.texture1, fragUV).rgb, 1.0); //NORMAL
-        //color = vec4(vec3(texture(material.texture2, fragUV).rgb),  1.0); //VIEWDIR
+        //color = vec4(texture(material.texture2, fragUV).rgb,  1.0); //VIEWDIR
+        //color = vec4(vec3(texture(material.texture2, fragUV).rg, 0.0),  1.0); //VIEWDIR (ignore blue)
         //color = vec4(texture(material.texture3, fragUV).rgb,  1.0); //ORIGINAL
         
         /*if(edge == 1.0){
