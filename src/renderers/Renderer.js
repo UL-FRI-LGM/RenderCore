@@ -64,7 +64,7 @@ export class Renderer {
 		this._screenshotData = new Uint8ClampedArray();
 
 		//viewport
-		this._viewport = {x: undefined, y: undefined, width: undefined, height: undefined};
+		this._viewport = {x: 0, y: 0, width: this._canvas.width, height: this._canvas.height};
 	}
 
 	render(scene, camera, renderTarget, cubeTarget = false, side = 0) {
