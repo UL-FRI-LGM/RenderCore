@@ -116,8 +116,7 @@ export class RenderQueue {
 						internalFormat: texConfig.internalFormat,
 						format: texConfig.format,
 						type: texConfig.type,
-						width: viewportRP.width,
-						height: viewportRP.height
+						size: Math.min(viewportRP.width, viewportRP.height)
 					});
 				}else{
 					texture = new Texture(

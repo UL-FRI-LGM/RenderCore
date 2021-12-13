@@ -62,8 +62,7 @@ export class RenderTarget {
 				internalFormat: Texture.DEPTH_COMPONENT32F,
 				format: Texture.DEPTH_COMPONENT,
 				type: Texture.FLOAT,
-				width: this._width,
-				height: this._height
+				size: Math.min(this._width, this._height)
 			});
 		}else{
 			this._depthTexture = new Texture(

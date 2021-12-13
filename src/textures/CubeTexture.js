@@ -5,7 +5,7 @@ import { Texture } from './Texture.js';
 export class CubeTexture extends Texture{
 
 	constructor(args = {}) {
-		super(null, args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.width, args.height);
+		super(null, args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.size, args.size);
 		this._uuid = _Math.generateUUID();
 
 		this._wrapR = args.wrapR ? args.wrapR : this.ClampToEdgeWrapping;
@@ -20,12 +20,12 @@ export class CubeTexture extends Texture{
 			args.textures["front"] ? this._textures.set("front", args.textures["front"]) : this._textures.set("front", new Texture());
 			args.textures["back"] ? this._textures.set("back", args.textures["back"]) : this._textures.set("back", new Texture());
 		}else if(args.images){
-			args.images["right"] ? this._textures.set("right", new Texture(args.images["right"], args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.width, args.height)) : this._textures.set("right", new Texture());
-			args.images["left"] ? this._textures.set("left", new Texture(args.images["left"], args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.width, args.height)) : this._textures.set("left", new Texture());
-			args.images["top"] ? this._textures.set("top", new Texture(args.images["top"], args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.width, args.height)) : this._textures.set("top", new Texture());
-			args.images["bottom"] ? this._textures.set("bottom", new Texture(args.images["bottom"], args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.width, args.height)) : this._textures.set("bottom", new Texture());
-			args.images["front"] ? this._textures.set("front", new Texture(args.images["front"], args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.width, args.height)) : this._textures.set("front", new Texture());
-			args.images["back"] ? this._textures.set("back", new Texture(args.images["back"], args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.width, args.height)) : this._textures.set("back", new Texture());
+			args.images["right"] ? this._textures.set("right", new Texture(args.images["right"], args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.size, args.size)) : this._textures.set("right", new Texture());
+			args.images["left"] ? this._textures.set("left", new Texture(args.images["left"], args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.size, args.size)) : this._textures.set("left", new Texture());
+			args.images["top"] ? this._textures.set("top", new Texture(args.images["top"], args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.size, args.size)) : this._textures.set("top", new Texture());
+			args.images["bottom"] ? this._textures.set("bottom", new Texture(args.images["bottom"], args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.size, args.size)) : this._textures.set("bottom", new Texture());
+			args.images["front"] ? this._textures.set("front", new Texture(args.images["front"], args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.size, args.size)) : this._textures.set("front", new Texture());
+			args.images["back"] ? this._textures.set("back", new Texture(args.images["back"], args.wrapS, args.wrapT, args.minFilter, args.magFilter, args.internalFormat, args.format, args.type, args.size, args.size)) : this._textures.set("back", new Texture());
 		}else{
 			this._textures.set("right", new Texture());
 			this._textures.set("left", new Texture());

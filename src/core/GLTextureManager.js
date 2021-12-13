@@ -137,20 +137,24 @@ export class GLTextureManager {
 		if (!isRTT) {
 			// Normal texture
 			if (texture.image === null) {
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, width, height, 0, format, type, null);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, width, height, 0, format, type, null);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, width, height, 0, format, type, null);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, width, height, 0, format, type, null);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, width, height, 0, format, type, null);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, width, height, 0, format, type, null);
+				const size = Math.min(width, height);
+
+				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, null);
+				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, null);
+				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
+				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
+				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
+				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
 			}
 			else if(this._gl.getParameter(this._gl.VERSION).includes("WebGL 2.0")) {
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, texture.width, texture.height, 0, format, type, texture.right.image);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, texture.width, texture.height, 0, format, type, texture.left.image);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, texture.width, texture.height, 0, format, type, texture.top.image);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, texture.width, texture.height, 0, format, type, texture.bottom.image);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, texture.width, texture.height, 0, format, type, texture.front.image);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, texture.width, texture.height, 0, format, type, texture.back.image);
+				const size = Math.min(texture.width, texture.height);
+
+				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, texture.right.image);
+				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, texture.left.image);
+				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, size, size, 0, format, type, texture.top.image);
+				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, texture.bottom.image);
+				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, texture.front.image);
+				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, texture.back.image);
 			}
 			else{
 				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, format, type, texture.right.image);
@@ -164,12 +168,14 @@ export class GLTextureManager {
 		// Otherwise create empty texture (width * height) and leave the texture unbinding to function caller
 		else {
 			// RTT texture
-			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, width, height, 0, format, type, null);
-			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, width, height, 0, format, type, null);
-			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, width, height, 0, format, type, null);
-			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, width, height, 0, format, type, null);
-			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, width, height, 0, format, type, null);
-			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, width, height, 0, format, type, null);
+			const size = Math.min(width, height);
+
+			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, null);
+			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, null);
+			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
+			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
+			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
+			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
 		}
 
 
