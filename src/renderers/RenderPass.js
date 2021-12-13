@@ -154,7 +154,8 @@ RenderPass.DEFAULT_R8_TEXTURE_CONFIG = {
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.R8,
 	format: Texture.RED,
-	type: Texture.UNSIGNED_BYTE
+	type: Texture.UNSIGNED_BYTE,
+	clearFunction: 3
 };
 RenderPass.DEFAULT_R32I_TEXTURE_CONFIG = {
 	wrapS: Texture.ClampToEdgeWrapping,
@@ -172,7 +173,8 @@ RenderPass.DEFAULT_R32UI_TEXTURE_CONFIG = {
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.R32UI,
 	format: Texture.RED_INTEGER,
-	type: Texture.UNSIGNED_INT
+	type: Texture.UNSIGNED_INT,
+	clearFunction: 1
 };
 RenderPass.DEFAULT_RGB_TEXTURE_CONFIG = {
 	wrapS: Texture.ClampToEdgeWrapping,
@@ -191,7 +193,8 @@ RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG = {
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.RGBA,
 	format: Texture.RGBA,
-	type: Texture.UNSIGNED_BYTE
+	type: Texture.UNSIGNED_BYTE,
+	clearFunction: 128
 };
 
 RenderPass.DEFAULT_RGBA_NEAREST_TEXTURE_CONFIG = {
@@ -223,7 +226,8 @@ RenderPass.DEFAULT_R16F_TEXTURE_CUBE_MAP_CONFIG = {
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.R16F,
 	format: Texture.RED,
-	type: Texture.HALF_FLOAT
+	type: Texture.HALF_FLOAT,
+	clearFunction: 128
 };
 RenderPass.NEAREST_R16F_TEXTURE_CUBE_MAP_CONFIG = {
 	wrapS: Texture.ClampToEdgeWrapping,
@@ -233,7 +237,8 @@ RenderPass.NEAREST_R16F_TEXTURE_CUBE_MAP_CONFIG = {
 	magFilter: Texture.NearestFilter,
 	internalFormat: Texture.R16F,
 	format: Texture.RED,
-	type: Texture.HALF_FLOAT
+	type: Texture.HALF_FLOAT,
+	clearFunction: 128
 };
 RenderPass.DEFAULT_RGB16F_TEXTURE_CONFIG = {
 	wrapS: Texture.ClampToEdgeWrapping,
@@ -251,7 +256,18 @@ RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG = {
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.RGBA16F,
 	format: Texture.RGBA,
-	type: Texture.HALF_FLOAT
+	type: Texture.HALF_FLOAT,
+	clearFunction: 128
+};
+RenderPass.NEAREST_RGBA16F_TEXTURE_CONFIG = {
+	wrapS: Texture.ClampToEdgeWrapping,
+	wrapT: Texture.ClampToEdgeWrapping,
+	minFilter: Texture.NearestFilter,
+	magFilter: Texture.NearestFilter,
+	internalFormat: Texture.RGBA16F,
+	format: Texture.RGBA,
+	type: Texture.HALF_FLOAT,
+	clearFunction: 128
 };
 
 RenderPass.FLOAT_RGB_TEXTURE_CONFIG = {

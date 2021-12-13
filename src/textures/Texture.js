@@ -26,6 +26,9 @@ export class Texture {
 		// Type
 		this._type = (type) ? type : 	this.UNSIGNED_BYTE;
 
+		// Clear function
+		this.clearFunction = 0;
+
 		// Mipmaps
 		this._generateMipmaps = false;
 
@@ -44,6 +47,8 @@ export class Texture {
 		this.internalFormat = texConfig.internalFormat;
 		this.format = texConfig.format;
 		this.type = texConfig.type;
+
+		this.clearFunction = texConfig.clearFunction;
 	}
 
 	// region GETTERS

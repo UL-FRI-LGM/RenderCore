@@ -249,6 +249,10 @@ export class GLManager {
 					console.error("Unknown error! Abandon hope all ye who enter here.")
 			}
 		}
+
+
+		//CLEAR SECTION
+		this.clearSeparate(renderTarget);
 	}
 	initRenderTargetCube(renderTarget, side) {
 		let glTexture;
@@ -332,7 +336,40 @@ export class GLManager {
 					console.error("Unknown error! Abandon hope all ye who enter here.")
 			}
 		}
-}
+
+
+		//CLEAR SECTION
+		this.clearSeparate(renderTarget);
+	}
+
+	clearSeparate(renderTarget){
+		const drawBuffersLength = renderTarget.sizeDrawBuffers();
+
+
+		//console.warn(renderTarget.depthTexture);
+		//this._gl.clearBufferfi(this._gl.DEPTH_STENCIL, 0, 1.0, 0);
+		this._gl.clearBufferfv(this._gl.DEPTH, 0, new Float32Array([1.0, 1.0, 1.0, 1.0]));
+		
+
+		for (let i = 0; i < drawBuffersLength; i++) {
+			///console.warn(renderTarget._drawBuffers[i]);
+			const clearIndex = i;
+			
+			if(renderTarget._drawBuffers[i].clearFunction === 0){
+				console.warn("No clear.");
+				continue;
+			}else if(renderTarget._drawBuffers[i].clearFunction === 1){
+				this._gl.clearBufferuiv(this._gl.COLOR, clearIndex, new Uint32Array([0, 0, 0, 0]));
+			}else if(renderTarget._drawBuffers[i].clearFunction === 2){
+				this._gl.clearBufferiv(this._gl.COLOR, clearIndex, new Int32Array([0, 0, 0, 0]));
+			}else if(renderTarget._drawBuffers[i].clearFunction === 3){
+				this._gl.clearBufferfv(this._gl.COLOR, clearIndex, new Float32Array([0, 0, 0, 0]));
+			}else{
+				//console.warn(renderTarget._drawBuffers[i].clearFunction);
+				this._gl.clearBufferfv(this._gl.COLOR, clearIndex, new Float32Array([0, 0, 0, 0]));
+			}
+		}
+	}
 
 	cleanupRenderTarget() {
 		this._fboManager.unbindFramebuffer();
@@ -414,6 +451,10 @@ export class GLManager {
 	 * @param {boolean} stencil true if clear, false if not
 	 */
 	clear (color, depth, stencil) {
+		const boundFramebuffer = this._gl.getParameter(this._gl.FRAMEBUFFER_BINDING);
+		if (boundFramebuffer !== null) return;
+
+
 		var bits = 0;
 
 		if ( color === undefined || color ) bits |= this._gl.COLOR_BUFFER_BIT;
