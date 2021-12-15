@@ -14,6 +14,7 @@ export class Text2D extends Mesh{
         this.type = "Text2D";
         this.frustumCulled = false;
 
+        this.pickable = false;
         this.remove(this.outline);
 
         this._text = args.text !== undefined ? args.text : "New text";
@@ -28,7 +29,7 @@ export class Text2D extends Mesh{
         if (this._mode === TEXT2D_SPACE_SCREEN){
             this.geometry = this.setText2D(this._text, this._xPos, this._yPos, this._fontSize);
             this.material = new Text2DMaterial();
-            this.material.setAttribute("deltaOffset", []);
+            this.material.setAttribute("deltaOffset", new Float32Attribute([]));
             // Uniforms aspect and viewport set by MeshRenderer based on actual viewport
             this.material.setUniform("MODE", TEXT2D_SPACE_SCREEN);
 
