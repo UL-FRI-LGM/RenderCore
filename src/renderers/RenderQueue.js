@@ -334,9 +334,13 @@ export class RenderQueue {
 		const reference = this._textureMap[name];
 		this._renderer.takeScreenshot(reference, sizeMultiplier, segmented, this);
 	}
-	pickColor(name, pickX, pickY){
+	pickRGB(name, pickX, pickY){
 		const reference = this._textureMap[name];
-		return this._renderer.pickColor(reference, pickX, pickY, this);
+		return this._renderer.pickRGB(reference, pickX, pickY, this);
+	}
+	pickUINT(name, pickX, pickY){
+		const reference = this._textureMap[name];
+		return this._renderer.pickUINT(reference, pickX, pickY, this);
 	}
 
 	downloadTexture(name){

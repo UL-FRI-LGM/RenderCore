@@ -3,10 +3,13 @@ precision mediump float;
 precision highp int;
 
 
+//UIO
+//**********************************************************************************************************************
 uniform mat4 MVMat; // Model View Matrix
 uniform mat4 PMat;  // Projection Matrix
 uniform float aspect;
 uniform vec3 cameraPosition;
+uniform float lineWidth;
 
 
 in vec3 VPos;       // Vertex position
@@ -14,31 +17,11 @@ in vec3 prevPosition;
 in vec3 nextPosition;
 in float normalDirection;
 
-in vec3 momentum;
-in float momentumMagnitude;
 
-in float nhits;
-in float track_id;
-
-
-out vec3 vPosition;
-out vec3 vMomentum;
-out float vMomentumMagnitude;
-out float vTrack_id;
-
-
+//MAIN
+//**********************************************************************************************************************
 void main() {
-    vPosition = VPos;
-    vMomentum = momentum;    //vMomentum = normalize(momentum)*0.5 + 0.5;
-    vMomentumMagnitude = momentumMagnitude;
-    vTrack_id = track_id;
-
-
     //gl_Position = PMat * MVMat * vec4(VPos, 1.0);
-
-
-    //float aspect = 16.0/9.0;
-    float line_width = nhits;
 
 
     mat4 MVP = PMat * MVMat;
@@ -77,8 +60,8 @@ void main() {
     }
 
     vec2 normal = normalize(vec2(-direction.y, direction.x));
-    //normal = normal * line_width/2.0*32.0; //fixed size in world space
-    normal = normal * line_width/2.0 * (distance(VPos, cameraPosition)/128.0); // fixed size in screen space
+    //normal = normal * lineWidth/2.0*32.0; //fixed size in world space
+    normal = normal * lineWidth/2.0 * (distance(VPos, cameraPosition)/128.0); // fixed size in screen space
     normal.x = normal.x / aspect;
 
     vec4 delta = vec4(normal * normalDirection, 0.0, 0.0);

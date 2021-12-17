@@ -378,11 +378,11 @@ export class Renderer {
 		this._renderQueue = renderQueue;
 		this._screenshotTextureReference = reference;
 	}
-	pickColor(reference = undefined, pickX, pickY, renderQueue = undefined){
+	pickRGB(reference = undefined, pickX, pickY, renderQueue = undefined){
 		const width = (reference)? reference.width : this.getViewport().width;
 		const height = (reference)? reference.height : this.getViewport().height;
 
-		const pickedColor = new Uint8Array(4);
+		const pickedRGBA = new Uint8Array(4);
 
 		//PREP
 		if(reference){
@@ -393,13 +393,37 @@ export class Renderer {
 		}
 
 		//READ
-		this._gl.readPixels(pickX, height-pickY, 1, 1, this._gl.RGBA, this._gl.UNSIGNED_BYTE, pickedColor);
+		this._gl.readPixels(pickX, height-pickY, 1, 1, this._gl.RGBA, this._gl.UNSIGNED_BYTE, pickedRGBA);
 
 		//CLEAN
 		if(reference){
 			this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
 		}
 
-		return pickedColor;
+		return pickedRGBA;
+	}
+	pickUINT(reference = undefined, pickX, pickY, renderQueue = undefined){
+		const width = (reference)? reference.width : this.getViewport().width;
+		const height = (reference)? reference.height : this.getViewport().height;
+
+		const pickedUINT = new Uint32Array(1);
+
+		//PREP
+		if(reference){
+			const fb = this._gl.createFramebuffer();
+			this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, fb);
+			const texture = this._glManager._textureManager.getTexture(reference);
+			this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, texture, 0);
+		}
+
+		//READ
+		this._gl.readPixels(pickX, height-pickY, 1, 1, this._gl.RED_INTEGER, this._gl.UNSIGNED_INT, pickedUINT);
+
+		//CLEAN
+		if(reference){
+			this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
+		}
+
+		return pickedUINT;
 	}
 };

@@ -564,8 +564,11 @@ export class MeshRenderer extends Renderer {
 		if (globalClippingPlanes !== undefined && uniformSetter["globalClippingPlanes"] !== undefined) {
 			uniformSetter["globalClippingPlanes"].set(globalClippingPlanes.elements);
 		}
-		if (uniformSetter["pickingID"] !== undefined) {
-			uniformSetter["pickingID"].set(object.pickID >>> 0);
+		if (uniformSetter["u_RGB_ID"] !== undefined) {
+			uniformSetter["u_RGB_ID"].set(object.RGB_ID.toArray());
+		}
+		if (uniformSetter["u_UINT_ID"] !== undefined) {
+			uniformSetter["u_UINT_ID"].set(object.UINT_ID >>> 0);
 		}
 		if (uniformSetter["aspect"] !== undefined) {
 			uniformSetter["aspect"].set(this._viewport.width / this._viewport.height);

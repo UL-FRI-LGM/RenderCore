@@ -18,6 +18,10 @@ scene.add(pLight);
 let text2D;
 populateScene();
 
+const params = {
+    "Pick mode": "RGB"
+};
+setUI();
 
 const renderQueue = new RC.RenderQueue(renderer);
 const PICK = new RC.PickerFX(
@@ -55,7 +59,9 @@ function populateScene(){
         cube.material = new RC.MeshBasicMaterial();
         cube.material.emissive.set(0.0, 0.0, 0.0);
         cube.position.set((Math.random() * 16) - 8, (Math.random() * 16) - 8, (Math.random() * 8) - 4);
-        cube.colorID = cube.material.color;
+
+        cube.RGB_ID = cube.material.color;
+        cube.UINT_ID = i + 1;
     
         scene.add(cube);
     }
@@ -81,6 +87,20 @@ function populateScene(){
         scene.add(text2D);
     });
 }
+function setUI(){
+    const gui = new dat.GUI();
+    gui.add(params, "Pick mode",["RGB", "UINT"]).onChange(setPickMode);
+}
+function setPickMode(){
+    text2D.text = "Click on objects.";
+
+    const pickMode = params["Pick mode"];
+    if(pickMode === "RGB"){
+        PICK.pickMode = RC.PickerFX.PICK_MODE.RGB;
+    }else if(pickMode === "UINT"){
+        PICK.pickMode = RC.PickerFX.PICK_MODE.UINT;
+    }
+}
 
 function resizeFunction() {
     canvas.updateSize();
@@ -90,9 +110,16 @@ function mousedownFunction(event) {
     console.log(event);
 
     if (event.which === 1) {
-        const pickedColor = renderQueue.pickColor("color_picker", event.clientX, event.clientY);
-        console.log(pickedColor);
-        text2D.text = "R:" + ("00" + pickedColor[0]).slice(-3) + " G:" + ("00" + pickedColor[1]).slice(-3) + " B:" + ("00" + pickedColor[2]).slice(-3);
+        const pickMode = params["Pick mode"];
+        if(pickMode === "RGB"){
+            const pickedColor = renderQueue.pickRGB("color_picker", event.clientX, event.clientY);
+            console.log(pickedColor);
+            text2D.text = "R:" + ("00" + pickedColor[0]).slice(-3) + " G:" + ("00" + pickedColor[1]).slice(-3) + " B:" + ("00" + pickedColor[2]).slice(-3);
+        }else if(pickMode === "UINT"){
+            const pickedColor = renderQueue.pickUINT("color_picker", event.clientX, event.clientY);
+            console.log(pickedColor);
+            text2D.text = "UINT:" + pickedColor[0];
+        }
     }
 }
 

@@ -2,6 +2,8 @@
 precision mediump float;
 
 
+//UIO
+//**********************************************************************************************************************
 #if (INSTANCED)
 //uniform mat4 VMat;
 uniform mat4 MVMat;
@@ -17,6 +19,8 @@ in mat4 MMat;
 in vec3 VPos;       // Vertex position
 
 
+//MAIN
+//**********************************************************************************************************************
 void main() {
     // MVP position
     //gl_Position = PMat * MVMat * vec4(VPos, 1.0); //original (non-instanced)

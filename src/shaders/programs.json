@@ -140,53 +140,53 @@
     },
 
 
-    "colorPicker": {
+    "picker": {
         "description": "Color picker.",
         "shaders": {
-            "vertex": "color_picker/color_picker.vert",
-            "fragment": "color_picker/color_picker.frag"
+            "vertex": "picker/picker.vert",
+            "fragment": "picker/picker.frag"
         }
     },
-    "custom_colorPicker_particle": {
+    "custom_picker_particle": {
         "description": "Color picker particle.",
         "shaders": {
-            "vertex": "color_picker/color_picker_particle.vert",
-            "fragment": "color_picker/color_picker_particle.frag"
+            "vertex": "picker/picker_particle.vert",
+            "fragment": "picker/picker_particle.frag"
         }
     },
-    "custom_colorPicker_hit": {
+    "custom_picker_hit": {
         "description": "Color picker hit.",
         "shaders": {
-            "vertex": "color_picker/color_picker_hit.vert",
-            "fragment": "color_picker/color_picker_hit.frag"
+            "vertex": "picker/picker_hit.vert",
+            "fragment": "picker/picker_hit.frag"
         }
     },
-    "custom_colorPicker_track_width": {
+    "custom_picker_track_width": {
         "description": "Color picker TW.",
         "shaders": {
-            "vertex": "color_picker/color_picker_track_width.vert",
-            "fragment": "color_picker/color_picker_track_width.frag"
+            "vertex": "picker/picker_track_width.vert",
+            "fragment": "picker/picker_track_width.frag"
         }
     },
-    "custom_colorPicker_POINTS": {
+    "custom_picker_POINTS": {
         "description": "Color picker POINTS.",
         "shaders": {
-            "vertex": "color_picker/color_picker_POINTS.vert",
-            "fragment": "color_picker/color_picker_POINTS.frag"
+            "vertex": "picker/picker_POINTS.vert",
+            "fragment": "picker/picker_POINTS.frag"
         }
     },
-    "custom_colorPicker_TRIANGLES": {
+    "custom_picker_TRIANGLES": {
         "description": "Color picker TRIANGLES.",
         "shaders": {
-            "vertex": "color_picker/color_picker_TRIANGLES.vert",
-            "fragment": "color_picker/color_picker_TRIANGLES.frag"
+            "vertex": "picker/picker_TRIANGLES.vert",
+            "fragment": "picker/picker_TRIANGLES.frag"
         }
     },
-    "custom_colorPicker_stripe": {
+    "custom_picker_stripe": {
         "description": "Color picker Stripe.",
         "shaders": {
-            "vertex": "color_picker/color_picker_stripe.vert",
-            "fragment": "color_picker/color_picker_stripe.frag"
+            "vertex": "picker/picker_stripe.vert",
+            "fragment": "picker/picker_stripe.frag"
         }
     },
 

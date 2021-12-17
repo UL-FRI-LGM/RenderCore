@@ -38,7 +38,10 @@ export class Mesh extends Object3D {
 		this._outlineMaterial = outlineMaterial !== undefined ? outlineMaterial : new OutlineBasicMaterial();
 
 		this.raycast = _raycast;
-		this._pickID = null; // stored as float [ R, G, B, A ], can represent full uint32 excluding 0
+
+		// PICKING IDs
+		this._RGB_ID = new Color(0.0, 0.0, 0.0); // stored as Color(r, g, b) 
+		this._UINT_ID = 0; // stored as float [ R, G, B, A ], can represent full uint32 excluding 0
 
 		//OUTLINE
 		this._useOutline = false; //outline object visibility
@@ -84,7 +87,8 @@ export class Mesh extends Object3D {
 	 * @returns Geometry of the mesh.
 	 */
 	get geometry() { return this._geometry; }
-	get pickID() { return this._pickID; }
+	get RGB_ID() { return this._RGB_ID; }
+	get UINT_ID() { return this._UINT_ID; }
 	get outline() { return this._outline; }
 	get useOutline() { return this._useOutline; }
 
@@ -129,8 +133,11 @@ export class Mesh extends Object3D {
 		this._material.onChangeListener = listener;
 	}
 
-	set pickID(pid) {
-		this._pickID = pid;
+	set RGB_ID(RGB_ID) {
+		this._RGB_ID = RGB_ID;
+	}
+	set UINT_ID(UINT_ID) {
+		this._UINT_ID = UINT_ID;
 	}
 	set outline(outline) {
 		this.remove(this._outline);	//remove current outline
