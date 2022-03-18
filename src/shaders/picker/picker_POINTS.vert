@@ -41,6 +41,10 @@ void main() {
     gl_Position = PMat * VPos4;
 
 
-    gl_PointSize = pointSize / length(VPos4.xyz);
+    #if (POINTS_SCALE)
+        gl_PointSize = pointSize / length(VPos4.xyz);
+    #else
+        gl_PointSize = pointSize;
+    #fi
     if(gl_PointSize < 1.0) gl_PointSize = 1.0;
 }

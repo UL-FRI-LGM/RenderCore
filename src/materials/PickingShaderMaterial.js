@@ -12,8 +12,7 @@ export class PickingShaderMaterial extends CustomShaderMaterial {
         RGB: 0,
         UINT: 1
     };
-
-
+    static DEFAULT_PICK_MODE = PickingShaderMaterial.PICK_MODE.RGB;
     constructor(programName = "TRIANGLES", uniforms = {}, attributes = {}, args = {}) {
         super("picker" + '_' + programName, uniforms, attributes, args);
 
@@ -25,7 +24,7 @@ export class PickingShaderMaterial extends CustomShaderMaterial {
 
 
         // set
-        this.pickMode = args.mode ? args.mode : PickingShaderMaterial.PICK_MODE.RGB;
+        this.pickMode = args.mode ? args.mode : PickingShaderMaterial.DEFAULT_PICK_MODE;
     }
 
 

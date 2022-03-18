@@ -55,7 +55,7 @@ export class CustomShaderMaterial  extends Material {
 		delete this._valuesSB[name];
 	}
 
-	clearSBFlags() {
+	clearSBValues() {
 		this._valuesSB = {};
 	}
 

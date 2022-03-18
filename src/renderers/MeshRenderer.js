@@ -373,7 +373,7 @@ export class MeshRenderer extends Renderer {
 			if(!object.pickable) continue;
 
 			if (this._pickObject3D) {
-				object.pickID = ++this._pickAutoID;
+				object.UINT_ID = ++this._pickAutoID;
 				this._pickLUA.push(object);
 			}
 
