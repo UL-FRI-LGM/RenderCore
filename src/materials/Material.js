@@ -42,7 +42,8 @@ export class Material {
 
 		// Using points
 		this._usePoints = false;
-        this._pointSize = 1.0;
+		this._pointSize = 1.0;
+		this._pointsScale = true;
 		this._drawCircles = false;
 		// Using clipping planes
 		this._useClippingPlanes = false;
@@ -201,6 +202,36 @@ export class Material {
         }
     }
 
+	set pointsScale(val){
+		if (val !== this._pointsScale) {
+			// Invalidate required program template
+			this._requiredProgramTemplate = null;
+
+			this._pointsScale = val;
+
+			// Notify onChange subscriber
+			if (this._onChangeListener) {
+				var update = {uuid: this._uuid, changes: {pointsScale: this._pointsScale}};
+				this._onChangeListener.materialUpdate(update)
+			}
+		}
+	}
+
+	set drawCircles(val){
+		if (val !== this._drawCircles) {
+			// Invalidate required program template
+			this._requiredProgramTemplate = null;
+
+			this._drawCircles = val;
+
+			// Notify onChange subscriber
+			if (this._onChangeListener) {
+				var update = {uuid: this._uuid, changes: {drawCircles: this._drawCircles}};
+				this._onChangeListener.materialUpdate(update)
+			}
+		}
+	}
+
 	set useClippingPlanes(val){
 		if (val !== this._useClippingPlanes) {
 			// Invalidate required program template
@@ -339,21 +370,8 @@ export class Material {
 	get useVertexColors() { return this._useVertexColors; }
 	get usePoints() {return this._usePoints;}
 	get pointSize() {return this._pointSize;}
+	get pointsScale() {return this._pointsScale;}
 	get drawCircles(){ return this._drawCircles; }
-	set drawCircles(val){
-		if (val !== this._drawCircles) {
-			// Invalidate required program template
-			this._requiredProgramTemplate = null;
-
-			this._drawCircles = val;
-
-			// Notify onChange subscriber
-			if (this._onChangeListener) {
-				var update = {uuid: this._uuid, changes: {drawCircles: this._drawCircles}};
-				this._onChangeListener.materialUpdate(update)
-			}
-		}
-	}
 	get useClippingPlanes() {return this._useClippingPlanes;}
 	get clippingPlanes() {return this._clippingPlanes;}
 	get shadingType() {return this._shadingType;}
@@ -520,6 +538,7 @@ export class Material {
 			this._flags.push("FRONT_AND_BACK_SIDE");
 		}
 		if(this._usePoints) this._flags.push("POINTS");
+		if(this._pointsScale) this._flags.push("POINTS_SCALE");
 		if(this._drawCircles) this.flags.push("CIRCLES");
 		if(this._useClippingPlanes){
 			this._flags.push("CLIPPING_PLANES");
@@ -639,6 +658,10 @@ export class Material {
                     this._pointSize = data.pointSize;
                     delete data.pointSize;
                     break;
+				case "pointsScale":
+					this._pointsScale = data.pointsScale;
+					delete data.pointsScale;
+					break;
 				case "drawCircles":
 					this._drawCircles = data.drawCircles;
 					delete data.drawCircles;

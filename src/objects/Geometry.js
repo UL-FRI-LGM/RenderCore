@@ -770,7 +770,7 @@ export class Geometry {
 	 * @returns Minimal bounding sphere.
 	 */
 	get boundingSphere() {
-		// If the bounding sphere was not jet computed compute it
+		// If the bounding sphere was not yet computed compute it
 		if (this._boundingSphere === null) {
 			this.computeBoundingSphere();
 		}
@@ -783,7 +783,7 @@ export class Geometry {
 	/**
 	 * Set geometry indices.
 	 *
-	 * @param values Geometry ndices.
+	 * @param values Geometry indices.
 	 */
 	set indices(values) {
 		this._indices = values;
