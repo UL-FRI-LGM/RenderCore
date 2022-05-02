@@ -134,15 +134,36 @@ export class GLProgramManager {
 			const info = this._gl.getActiveAttrib(program, i);
 			const location = self._gl.getAttribLocation(program, info.name);
 
+			let gl = this._gl;
+			let t = info.type;
+			let type;
+			if (t == gl.INT || t == gl.INT_VEC2 || t == gl.INT_VEC3 || t == gl.GL_INT_VEC4) {
+				type = gl.INT;
+			} else if (t == gl.UNSIGNED_INT, t == gl.UNSIGNED_INT_VEC2 || t == gl.UNSIGNED_INT_VEC3 || t == gl.UNSIGNED_INT_VEC4) {
+				type = gl.UNSIGNED_INT;
+			} else {
+				type = gl.FLOAT;
+			}
+
 			// Create attribute setter function
 			attributeSetter[info.name] = {};
-			attributeSetter[info.name]['set'] = function (buffer, item_size, instanced = false, divisor = 0) {
-
+			attributeSetter[info.name]['set'] = function (buffer, item_size, instanced = false, divisor = 0,
+                                                          utype = 0, unormalized = false) {
+				// Caller can use utype and unormalized to pass the actual array type and
+				// int/uint to float normalization flag.
+				// Alternatively, one could check buffer.array.constructor.name but this is not
+				// a good place for string comparisons etc. Normalize flag could still not be deduced.
+				// Best place to put those would probably be BufferAttribute.
+				if (utype == 0)
+					utype = type;
 				if(item_size <= 4){
 					self._gl.enableVertexAttribArray(location);
 					self._gl.bindBuffer(self._gl.ARRAY_BUFFER, buffer);
-					self._gl.vertexAttribPointer(location, item_size, self._gl.FLOAT, false, 0, 0);
-
+					if (type == self._gl.FLOAT){
+						self._gl.vertexAttribPointer(location, item_size, utype, unormalized, 0, 0);
+					}else{
+						self._gl.vertexAttribIPointer(location, item_size, utype, 0, 0);
+					}
 					if(instanced) {
 						self._gl.vertexAttribDivisor(location, divisor);
 					}else{
@@ -153,8 +174,11 @@ export class GLProgramManager {
 
 					for(let i = 0; i < item_size/4; i++){
 						self._gl.enableVertexAttribArray(location + i);
-						self._gl.vertexAttribPointer(location + i, 4, self._gl.FLOAT, false, 4*16, i*16);
-
+						if (type == self._gl.FLOAT){
+							self._gl.vertexAttribPointer(location + i, 4, utype, unormalized, 4*16, i*16);
+						}else{
+							self._gl.vertexAttribIPointer(location + i, 4, utype, 4*16, i*16);
+						}
 						if(instanced) {
 							self._gl.vertexAttribDivisor(location + i, divisor);
 						}else{
