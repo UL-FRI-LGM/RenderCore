@@ -161,6 +161,9 @@ export class GLManager {
 		const heightMap = material.heightMap;
 		if (heightMap) this._textureManager.updateTexture(heightMap, false);
 
+		const instanceData = material.instanceData;
+		if (instanceData) this._textureManager.updateTexture(instanceData, false);
+
 		// CustomShaderMaterial may specify extra attributes
 		if (object.material instanceof CustomShaderMaterial) {
 			let customAttributes = object.material._attributes;

@@ -10,66 +10,8 @@ import {Float32Attribute, Uint32Attribute} from '../core/BufferAttribute.js';
 export class Quad extends Mesh {
 	constructor(xy0, xy1, material, geometry, flipped = false) {
 
-		if (geometry === undefined) {
-			var geometry = new Geometry();
-
-			// Quad vertices
-			if (flipped) {
-				geometry.vertices = Float32Attribute(
-					[
-						xy0.x, xy0.y, 0,
-						xy1.x, xy0.y, 0,
-						xy1.x, xy1.y, 0,
-						xy0.x, xy1.y, 0
-					], 3
-				);
-			} else {
-				geometry.vertices = Float32Attribute(
-					[
-						xy0.x, xy1.y, 0,
-						xy1.x, xy0.y, 0,
-						xy0.x, xy0.y, 0,
-						xy1.x, xy1.y, 0
-					], 3
-				);
-			}
-
-			geometry.vertColor = Float32Attribute(
-				[
-					1, 1, 1, 1,
-					1, 1, 1, 1,
-					1, 1, 1, 1,
-					1, 1, 1, 1
-				], 4
-			);
-			if (flipped) {
-				geometry.uv = Float32Attribute(
-					[
-						0, 0,
-						1, 0,
-						1, 1,
-						0, 1
-					], 2
-				);
-			} else {
-				geometry.uv = Float32Attribute(
-					[
-						0, 0,
-						1, 1,
-						0, 1,
-						1, 0
-					], 2
-				);
-			}
-
-			// Quad triangle vertices
-			if (flipped) {
-				geometry.indices = Uint32Attribute([0, 1, 2, 0, 2, 3], 1);
-			} else {
-				geometry.indices = Uint32Attribute([0, 1, 2, 0, 3, 1], 1);
-			}
-			geometry.computeVertexNormals();
-		}
+		if (geometry === undefined)
+			geometry = Quad.makeGeometry(xy0, xy1, flipped);
 
 		// Super Mesh
 		super(geometry, material);
@@ -78,6 +20,62 @@ export class Quad extends Mesh {
 		this._xy1 = xy1;
 
 		this.type = "Quad";
+	}
+
+	static makeGeometry(xy0, xy1, flipped, do_normals = true, do_color = true) {
+		let geometry = new Geometry();
+
+		// Quad vertices
+		if (flipped) {
+			geometry.vertices = Float32Attribute(
+				[
+					xy0.x, xy0.y, 0,
+					xy1.x, xy0.y, 0,
+					xy1.x, xy1.y, 0,
+					xy0.x, xy1.y, 0
+				], 3
+			);
+			geometry.indices = Uint32Attribute([0, 1, 2, 0, 2, 3], 1);
+			geometry.uv = Float32Attribute(
+				[
+					0, 0,
+					1, 0,
+					1, 1,
+					0, 1
+				], 2
+			);
+		} else {
+			geometry.vertices = Float32Attribute(
+				[
+					xy0.x, xy1.y, 0,
+					xy1.x, xy0.y, 0,
+					xy0.x, xy0.y, 0,
+					xy1.x, xy1.y, 0
+				], 3
+			);
+			geometry.indices = Uint32Attribute([0, 1, 2, 0, 3, 1], 1);
+			geometry.uv = Float32Attribute(
+				[
+					0, 0,
+					1, 1,
+					0, 1,
+					1, 0
+				], 2
+			);
+		}
+		if (do_color)
+			geometry.vertColor = Float32Attribute(
+				[
+					1, 1, 1, 1,
+					1, 1, 1, 1,
+					1, 1, 1, 1,
+					1, 1, 1, 1
+				], 4
+			);
+		if (do_normals)
+			geometry.computeVertexNormals();
+
+		return geometry;
 	}
 
 	toJson() {
