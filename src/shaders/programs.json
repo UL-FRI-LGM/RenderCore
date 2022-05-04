@@ -51,6 +51,13 @@
             "fragment": "basic/basic_sprite_template.frag"
         }
     },
+    "basic_zsprite": {
+        "description": "ZSprite instanced through texture; supports PICKING and OUTLINE modes.",
+        "shaders": {
+            "vertex": "basic/basic_zsprite_template.vert",
+            "fragment": "basic/basic_zsprite_template.frag"
+        }
+    },
 
     "basic_stripe": {
         "description": "Default gl2 program used for testing.",
@@ -195,6 +202,13 @@
         "shaders": {
             "vertex": "custom/post_process/multi.vert",
             "fragment": "custom/post_process/multi.frag"
+        }
+    },
+    "custom_GBufferMini": {
+        "description": "GBuffer with minimal output for custom_outline.",
+        "shaders": {
+            "vertex": "custom/GBuffer/GBufferMini_template.vert",
+            "fragment": "custom/GBuffer/GBufferMini_template.frag"
         }
     },
     "custom_outline": {

@@ -17,7 +17,6 @@ import {DirectionalLight} from '../lights/DirectionalLight.js';
 import {PointLight} from '../lights/PointLight.js';
 import {SpotLight} from '../lights/SpotLight.js';
 import {CustomShaderMaterial} from '../materials/CustomShaderMaterial.js';
-import {OutlineBasicMaterial} from "../materials/OutlineBasicMaterial.js";
 import {RenderArrayManager} from './RenderArrayManager.js';
 import {Vector4} from '../math/Vector4.js';
 
@@ -145,7 +144,7 @@ export class MeshRenderer extends Renderer {
 
 		// Render picking objects
 		if(this._pickEnabled) {
-			this._renderPickingObjects(this._renderArrayManager.opaqueObjects, this._renderArrayManager.transparentObjects, this._renderArrayManager.opaqueObjectsWithOutline, this._renderArrayManager.transparentObjectsWithOutline, camera);
+			this._renderPickingObjects(this._renderArrayManager.opaqueObjects, this._renderArrayManager.transparentObjects, camera);
 			if (this._pickDoNotRender)
 				return;
 		}
@@ -155,15 +154,9 @@ export class MeshRenderer extends Renderer {
 
 		// Render transparent objects
 		this._renderTransparentObjects(this._renderArrayManager.transparentObjects, camera);
-
-		// Render outlines
-		this._renderOutlinedObjects(this._renderArrayManager.opaqueObjectsWithOutline, this._renderArrayManager.transparentObjectsWithOutline, camera);
-
-		// Render skybox last (opitmization)
-		this._renderOpaqueObjects(this._renderArrayManager.skyboxes, camera);
 	}
 
-	_renderPickingObjects(opaqueObjects, transparentObjects, opaqueObjectsWithOutline, transparentObjectsWithOutline, camera){
+	_renderPickingObjects(opaqueObjects, transparentObjects, camera){
 		// Default background can be other than black - we need it black here.
 		// Plus we need these special clear calls for uint color buffer.
 		this._gl.clearBufferuiv(this._gl.COLOR, 0, new Uint32Array([0, 0, 0, 0]));
@@ -176,8 +169,6 @@ export class MeshRenderer extends Renderer {
 
 		this._renderPickableObjects(opaqueObjects, camera);
 		this._renderPickableObjects(transparentObjects, camera);
-		this._renderPickableObjects(opaqueObjectsWithOutline, camera);
-		this._renderPickableObjects(transparentObjectsWithOutline, camera);
 
 		let r = new Uint32Array(1);
 		this._gl.readPixels(this._pickCoordinateX, this._canvas.height - this._pickCoordinateY, 1, 1, this._gl.RED_INTEGER, this._gl.UNSIGNED_INT, r);
@@ -193,120 +184,6 @@ export class MeshRenderer extends Renderer {
 			if (this._pickCallback) this._pickCallback(this._pickedObject3D);
 		} else {
 			if (this._pickCallback) this._pickCallback(this._pickedID);
-		}
-	}
-	_renderOutlinedObjects(opaqueObjectsWithOutline, transparentObjectsWithOutline, camera){
-		if (opaqueObjectsWithOutline.length + transparentObjectsWithOutline.length > 0) {
-			// drawing will set stencil stencil
-			this.gl.enable(this.gl.STENCIL_TEST);
-			this.gl.clearStencil(1);
-			this.gl.clear(this.gl.STENCIL_BUFFER_BIT);
-
-			this._renderOpaqueOutlinedObjects(opaqueObjectsWithOutline, camera);
-			this._renderTransparentOutlinedObjects(transparentObjectsWithOutline, camera);
-
-			// done
-			this.gl.disable(this.gl.STENCIL_TEST);
-		}
-	}
-	_renderOpaqueOutlinedObjects(opaqueObjects, camera){
-		if (opaqueObjects.length > 0) {
-			// Sort the objects by render order
-			opaqueObjects.sort(function(a, b) {
-				return a.renderOrder - b.renderOrder;
-			});
-
-			this._renderOutlines(opaqueObjects, camera);
-		}
-	}
-	_renderTransparentOutlinedObjects(transparentObjects, camera){
-		// Sort the objects by Z
-		transparentObjects.sort(function(a, b) {
-			let renderOrderDiff = a.renderOrder - b.renderOrder;
-			if(renderOrderDiff === 0){
-				return b._zVector.z - a._zVector.z;
-			}else{
-				return renderOrderDiff;
-			}
-		});
-
-		// Enable Blending
-		this._gl.enable(this._gl.BLEND);
-
-		// Set up blending equation and params
-		this._gl.blendEquation(this._gl.FUNC_ADD);
-		//added separate blending function
-		this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
-
-		// Render transparent objects
-		this._renderOutlines(transparentObjects, camera);
-
-		// Clean up
-		this._gl.disable(this._gl.BLEND);
-	}
-	_renderOutlines(objectsWithOutline, camera){
-
-		// draw objects
-		for (let i = 0; i < objectsWithOutline.length; i++) {
-			const object = objectsWithOutline.get(i);
-
-
-			this.gl.enable(this.gl.DEPTH_TEST);
-			this.gl.depthFunc(this.gl.LESS);
-			//this.gl.depthMask(true);
-
-
-			/*--------------------------------------------------------------------------------------------------------*/
-			this.gl.stencilFunc(this.gl.EQUAL, 1, 1); //stencil pass test function (the test | reference value | mask)
-			this.gl.stencilOp(this.gl.KEEP, this.gl.INCR, this.gl.INCR); //stencil state change operator (s-buff fail | s-buff pass, d-buff fail | s-buff pass, d-buff pass)
-			this.gl.stencilMask(0xFF); //STENCIL WRITE mask
-
-
-			// draw objects
-			this._setupProgram(object, camera, object.material.requiredProgram(this).programID);
-			//this._setup_material_settings(object.material);
-			//COMPACT
-			this._drawObject(object);
-			/*--------------------------------------------------------------------------------------------------------*/
-
-
-			this.gl.disable(this.gl.DEPTH_TEST); //DRAW OUTLINE ON TOP OF THE FLOR AND OTHER OBJECTS
-			//this.gl.depthFunc(this.gl.ALWAYS);
-			//this.gl.depthMask(false);
-
-
-			/*--------------------------------------------------------------------------------------------------------*/
-			// set stencil mode to only draw those not previous drawn
-			this.gl.stencilFunc(this.gl.EQUAL, 1, 1);
-			this.gl.stencilOp(this.gl.KEEP, this.gl.ZERO, this.gl.ZERO);
-			this.gl.stencilMask(0xFF); //STENCIL WRITE mask
-
-
-			// draw object halo
-			this._setupProgram(object.outline, camera, object.outline.material.requiredProgram(this).programID);
-			//this._setup_material_settings(object.outline.material);
-			//COMPACT
-			this._drawObject(object.outline);
-			/*--------------------------------------------------------------------------------------------------------*/
-
-
-			this.gl.enable(this.gl.DEPTH_TEST);
-			this.gl.depthFunc(this.gl.NEVER);
-
-
-			/*--------------------------------------------------------------------------------------------------------*/
-			this.gl.stencilFunc(this.gl.EQUAL, 2, 1); //stencil pass test function (the test | reference value | mask)
-			this.gl.stencilOp(this.gl.KEEP, this.gl.DECR, this.gl.DECR); //stencil state change operator (s-buff fail | s-buff pass, d-buff fail | s-buff pass, d-buff pass)
-			this.gl.stencilMask(0xFF); //STENCIL WRITE mask
-
-
-			// draw objects
-			this._setupProgram(object, camera, object.material.requiredProgram(this).programID);
-			//COMPACT
-			this._drawObject(object);
-			/*--------------------------------------------------------------------------------------------------------*/
-
-			this.gl.enable(this.gl.DEPTH_TEST); //RE-ENABLE
 		}
 	}
 
@@ -807,11 +684,6 @@ export class MeshRenderer extends Renderer {
 			}
 			if (uniformSetter["material.alpha"] !== undefined) {
 				uniformSetter["material.alpha"].set(1.0);
-			}
-		}
-		if (material instanceof OutlineBasicMaterial){
-			if (uniformSetter["offset"] !== undefined) {
-				uniformSetter["offset"].set(material.offset);
 			}
 		}
 	}

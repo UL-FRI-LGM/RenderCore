@@ -14,6 +14,9 @@ import {CustomShaderMaterial} from '../materials/CustomShaderMaterial.js';
 import {Vector4} from '../math/Vector4.js';
 
 export class GLManager {
+
+	static sCheckFrameBuffer = true;
+
 	/**
 	 * Creates new WebGL context manager. The context is retrieved from the given canvas.
 	 * @param {canvas} canvas HTML5 canvas from which GL context is retrieved
@@ -233,7 +236,7 @@ export class GLManager {
 		// endregion
 
 		// Validation
-		if (this._gl.checkFramebufferStatus(this._gl.FRAMEBUFFER) !== this._gl.FRAMEBUFFER_COMPLETE) {
+		if (GLManager.sCheckFrameBuffer && this._gl.checkFramebufferStatus(this._gl.FRAMEBUFFER) !== this._gl.FRAMEBUFFER_COMPLETE) {
 			console.error("Render target: framebuffer not complete!");
 
 			switch (this._gl.checkFramebufferStatus(this._gl.FRAMEBUFFER)) {
@@ -319,7 +322,7 @@ export class GLManager {
 		// endregion
 
 		// Validation
-		if (this._gl.checkFramebufferStatus(this._gl.FRAMEBUFFER) !== this._gl.FRAMEBUFFER_COMPLETE) {
+		if (GLManager.sCheckFrameBuffer && this._gl.checkFramebufferStatus(this._gl.FRAMEBUFFER) !== this._gl.FRAMEBUFFER_COMPLETE) {
 			console.error("Render target: framebuffer not complete!");
 			console.error(glTexture);
 

@@ -18,7 +18,7 @@ import {Mesh} from "../objects/Mesh.js";
 
 export class Object3D {
 
-	static sDefaultPickable = true;
+	static sDefaultPickable = false;
 
 	constructor() {
 
