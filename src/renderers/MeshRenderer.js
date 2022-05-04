@@ -373,10 +373,7 @@ export class MeshRenderer extends Renderer {
 					buffer = this._glManager.getAttributeBuffer(a_Translation);
 					attributeSetter["a_Translation"].set(buffer, 4, object.instanced, a_Translation.divisor);
 				case "gl_InstanceID":
-					if ( ! this._reported_gl_instanceid) {
-						console.warn("MeshRenderer._setup_attributes -- for some reason wants to set gl_InstanceID as attribute (??)");
-						this._reported_gl_instanceid = true;
-					}
+					// For some reason gl_InstanceID is considered an attribute. Ignore.
 					break;
 				default:
 					let found = false;
