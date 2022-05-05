@@ -61,13 +61,8 @@ in vec3 VPos;       // Vertex position
 #fi
 
 #if (OUTLINE)
-// uniform mat3 NMat;  // Normal Matrix
-// in vec3 VNorm;      // Vertex normal
-
-// out vec3 v_position_viewspace;
 out vec3 v_normal_viewspace;
 out vec3 v_ViewDirection_viewspace;
-// out float v_distanceToCamera_viewspace;
 #fi
 
 //MAIN

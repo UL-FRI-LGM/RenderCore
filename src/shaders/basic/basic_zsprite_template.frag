@@ -81,14 +81,12 @@ in vec3 fragVPos;
     // in vec3 v_position_viewspace;
     in vec3 v_normal_viewspace;
     in vec3 v_ViewDirection_viewspace;
-    // in float v_distanceToCamera_viewspace;
 
-    //out vec4 color[3];
-    // layout (location = 0) out vec4 de_viewspace;
-    // layout (location = 1) out vec4 vp_viewspace;
     layout (location = 0) out vec4 vn_viewspace;
     layout (location = 1) out vec4 vd_viewspace;
-    // layout (location = 4) out vec4 dc_viewspace;
+    #if (DEPTH)
+        layout (location = 2) out vec4 de_viewspace; // could be float
+    #fi
 #else
     out vec4 outColor;
 #fi
@@ -184,21 +182,11 @@ void main() {
             objectID = u_UINT_ID;
         #fi
     #else if (OUTLINE)
-        // float depth = gl_FragCoord.z;
-        //depth = linearizeDepth_1(fragVPos.z);
-        //depth = linearizeDepth_2(gl_FragCoord.z) / u_Far;
-        // de_viewspace = vec4(depth, 0.0, 0.0, 1.0);
-
-        //vp_viewspace = vec4(v_position_viewspace * 0.5 + 0.5, 1.0);
-        // vp_viewspace = vec4(v_position_viewspace, 1.0);
-
-        //vn_viewspace = vec4(normalize(v_normal_viewspace) * 0.5 + 0.5, 0.0);
         vn_viewspace = vec4(v_normal_viewspace, 0.0);
-
-        //vd_viewspace = vec4(normalize(v_ViewDirection_viewspace) * 0.5 + 0.5, 0.0);
         vd_viewspace = vec4(v_ViewDirection_viewspace, 0.0);
-
-        // dc_viewspace = vec4(v_distanceToCamera_viewspace, 0.0, 0.0, 1.0);
+        #if (DEPTH)
+            de_viewspace = vec4(gl_FragCoord.z, 0.0, 0.0, 1.0);
+        #fi
     #else
         outColor = color;
     #fi
@@ -214,14 +202,12 @@ void main() {
             objectID = 0;
         #fi
     #else if (OUTLINE)
-        // float depth = 1.0;
-        //de_viewspace = vec4(depth, 0.0, 0.0, 0.0);
         gl_FragDepth = 1.0;
-
-        // vp_viewspace = vec4(0.0, 0.0, 0.0, 0.0);
         vn_viewspace = vec4(0.0, 0.0, 0.0, 0.0);
         vd_viewspace = vec4(0.0, 0.0, 0.0, 0.0);
-        // dc_viewspace = vec4(0.0, 0.0, 0.0, 0.0);
+        #if (DEPTH)
+            de_viewspace = vec4(1.0, 0.0, 0.0, 1.0);
+        #fi
     #else
         outColor = color;
     #fi

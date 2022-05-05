@@ -10,7 +10,7 @@ in vec3 v_ViewDirection_viewspace;
 layout (location = 0) out vec4 vn_viewspace;
 layout (location = 1) out vec4 vd_viewspace;
 #if (DEPTH)
-    layout (location = 2) out vec4 de_viewspace; // should really be float
+    layout (location = 2) out vec4 de_viewspace; // could be float
 #fi
 
 #if (CLIPPING_PLANES)

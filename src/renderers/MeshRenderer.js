@@ -154,6 +154,9 @@ export class MeshRenderer extends Renderer {
 
 		// Render transparent objects
 		this._renderTransparentObjects(this._renderArrayManager.transparentObjects, camera);
+
+		// Render skybox last (opitmization)
+		this._renderOpaqueObjects(this._renderArrayManager.skyboxes, camera);
 	}
 
 	_renderPickingObjects(opaqueObjects, transparentObjects, camera){
