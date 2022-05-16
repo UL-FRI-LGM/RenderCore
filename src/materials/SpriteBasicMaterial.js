@@ -13,6 +13,7 @@ export class SpriteBasicMaterial extends CustomShaderMaterial {
         this.programName = "basic_sprite";
 
         //ASSEMBLE MATERIAL
+        this.emissive = args.emissive ? args.emissive : new Color(Math.random() * 0xffffff);
         this.color = args.color ? args.color : new Color(Math.random() * 0xffffff);
         this.drawCircles = args.drawCircles ? args.drawCircles : false;
 
@@ -36,6 +37,16 @@ export class SpriteBasicMaterial extends CustomShaderMaterial {
 			}
 		}
 	}
+    get emissive() { return this._emissive; }
+    set emissive(val) {
+        this._emissive = val;
+
+        // Notify onChange subscriber
+        if (this._onChangeListener) {
+            var update = {uuid: this._uuid, changes: {emissive: this._emissive.getHex()}};
+            this._onChangeListener.materialUpdate(update)
+        }
+    }
     get color() { return this._color; }
     set color(val) {
         this._color = val;
@@ -53,6 +64,10 @@ export class SpriteBasicMaterial extends CustomShaderMaterial {
 
         for (let prop in data) {
             switch (prop) {
+                case "emissive":
+                    this._emissive = data.emissive;
+                    delete data.emissive;
+                    break;
                 case "color":
                     this._color = data.color;
                     delete data.color;
