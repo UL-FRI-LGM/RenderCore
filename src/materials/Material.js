@@ -68,6 +68,7 @@ export class Material {
 		this._values = {};
 		// INSTANCING
 		this._instanced = false;
+		this._instancedTranslation = false;
 
 		this._receiveShadows = true;
 	}
@@ -292,6 +293,21 @@ export class Material {
 		}
 	}
 
+	set instancedTranslation(val){
+		if (val !== this._instancedTranslation) {
+			// Invalidate required program template
+			this._requiredProgramTemplate = null;
+
+			this._instancedTranslation = val;
+
+			// Notify onChange subscriber
+			if (this._onChangeListener) {
+				var update = {uuid: this._uuid, changes: {instancedTranslation: this._instancedTranslation}};
+				this._onChangeListener.materialUpdate(update)
+			}
+		}
+	}
+
 	set heightScale(val){
 		if (val !== this._heightScale) {
 			// Invalidate required program template
@@ -376,6 +392,7 @@ export class Material {
 	get clippingPlanes() {return this._clippingPlanes;}
 	get shadingType() {return this._shadingType;}
 	get instanced() {return this._instanced;}
+	get instancedTranslation() {return this._instancedTranslation;}
 	get heightScale() {return this._heightScale;}
 	get blinn() {return this._blinn;}
 	get receiveShadows() {return this._receiveShadows;}
@@ -551,6 +568,7 @@ export class Material {
 		}
 		if(this._transparent === true) this._flags.push("TRANSPARENT");
 		if(this._instanced === true) this._flags.push("INSTANCED");
+		if(this._instancedTranslation === true) this._flags.push("INSTANCED_TRANSLATION");
 		if(this._diffuseMap) this._flags.push("DIFFUSE_MAP");
 		if(this._specularMap) this._flags.push("SPECULAR_MAP");
 		if(this._normalMap) this._flags.push("NORMAL_MAP");
@@ -678,9 +696,13 @@ export class Material {
 					this._shadingType = data.shadingType;
 					delete data.shadingType;
 					break;
-				case "shadingType":
+				case "instanced":
 					this._instanced = data.instanced;
 					delete data.instanced;
+					break;
+				case "instancedTranslation":
+					this._instancedTranslation = data.instancedTranslation;
+					delete data.instancedTranslation;
 					break;
 
 				case "lights":

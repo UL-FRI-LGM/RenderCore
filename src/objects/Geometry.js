@@ -29,6 +29,7 @@ export class Geometry {
 		this._uv = (args.uv !== undefined) ? args.uv : null;
 		this._wireframeIndices = (args.wireframeIndices !== undefined) ? args.wireframeIndices : null;
 		this._MMat = (args.MMat !== undefined) ? args.MMat : null;
+		this._translation = (args.translation !== undefined) ? args.translation : null;
 
 		// Bounding
 		this._boundingBox = null;
@@ -749,6 +750,7 @@ export class Geometry {
 	get wireframeIndices() { return this._wireframeIndices; }
 
 	get MMat() { return this._MMat; }
+	get translation() { return this._translation; }
 
 	/**
 	 * Check if wireframe drawing is on or off.
@@ -873,6 +875,7 @@ export class Geometry {
 	set wireframeIndices(values) { this._wireframeIndices = values; }
 
 	set MMat(MMat) { this._MMat = MMat; }
+	set translation(translation) { this._translation = translation; }
 
 	/**
 	 * Turn wireframe drawing on or off.
@@ -981,6 +984,9 @@ export class Geometry {
 				case "vertColor":
 					this._vertColor = Float32Attribute(data.vertColor.array, data.vertColor.itemSize);
 					delete data.vertColor;
+					break;
+				default:
+					console.warn("Uknown property!");
 					break;
 			}
 		}

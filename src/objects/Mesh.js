@@ -56,6 +56,7 @@ export class Mesh extends Object3D {
 
 		//INSTANCING
 		this._instanced = false;
+		this._instancedTranslation = false;
 		this._instanceCount = 1;
 	}
 
@@ -93,6 +94,7 @@ export class Mesh extends Object3D {
 	get useOutline() { return this._useOutline; }
 
 	get instanced() { return this._instanced; }
+	get instancedTranslation() { return this._instancedTranslation; }
 	get instanceCount() { return this._instanceCount; }
 	// endregion
 
@@ -108,11 +110,13 @@ export class Mesh extends Object3D {
 
 		this._staticStateDirty = true;
 		this._material.instanced = this._instanced;
+		this._material.instancedTranslation = this._instancedTranslation;
 	}
     set pickingMaterial(pickingMaterial) {
 		this._pickingMaterial = pickingMaterial;
 
 		this._pickingMaterial.instanced = this._instanced;
+		this._pickingMaterial.instancedTranslation = this._instancedTranslation;
 	}
 
 	/**
@@ -154,7 +158,14 @@ export class Mesh extends Object3D {
 
 		this._material.instanced = instanced;
 		this._pickingMaterial.instanced = instanced;
-		this._outlineMaterial.indices = instanced;
+		this._outlineMaterial.instanced = instanced;
+	}
+	set instancedTranslation(instancedTranslation) {
+		this._instanced = instancedTranslation;
+
+		this._material.instancedTranslation = instancedTranslation;
+		this._pickingMaterial.instancedTranslation = instancedTranslation;
+		this._outlineMaterial.instancedTranslation = instancedTranslation;
 	}
 	set instanceCount(instanceCount) { this._instanceCount = instanceCount; }
 	// endregion
@@ -242,7 +253,7 @@ export class Mesh extends Object3D {
 			let buffer = glManager.getAttributeBuffer(this.geometry.wireframeIndices);
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
 
-			if(this._instanced){
+			if(this._instanced || this._instancedTranslation){
 				gl.drawElementsInstanced(gl.LINES, this.geometry.wireframeIndices.count(), gl.UNSIGNED_INT, 0, this._instanceCount);
 			}
 			else{
@@ -254,7 +265,7 @@ export class Mesh extends Object3D {
 			let buffer = glManager.getAttributeBuffer(this.geometry.indices);
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
 
-			if(this._instanced){
+			if(this._instanced || this._instancedTranslation){
 				gl.drawElementsInstanced(this.renderingPrimitive, this.geometry.indexCount, gl.UNSIGNED_INT, 4 * this.geometry.indexStart, this._instanceCount);
 			}
 			else{
@@ -263,7 +274,7 @@ export class Mesh extends Object3D {
 		}
 		else {
 			//non indexed
-			if(this._instanced){
+			if(this._instanced || this._instancedTranslation){
 				gl.drawArraysInstanced(this.renderingPrimitive, 0, this.geometry.vertices.count(), this._instanceCount);
 			}
 			else{

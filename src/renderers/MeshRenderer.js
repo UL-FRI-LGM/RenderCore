@@ -487,6 +487,15 @@ export class MeshRenderer extends Renderer {
 					buffer = this._glManager.getAttributeBuffer(MMat);
 					attributeSetter["MMat"].set(buffer, 16, object.instanced, MMat.divisor);
 					break;
+				case "a_Translation":
+					const a_Translation = object.geometry.translation;
+					if(!a_Translation) {
+						console.error("[" + object.type + "]: Translation not found in geometry!");
+						break;
+					}
+					buffer = this._glManager.getAttributeBuffer(a_Translation);
+					attributeSetter["a_Translation"].set(buffer, 4, object.instanced, a_Translation.divisor);
+					break;
 				default:
 					let found = false;
 

@@ -126,6 +126,10 @@ export class GLManager {
 		if (geometry.MMat != null) {
 			this._attributeManager.updateAttribute(geometry.MMat, this._gl.ARRAY_BUFFER);
 		}
+
+		if (geometry.translation != null) {
+			this._attributeManager.updateAttribute(geometry.translation, this._gl.ARRAY_BUFFER);
+		}
 		// endregion
 
 		// region MATERIAL ATTRIBUTES
