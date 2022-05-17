@@ -18,7 +18,7 @@ import {Color} from "../RenderCore.js";
 
 export class Mesh extends Object3D {
 
-	static sDefaultPickableMesh = true;
+	static sDefaultPickable = false;
 
 	/**
 	 * Create new Mesh object.
@@ -56,7 +56,7 @@ export class Mesh extends Object3D {
 		this._instancedTranslation = false;
 		this._instanceCount = 1;
 
-		this.pickable = Mesh.sDefaultPickableMesh;
+		this.pickable = Mesh.sDefaultPickable;
 	}
 
 	/**
@@ -91,6 +91,7 @@ export class Mesh extends Object3D {
 	get RGB_ID() { return this._RGB_ID; }
 	get UINT_ID() { return this._UINT_ID; }
 	get drawOutline() { return this._drawOutline; }
+	get pickable() { return super.pickable; }
 
 	get instanced() { return this._instanced; }
 	get instancedTranslation() { return this._instancedTranslation; }
