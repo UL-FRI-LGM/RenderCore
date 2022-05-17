@@ -5,7 +5,7 @@
  * - Construct geometry and material in place.
  * - Assume use of fixed unit square quad, centered by default (-0.5,0.5) -> (0.5,-0.5)
  *   This simplifies shaders and does not require the use of deltaOffsets as they are
- *   implied in the vertex position. 
+ *   implied in the vertex position.
  * - Removed deltaOffsets and obsolete spriteSize members.
  * - Normals are not needed, shader can always set them to (0,0,+/-1).
  * - Shader basic_zsprite also supports picking and outline.
@@ -20,7 +20,7 @@
  * place / center sprite in other ways.
  * There is, in principle, no reason to restrict this to a Quad, it can be any 2D mesh
  * that fits into nit square, eg., triangle, five-pointed-star.
- * 
+ *
  * Texture 0 in SpriteBasicMaterial is mapped onto the mesh. If transparent flag is set,
  * fragments with zero alpha are discarded so one can have shapes determined by the texture.
  * For instancing, one should also bind an instanceData texture (RGBA32F).

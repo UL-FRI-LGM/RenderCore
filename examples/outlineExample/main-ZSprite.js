@@ -117,7 +117,6 @@ const CoreControl = {
             // RC.Texture.LinearFilter, RC.Texture.LinearFilter,
             RC.Texture.LUMINANCE_ALPHA, RC.Texture.LUMINANCE_ALPHA, RC.Texture.UNSIGNED_BYTE,
             2, 2);
-
     },
 
     /** INIT CORE */
@@ -259,7 +258,7 @@ const CoreControl = {
         // sm.depthWrite = false;
         sm.addMap(this.texDot);
         sm.instanceData = this.tex_insta_pos;
-                                        
+
         let sprite = new RC.ZSprite(null, sm);
         sprite.position.set(0, 0, -12.8);
         sprite.frustumCulled = false; // need a way to speciy bounding box/sphere !!!
@@ -408,7 +407,7 @@ window.onload = function(){
     //INIT
     // CoreControl.initializeCore();
     CoreControl.loadTexturesAndInit();
-    
+
     //RENDER
     // window.requestAnimationFrame(function(){CoreControl.render()});
 };
