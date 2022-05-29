@@ -220,6 +220,30 @@ object.instanceCount = instances.length;
 scene.add(cubeObject);
 ```
 
+### [Instancing translation](https://ul-fri-lgm.github.io/RenderCore/examples/instancingTranslationExample/instancingTranslationExample.html)
+This example show how to draw a lot of models with same set of vertex data. 
+
+```js
+const spriteGeometry = new RC.SpriteGeometry({baseGeometry: spriteBaseGeometry});
+spriteGeometry.vertices.divisor = 0;
+spriteGeometry.normals.divisor = 0;
+
+spriteGeometry.translation = new RC.Float32Attribute(spriteTranslations.reduce((acc, x) => {acc.push(...x.toArray()); return acc;}, new Array()), 4);
+spriteGeometry.translation.divisor = 1;
+spriteGeometry.translation.drawType = RC.BufferAttribute.DRAW_TYPE.DYNAMIC;
+
+const spriteMaterial = new RC.SpriteBasicMaterial({baseGeometry: spriteBaseGeometry, color: new RC.Color(Math.random(), Math.random(), Math.random()), spriteSize: [8, 8], drawCircles: true});
+spriteMaterial.emissive.set(0.0, 0.0, 0.0);
+
+const spriteObject = new RC.Sprite({geometry: spriteGeometry, material: spriteMaterial});
+spriteObject.position.set(0.0, 0.0, 0.0);
+spriteObject.scale.set(0.1, 0.1, 0.1);
+spriteObject.instancedTranslation = true;
+spriteObject.instanceCount = spriteInstances.length;
+
+scene.add(spriteObject);
+```
+
 
 ## External sources
 Framework contains some functionalities adopted from [Three.js](https://github.com/mrdoob/three.js/) 3D library.
