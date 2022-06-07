@@ -32,14 +32,6 @@ export class Stripe extends Mesh {
 
         this.type = "Stripe";
 
-        //OUTLINE
-        this.outline.material = new StripeBasicMaterial();
-        this.outline.material.setAttribute("prevPosition", new Float32Attribute(stripeVertex.stripePrevPosition, points.itemSize));
-        this.outline.material.setAttribute("nextPosition", new Float32Attribute(stripeVertex.stripeNextPosition, points.itemSize));
-        this.outline.material.setAttribute("normalDirection", new Float32Attribute(stripeVertex.stripeNormalDirection, 1));
-        // Uniform aspect set by MeshRenderer based on actual viewport
-        this.outline.material.lineWidth = this.material.lineWidth * 1.1;
-
         this._dashed = false;
     }
 

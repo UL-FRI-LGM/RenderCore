@@ -22,14 +22,6 @@ export class Point extends Mesh {
 
         this.type = "Point";
         this.renderingPrimitive = POINTS;
-
-
-        //OUTLINE
-        this.outline.renderingPrimitive = POINTS;
-        this.outline.material.side = FRONT_SIDE;
-        this.outline.material.usePoints = true;
-        this.outline.material.pointSize = this.material.pointSize * 1.1;
-        this.outline.material.offset = 0.0;
     }
 
 
