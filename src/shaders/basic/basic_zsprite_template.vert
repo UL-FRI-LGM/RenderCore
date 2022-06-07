@@ -12,9 +12,9 @@ struct Material {
     vec3 emissive;
     vec3 diffuse;
     sampler2D instanceData;
-    // The following one could actually be instanced in int (or it has to be float?)
+    // The following could (should, really) be an int attribute with divisor 1
     // #if (OUTLINE)
-    //    sampler2D instance_indices;
+    //    isampler2D instance_indices;
     // #fi
     #if (TEXTURE)
         #for I_TEX in 0 to NUM_TEX
@@ -72,15 +72,12 @@ void main() {
     vec4 VPos_viewspace;
 
     #if (INSTANCED)
-        ivec2 tsi = textureSize(material.instanceData, 0);
-        vec2 ootsf = vec2(1.0 / float(tsi.x), 1.0 / float(tsi.y));
-        vec2 tc;
-        tc.y = (float(gl_InstanceID / tsi.x) + 0.5) * ootsf.y;
-        tc.x = (float(gl_InstanceID % tsi.x) + 0.5) * ootsf.x;
-        vec4 pos = texture(material.instanceData, tc);
-        vec4 trans = vec4(pos.x, pos.y, pos.z, 0.0);
+        int   tsx = textureSize(material.instanceData, 0).x;
+        ivec2 tc  = ivec2(gl_InstanceID % tsx, gl_InstanceID / tsx);
+        vec4  pos = texelFetch(material.instanceData, tc, 0);
+        // see also texelFetchOffset about how to get neigboring texels
 
-        VPos_viewspace = MVMat * (vec4(0.0, 0.0, 0.0, 1.0) + trans);
+        VPos_viewspace = MVMat * vec4(pos.xyz, 1.0);
     #else
         VPos_viewspace = MVMat * vec4(0.0, 0.0, 0.0, 1.0);
     #fi
