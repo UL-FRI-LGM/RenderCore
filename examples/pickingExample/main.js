@@ -28,7 +28,7 @@ const PICK = new RC.PickerFX(
     renderer, 
     {scene: scene, camera: camera},
     {},
-    new RC.FX.output("color_picker")
+    {color: new RC.FX.output("color_picker")}
 );
 renderQueue.pushRenderQueue(PICK);
 
@@ -62,7 +62,8 @@ function populateScene(){
 
         cube.RGB_ID = cube.material.color;
         cube.UINT_ID = i + 1;
-    
+        cube.pickable = true;
+
         scene.add(cube);
     }
 

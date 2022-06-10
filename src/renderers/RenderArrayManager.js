@@ -11,8 +11,6 @@ export class RenderArrayManager{
         this._skyboxes = new RenderArray();
         this._opaqueObjects = new RenderArray();
 		this._transparentObjects = new RenderArray();
-		this._opaqueObjectsWithOutline = new RenderArray();
-		this._transparentObjectsWithOutline = new RenderArray();
 		this._lights = new RenderArray();
     }
 
@@ -24,8 +22,6 @@ export class RenderArrayManager{
     get skyboxes() { return this._skyboxes; }
     get opaqueObjects() { return this._opaqueObjects; }
     get transparentObjects() { return this._transparentObjects; }
-    get opaqueObjectsWithOutline() { return this._opaqueObjectsWithOutline; }
-    get transparentObjectsWithOutline() { return this._transparentObjectsWithOutline; }
     get lights() { return this._lights; }
 
 
@@ -38,8 +34,6 @@ export class RenderArrayManager{
         this._skyboxes.clear();
         this._opaqueObjects.clear();
 		this._transparentObjects.clear();
-		this._opaqueObjectsWithOutline.clear();
-		this._transparentObjectsWithOutline.clear();
 		this._lights.clear();
     }
 }

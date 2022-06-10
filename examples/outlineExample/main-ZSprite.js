@@ -64,6 +64,61 @@ const CoreControl = {
         multiplier: 1
     },
 
+    loadTexturesAndInit: function(){
+        let pthis = this;
+
+        this.mgrLoader = new RC.LoadingManager(function() {
+            console.log("LOADER MGR DONE");
+            pthis.initializeCore();
+            window.requestAnimationFrame(function() { CoreControl.render() });
+        });
+
+        let new_la_tex_foo = function(img) {
+            return new RC.Texture(img, RC.Texture.ClampToEdgeWrapping, RC.Texture.ClampToEdgeWrapping,
+                                  RC.Texture.LinearFilter, RC.Texture.LinearFilter,
+                                  RC.Texture.LUMINANCE_ALPHA, RC.Texture.LUMINANCE_ALPHA, RC.Texture.UNSIGNED_BYTE,
+                                  img.width, img.height);
+        };
+        let load_tex_foo = function(fname, mname) {
+            new RC.ImageLoader(pthis.mgrLoader).load("../common/textures/" + fname, function(img) {
+                pthis[mname] = new_la_tex_foo(img);
+            });
+        };
+        load_tex_foo("dot-32a.png", "texDot");
+        load_tex_foo("brush-32a.png", "texBrush");
+        load_tex_foo("star5-32a.png", "texStar");
+
+        // Instancing, passing position for each instance in RGBA32F texture, A not used.
+        let Nx = 32;
+        let Ny = 4;
+        let N = Nx * Ny;
+        let arr = new Float32Array(N * 4);
+        for (let i = 0; i < N; ++i) {
+            arr[4*i]     = 3 * Math.cos(0.2 * i);
+            arr[4*i + 1] = 3 * Math.sin(0.2 * i);
+            arr[4*i + 2] = 0.2 * i;
+            // fourth / A value left for unsigned-char encoded RGBA color.
+            // Or this could be extended for spriteSize as well.
+            arr[4*i + 3] = 0;
+        }
+        this.tex_insta_num = N;
+        this.tex_insta_pos = new RC.Texture(arr, RC.Texture.ClampToEdgeWrapping, RC.Texture.ClampToEdgeWrapping,
+            RC.Texture.NearestFilter, RC.Texture.NearestFilter,
+            // RC.Texture.R32F, RC.Texture.R32F, RC.Texture.FLOAT,
+            RC.Texture.RGBA32F, RC.Texture.RGBA, RC.Texture.FLOAT,
+            Nx, Ny);
+
+        // Testing creation of texture from JS array, simple checker pattern.
+        let at = new Uint8Array(2 * 2 * 2);
+        at[0] = at[6] = 255; // luminance
+        at[1] = at[7] = 255; // alpha
+        this.tex_checker_2x2 = new RC.Texture(at, RC.Texture.ClampToEdgeWrapping, RC.Texture.ClampToEdgeWrapping,
+            RC.Texture.NearestFilter, RC.Texture.NearestFilter,
+            // RC.Texture.LinearFilter, RC.Texture.LinearFilter,
+            RC.Texture.LUMINANCE_ALPHA, RC.Texture.LUMINANCE_ALPHA, RC.Texture.UNSIGNED_BYTE,
+            2, 2);
+    },
+
     /** INIT CORE */
     initializeCore: function(){
         this.canvas = this.initializeCanvas();
@@ -96,6 +151,11 @@ const CoreControl = {
         const renderer = new RC.MeshRenderer(canvas, RC.WEBGL2, {antialias: false, stencil: true});
         renderer.clearColor = "#ffffffff";
         renderer.addShaderLoaderUrls("../../src/shaders");
+
+        RC.GLManager.sCheckFrameBuffer = false;
+        // Would require an additional render-queue and pass to render into Uin32 buffer.
+        // RC.PickingShaderMaterial.DEFAULT_PICK_MODE = RC.PickingShaderMaterial.PICK_MODE.UINT;
+        // renderer.pickObject3D = true;
 
         return renderer;
     },
@@ -189,7 +249,60 @@ const CoreControl = {
         cube9.material.emissive = new RC.Color(0, 0, 0);
         scene.add(cube9);
 
-                
+
+        let sm = new RC.ZSpriteBasicMaterial( { SpriteMode: RC.SPRITE_SPACE_WORLD, SpriteSize: [.5, .5],
+                                                color: new RC.Color(0, 1, 0),
+                                                emissive: new RC.Color(0, 1, 0),
+                                                diffuse: new RC.Color(0, 0, 0) } );
+        sm.transparent = true;
+        // sm.depthWrite = false;
+        sm.addMap(this.texDot);
+        sm.instanceData = this.tex_insta_pos;
+
+        let sprite = new RC.ZSprite(null, sm);
+        sprite.position.set(0, 0, -12.8);
+        sprite.frustumCulled = false; // need a way to speciy bounding box/sphere !!!
+        sprite.instanced = true;
+        sprite.instanceCount = this.tex_insta_num;
+        sprite.drawOutline = true;
+        scene.add(sprite);
+
+        let sm2 = new RC.ZSpriteBasicMaterial( { SpriteMode: RC.SPRITE_SPACE_WORLD, SpriteSize: [8, 8],
+                                                 color: new RC.Color(0, 0, 1),
+                                                 emissive: new RC.Color(0, 0, 1),
+                                                 diffuse: new RC.Color(0, 0, 0) } );
+        sm2.transparent = true;
+        // sm2.depthWrite = false;
+        sm2.addMap(this.texStar);
+        let sprite2 = new RC.ZSprite(null, sm2);
+        sprite2.position.set(5, -5, 5);
+        sprite2.drawOutline = true;
+        scene.add(sprite2);
+
+        let sm3 = new RC.ZSpriteBasicMaterial( { SpriteMode: RC.SPRITE_SPACE_SCREEN, SpriteSize: [128, 128],
+                                                 color: new RC.Color(1, 0, 0.25),
+                                                 emissive: new RC.Color(1, 0, 0),
+                                                 diffuse: new RC.Color(0, 0, 0) } );
+        sm3.transparent = true;
+        // sm3.depthWrite = false;
+        sm3.addMap(this.tex_checker_2x2);
+        let sprite3 = new RC.ZSprite(null, sm3);
+        sprite3.position.set(5, 5, 5);
+        sprite3.drawOutline = true;
+        scene.add(sprite3);
+
+        let sm4 = new RC.ZSpriteBasicMaterial( { SpriteMode: RC.SPRITE_SPACE_SCREEN, SpriteSize: [256, 256],
+                                                 color: new RC.Color(1, 0, 0),
+                                                 emissive: new RC.Color(0, 1, 0),
+                                                 diffuse: new RC.Color(0, 0, 0) } );
+        sm4.transparent = true;
+        // sm4.depthWrite = false;
+        sm4.addMap(this.texBrush);
+        let sprite4 = new RC.ZSprite(null, sm4);
+        sprite4.position.set(-5, 5, 5);
+        sprite4.drawOutline = true;
+        scene.add(sprite4);
+
         //outlined objects
         const cube_outlined = new RC.Cube(2, new RC.Color().setColorName("purple"));
         cube_outlined.drawOutline = true;
@@ -276,7 +389,9 @@ window.onload = function(){
     // MT: Picking through MeshRenderer only works for Uint32 picking, requires a different render pass
     //     with appropriate output format. It can be fixed back. But this demo does not assign pick IDs.
     /*
+
     window.addEventListener("mouseup", function(event){
+        //CoreControl.rendererManager.activeRenderer.pick(RC.MouseInput.instance.cursor.position.x, RC.MouseInput.instance.cursor.position.y);
         CoreControl.rendererManager.activeRenderer.pick(event.clientX, event.clientY, function(pickedColor){
             console.log(pickedColor);
         });
@@ -290,11 +405,11 @@ window.onload = function(){
 
 
     //INIT
-    CoreControl.initializeCore();
+    // CoreControl.initializeCore();
+    CoreControl.loadTexturesAndInit();
 
-    
     //RENDER
-    window.requestAnimationFrame(function(){CoreControl.render()});
+    // window.requestAnimationFrame(function(){CoreControl.render()});
 };
 
 
@@ -382,7 +497,7 @@ const RenderPass_MainShader = new RC.RenderPass(
     ]
 );
 
-const multi = new RC.CustomShaderMaterial("multi");
+const multi = new RC.CustomShaderMaterial("GBufferMini");
 multi.lights = false;
 multi.side = RC.FRONT_AND_BACK_SIDE;
 const RenderPass_MainMulti = new RC.RenderPass(
@@ -393,7 +508,10 @@ const RenderPass_MainMulti = new RC.RenderPass(
     function (textureMap, additionalData) {
         iterateSceneR(CoreControl.scene, function(object){
             if(object.drawOutline) {
-                MultiMats.push(multi);
+                if (object._outlineMaterial)
+                    MultiMats.push(object._outlineMaterial);
+                else
+                    MultiMats.push(multi);
             }
         });
     },
@@ -431,11 +549,8 @@ const RenderPass_MainMulti = new RC.RenderPass(
     "depthDefaultMultiMaterials",
 
     [
-        {id: "depth", textureConfig: RC.RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG},
-        {id: "position", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
         {id: "normal", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
         {id: "viewDir", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
-        {id: "camDist", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
     ]
 );
 

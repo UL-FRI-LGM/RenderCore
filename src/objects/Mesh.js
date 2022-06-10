@@ -14,11 +14,11 @@ import {Vector3} from '../math/Vector3.js';
 import {Ray} from '../math/Ray.js';
 import {Sphere} from '../math/Sphere.js';
 import {Color} from "../RenderCore.js";
-import {Outline} from "../RenderCore.js";
-import {OutlineBasicMaterial} from "../materials/OutlineBasicMaterial.js";
 
 
 export class Mesh extends Object3D {
+
+	static sDefaultPickable = false;
 
 	/**
 	 * Create new Mesh object.
@@ -34,30 +34,29 @@ export class Mesh extends Object3D {
 		// Each mesh defines geometry and its material
 		this._geometry = geometry !== undefined ? geometry : new Geometry();
 		this._material = material !== undefined ? material : new MeshBasicMaterial( { color: Math.random() * 0xffffff } );
-		this._pickingMaterial = pickingMaterial !== undefined ? pickingMaterial : new PickingShaderMaterial("TRIANGLES");
-		this._outlineMaterial = outlineMaterial !== undefined ? outlineMaterial : new OutlineBasicMaterial();
+
+		// If undefined it gets default constructed when set pickable is called.
+		this._pickingMaterial = pickingMaterial;
+
+		// Shared version used by RenderPass / MeshRenderer; set it here if vert shader transforms
+		// vertices or if frag shader does not write all the fragments. See ZSprite for example.
+		this._outlineMaterial = outlineMaterial;
 
 		this.raycast = _raycast;
 
 		// PICKING IDs
 		this._RGB_ID = new Color(0.0, 0.0, 0.0); // stored as Color(r, g, b) 
-		this._UINT_ID = 0; // stored as float [ R, G, B, A ], can represent full uint32 excluding 0
+		this._UINT_ID = 0; // stored as Uint32
 
 		//OUTLINE
-		this._useOutline = false; //outline object visibility
-
-		this._outline = new Outline(this._geometry, this._outlineMaterial, this._pickingMaterial);	//outline object
-		this._outline.visible = this._useOutline;
-		this._outline.material.offset = 0.1;
-
-		this.add(this._outline);
-		//OUTLINE V2
-		this.drawOutline = false;
+		this._drawOutline = false;
 
 		//INSTANCING
 		this._instanced = false;
 		this._instancedTranslation = false;
 		this._instanceCount = 1;
+
+		this.pickable = Mesh.sDefaultPickable;
 	}
 
 	/**
@@ -81,6 +80,7 @@ export class Mesh extends Object3D {
 	 */
 	get material() { return this._material; }
 	get pickingMaterial() { return this._pickingMaterial; }
+	get outlineMaterial() { return this._outlineMaterial; }
 
 	/**
 	 * Get geometry of the mesh.
@@ -90,8 +90,8 @@ export class Mesh extends Object3D {
 	get geometry() { return this._geometry; }
 	get RGB_ID() { return this._RGB_ID; }
 	get UINT_ID() { return this._UINT_ID; }
-	get outline() { return this._outline; }
-	get useOutline() { return this._useOutline; }
+	get drawOutline() { return this._drawOutline; }
+	get pickable() { return super.pickable; }
 
 	get instanced() { return this._instanced; }
 	get instancedTranslation() { return this._instancedTranslation; }
@@ -115,9 +115,17 @@ export class Mesh extends Object3D {
     set pickingMaterial(pickingMaterial) {
 		this._pickingMaterial = pickingMaterial;
 
+		this._staticStateDirty = true;
 		this._pickingMaterial.instanced = this._instanced;
 		this._pickingMaterial.instancedTranslation = this._instancedTranslation;
 	}
+	set outlineMaterial(outlineMaterial) {
+		this._outlineMaterial = outlineMaterial;
+
+		this._staticStateDirty = true;
+		this._outlineMaterial.instanced = this._instanced;
+	}
+
 
 	/**
 	 * Set geometry of the mesh.
@@ -143,22 +151,22 @@ export class Mesh extends Object3D {
 	set UINT_ID(UINT_ID) {
 		this._UINT_ID = UINT_ID;
 	}
-	set outline(outline) {
-		this.remove(this._outline);	//remove current outline
-		this._outline = outline;
-		this._outline.visible = this._useOutline;
-		this.add(outline);		//add new outline
+	set drawOutline(drawOutline) {
+		this._drawOutline = drawOutline;
+		// The default outline material (multi or GBufferMini) is set and shared through RenderPass.
+		// If one sets it for a mesh, it will be picked up and used.
 	}
-	set useOutline(useOutline) {
-		this._useOutline = useOutline;
-		this._outline.visible = useOutline;
+	set pickable(pickable) {
+		super.pickable = pickable;
+		if (pickable && ! this._pickingMaterial)
+			this.pickingMaterial = new PickingShaderMaterial("TRIANGLES");
 	}
 	set instanced(instanced) {
 		this._instanced = instanced;
 
 		this._material.instanced = instanced;
-		this._pickingMaterial.instanced = instanced;
-		this._outlineMaterial.instanced = instanced;
+		if (this._pickingMaterial) this._pickingMaterial.instanced = instanced;
+		if (this._outlineMaterial) this._outlineMaterial.instanced = instanced;
 	}
 	set instancedTranslation(instancedTranslation) {
 		this._instanced = instancedTranslation;
@@ -211,18 +219,13 @@ export class Mesh extends Object3D {
 
 	fillRenderArray(renderArrayManager){
 		// Add object to correct render array
+
+		// MTQQ should have arrays for picking / outline ???
+
 		if (this.material.transparent) {
-			if(this.useOutline) {
-				renderArrayManager.transparentObjectsWithOutline.addlast(this);
-			}else{
-				renderArrayManager.transparentObjects.addlast(this);
-			}
+			renderArrayManager.transparentObjects.addlast(this);
 		} else {
-			if(this.useOutline) {
-				renderArrayManager.opaqueObjectsWithOutline.addlast(this);
-			}else {
-				renderArrayManager.opaqueObjects.addlast(this);
-			}
+			renderArrayManager.opaqueObjects.addlast(this);
 		}
 	}
 	project(projScreenMatrix){
@@ -233,12 +236,13 @@ export class Mesh extends Object3D {
 		}
 	}
 	getRequiredPrograms(renderer){
-		const m1 = this._material.requiredProgram(renderer)
-		const m2 = this._pickingMaterial.requiredProgram(renderer)
+		let r = [ this._material.requiredProgram(renderer) ];
+		if (this._pickingMaterial && this.pickable) r.push( this._pickingMaterial.requiredProgram(renderer) );
+		if (this._outlineMaterial && this.drawOutline) r.push( this._outlineMaterial.requiredProgram(renderer) );
 
 		this._staticStateDirty = false;
 
-		return [m1, m2];
+		return r;
 	}
 	update(glManager, camera){
 		// Updates or derives attributes from the WebGL geometry

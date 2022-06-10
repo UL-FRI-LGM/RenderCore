@@ -97,7 +97,6 @@ export {SpriteBasicMaterial} from './materials/SpriteBasicMaterial.js';
 export {PickingShaderMaterial} from './materials/PickingShaderMaterial.js';
 export {StripeBasicMaterial} from './materials/StripeBasicMaterial.js';
 export {PointBasicMaterial} from './materials/PointBasicMaterial.js';
-export {OutlineBasicMaterial} from './materials/OutlineBasicMaterial.js';
 export {Text2DMaterial} from './materials/Text2DMaterial.js';
 export {SkyBox2BasicMaterial} from './materials/SkyBox2BasicMaterial.js';
 export {DirectionalShadowMaterial} from './materials/DirectionalShadowMaterial.js';
@@ -128,9 +127,12 @@ export {SkyDome} from './objects/SkyDome.js'
 export {Point} from './objects/Point.js';
 export {Stripe} from './objects/Stripe.js';
 export {VertexNormal} from './objects/VertexNormal.js';
-export {Outline} from './objects/Outline.js';
 export {Text2D} from './objects/Text2D.js';
 export {Grid} from './objects/Grid.js';
+
+// Instanced, instance-pickable, outline-supporting materials and objects
+export {ZSpriteBasicMaterial} from './materials/ZSpriteBasicMaterial.js';
+export {ZSprite} from './objects/ZSprite.js';
 
 // Program Management
 export {MaterialProgramTemplate} from './program_management/MaterialProgramTemplate.js';

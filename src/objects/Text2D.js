@@ -15,7 +15,6 @@ export class Text2D extends Mesh{
         this.frustumCulled = false;
 
         this.pickable = false;
-        this.remove(this.outline);
 
         this._text = args.text !== undefined ? args.text : "New text";
         this._fontTexture = args.fontTexture !== undefined ? args.fontTexture : null; //this._fontTexture = this.initializeText2D(fontTexturePath);

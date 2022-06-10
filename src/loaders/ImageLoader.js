@@ -49,8 +49,6 @@ export class ImageLoader {
 
 		// onLoad listener
 		image.addEventListener('load', function(event) {
-			scope.manager.itemEnd(url);
-
 			// Cache loaded image
 			Cache.add(url, this);
 
@@ -58,6 +56,8 @@ export class ImageLoader {
 			if (onLoad !== undefined) {
 				onLoad(image);
 			}
+
+			scope.manager.itemEnd(url);
 		});
 
 		// onProgress listener

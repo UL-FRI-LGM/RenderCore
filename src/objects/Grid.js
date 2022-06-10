@@ -12,7 +12,6 @@ export class Grid extends Mesh{
     constructor(geometry, material, unitSize = 1.0, orderOfMagnitude = 10.0, lineBase = 128, showUnits = false){
         super(geometry, material);
         this.type = "Grid";
-        this.remove(this.outline);
         this.pickable = false;
         this.frustumCulled = false;
 
