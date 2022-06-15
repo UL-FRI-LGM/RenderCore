@@ -111,32 +111,36 @@ export class MeshRenderer extends Renderer {
 
 		// Programs need to be loaded after the lights
 		if (!this._loadRequiredPrograms()) {
-			console.warn("Required programs not loaded!");
-
-			console.log("-----------------PRE-----------------");
-			console.log("REQUIRED: " + this._requiredPrograms + " length: " + this._requiredPrograms.size);
-			console.log(this._requiredPrograms);
-			console.log("--------------------------------------");
-			console.log("LOADING: " + this._loadingPrograms + " length: " + this._loadingPrograms.size);
-			console.log(this._loadingPrograms);
-			console.log("--------------------------------------");
-			console.log("COMPILED: " + this._compiledPrograms + " length: " + this._compiledPrograms.size);
-			console.log(this._compiledPrograms);
-			console.log("--------------------------------------");
-
+			if (this._logLevel >= 1) {
+				console.warn("Required programs not loaded!");
+			}
+			if (this._logLevel >= 2) {
+				console.log("-----------------PRE-----------------");
+				console.log("REQUIRED: " + this._requiredPrograms + " length: " + this._requiredPrograms.size);
+				console.log(this._requiredPrograms);
+				console.log("--------------------------------------");
+				console.log("LOADING: " + this._loadingPrograms + " length: " + this._loadingPrograms.size);
+				console.log(this._loadingPrograms);
+				console.log("--------------------------------------");
+				console.log("COMPILED: " + this._compiledPrograms + " length: " + this._compiledPrograms.size);
+				console.log(this._compiledPrograms);
+				console.log("--------------------------------------");
+			}
 			return;
 		}
 		if(!this.used) {
-			console.log("-----------------POST------------------");
-			console.log("REQUIRED: " + this._requiredPrograms + " length: " + this._requiredPrograms.size);
-			console.log(this._requiredPrograms);
-			console.log("--------------------------------------");
-			console.log("LOADING: " + this._loadingPrograms + " length: " + this._loadingPrograms.size);
-			console.log(this._loadingPrograms);
-			console.log("--------------------------------------");
-			console.log("COMPILED: " + this._compiledPrograms + " length: " + this._compiledPrograms.size);
-			console.log(this._compiledPrograms);
-			console.log("--------------------------------------");
+			if (this._logLevel >= 2) {
+				console.log("-----------------POST------------------");
+				console.log("REQUIRED: " + this._requiredPrograms + " length: " + this._requiredPrograms.size);
+				console.log(this._requiredPrograms);
+				console.log("--------------------------------------");
+				console.log("LOADING: " + this._loadingPrograms + " length: " + this._loadingPrograms.size);
+				console.log(this._loadingPrograms);
+				console.log("--------------------------------------");
+				console.log("COMPILED: " + this._compiledPrograms + " length: " + this._compiledPrograms.size);
+				console.log(this._compiledPrograms);
+				console.log("--------------------------------------");
+			}
 			this.used = true;
 		}
 
