@@ -47,14 +47,11 @@ export class ZSprite extends Mesh {
         }
 
         // MT for Sebastien -- what would be the best way to clone material?
-        // ZSpriteBasicMaterial.clone_for_outline() seems OK (but one needs to 
-        // take care with uniform / texture / instanceData updates).
-
-        // let pmat = Object.assign(new ZSpriteBasicMaterial(), material);
-        // pmat.addSBFlag('PICK_MODE_UINT'); // should get it from PickingShaderMaterial
-        let pmat = undefined;
-        // let omat = Object.assign(new ZSpriteBasicMaterial(), material);
-        // omat.addSBFlag('OUTLINE');
+        // ZSpriteBasicMaterial.clone_for_xyzz() seems OK but one needs to
+        // take care with uniform / texture / instanceData updates.
+        // Ideally, one could even have the same program built and compiled
+        // several times with different SB flags.
+        let pmat = material.clone_for_picking();
         let omat = material.clone_for_outline();
 
         //SUPER

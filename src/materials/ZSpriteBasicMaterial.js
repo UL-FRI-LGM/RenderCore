@@ -25,6 +25,17 @@ export class ZSpriteBasicMaterial extends CustomShaderMaterial {
         this.diffuse = args.diffuse ? args.diffuse : new Color(Math.random() * 0xffffff);
     }
 
+    clone_for_picking() {
+        let o = new ZSpriteBasicMaterial( {
+            SpriteMode: this.getUniform("SpriteMode"), SpriteSize: this.getUniform("SpriteSize"),
+            color: this.color, emissive: this.emissive, diffuse: this.diffuse
+        } );
+        for (const m of this.maps) o.addMap(m);
+        o.instanceData = this.instanceData;
+        o.addSBFlag('PICK_MODE_UINT');
+        return o;
+    }
+
     clone_for_outline() {
         let o = new ZSpriteBasicMaterial( {
             SpriteMode: this.getUniform("SpriteMode"), SpriteSize: this.getUniform("SpriteSize"),

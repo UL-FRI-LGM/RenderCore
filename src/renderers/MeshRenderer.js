@@ -164,14 +164,12 @@ export class MeshRenderer extends Renderer {
 	}
 
 	_renderPickingObjects(opaqueObjects, transparentObjects, camera){
-		// Default background can be other than black - we need it black here.
-		// Plus we need these special clear calls for uint color buffer.
-		this._gl.clearBufferuiv(this._gl.COLOR, 0, new Uint32Array([0, 0, 0, 0]));
+		// Assuming UINT picking with R32UI color buffer. Set it to max_uint so 0 is a valid identifier.
+		this._gl.clearBufferuiv(this._gl.COLOR, 0, new Uint32Array([0xFFFFFFFF, 0, 0, 0]));
 		this._gl.clearBufferfi(this._gl.DEPTH_STENCIL, 0, 1.0, 0);
 
 		if (this._pickObject3D) {
 			this._pickLUA = [];
-			this._pickAutoID = 0;
 		}
 
 		this._renderPickableObjects(opaqueObjects, camera);
@@ -179,15 +177,14 @@ export class MeshRenderer extends Renderer {
 
 		let r = new Uint32Array(1);
 		this._gl.readPixels(this._pickCoordinateX, this._canvas.height - this._pickCoordinateY, 1, 1, this._gl.RED_INTEGER, this._gl.UNSIGNED_INT, r);
-		this._pickedID = r[0];
-		console.log("MeshRenderer pickID:", this._pickedID);
+		this._pickedID = (r[0] != 0xFFFFFFFF) ? r[0] : null;
 
+		console.log("MeshRenderer pickID:", this._pickedID);
 		this._pickEnabled = false;
 
 		if (this._pickObject3D) {
-			this._pickedObject3D = (this._pickedID > 0 && this._pickedID <= this._pickAutoID) ? this._pickLUA[ this._pickedID - 1] : null;
+			this._pickedObject3D = (this._pickedID !== null) ? this._pickLUA[this._pickedID] : null;
 			delete this._pickLUA;
-			delete this._pickAutoID;
 			if (this._pickCallback) this._pickCallback(this._pickedObject3D);
 		} else {
 			if (this._pickCallback) this._pickCallback(this._pickedID);
@@ -257,7 +254,7 @@ export class MeshRenderer extends Renderer {
 			if(!object.pickable) continue;
 
 			if (this._pickObject3D) {
-				object.UINT_ID = ++this._pickAutoID;
+				object.UINT_ID = this._pickLUA.length;
 				this._pickLUA.push(object);
 			}
 

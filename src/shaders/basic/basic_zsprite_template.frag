@@ -166,52 +166,37 @@ void main() {
         #end
         #if (TRANSPARENT)
             if (color.w <= 0.00392) discard;
-            // alternatively, increase fragment depth?
-            // if (texcol.w < 0.25) gl_FragDepth = some larger value, clamped to 1.0; else gl_FragDepth = gl_FragCoord.z;
         #fi
     #fi
 
-  if (color.w > 0.50) {
-
-    #if (PICK_MODE_RGB)
-        objectID = vec4(u_RGB_ID, 1.0);
-    #else if (PICK_MODE_UINT)
-        #if (PICK_INSTANCE)
-            objectID = uint(gl_InstanceID) + 1; // no +1 if we do white clear
-        #else
-            objectID = u_UINT_ID;
-        #fi
-    #else if (OUTLINE)
-        vn_viewspace = vec4(v_normal_viewspace, 0.0);
-        vd_viewspace = vec4(v_ViewDirection_viewspace, 0.0);
-        #if (DEPTH)
-            de_viewspace = vec4(gl_FragCoord.z, 0.0, 0.0, 1.0);
-        #fi
+    // Special handling for outline to provide better edge detection,
+    // especially with overlapping outlined objects.
+    #if (OUTLINE)
+        if (color.w > 0.50) {
+            vn_viewspace = vec4(v_normal_viewspace, 0.0);
+            vd_viewspace = vec4(v_ViewDirection_viewspace, 0.0);
+            #if (DEPTH)
+                de_viewspace = vec4(gl_FragCoord.z, 0.0, 0.0, 1.0);
+            #fi
+        } else {
+            gl_FragDepth = 1.0;
+            vn_viewspace = vec4(0.0, 0.0, 0.0, 0.0);
+            vd_viewspace = vec4(0.0, 0.0, 0.0, 0.0);
+            #if (DEPTH)
+                de_viewspace = vec4(1.0, 0.0, 0.0, 1.0);
+            #fi
+        }
     #else
-        outColor = color;
-    #fi
-
-  } else {
-
-    #if (PICK_MODE_RGB)
-        objectID = vec4(0.0, 0.0, 0.0, 1.0);
-    #else if (PICK_MODE_UINT)
-        #if (PICK_INSTANCE)
-            objectID = 0; // no +1 if we do white clear
+        #if (PICK_MODE_RGB)
+            objectID = vec4(u_RGB_ID, 1.0);
+        #else if (PICK_MODE_UINT)
+            #if (PICK_INSTANCE)
+                objectID = uint(gl_InstanceID); // 0 is a valid result
+            #else
+                objectID = u_UINT_ID;
+            #fi
         #else
-            objectID = 0;
+            outColor = color;
         #fi
-    #else if (OUTLINE)
-        gl_FragDepth = 1.0;
-        vn_viewspace = vec4(0.0, 0.0, 0.0, 0.0);
-        vd_viewspace = vec4(0.0, 0.0, 0.0, 0.0);
-        #if (DEPTH)
-            de_viewspace = vec4(1.0, 0.0, 0.0, 1.0);
-        #fi
-    #else
-        outColor = color;
     #fi
-
-  }
-
 }
