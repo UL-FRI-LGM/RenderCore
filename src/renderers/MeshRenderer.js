@@ -65,7 +65,7 @@ export class MeshRenderer extends Renderer {
 
 		//picking
 		this._pickEnabled = false;
-		this._pickDoNotRender = false; // If true, exit render() after picking.
+		this._pickSecondaryEnabled = false;
 		this._pickObject3D = false; // Use internal IDs to select Mesh that was picked. When false, user must set pickID.
 		this._pickCoordinateX = 0;
 		this._pickCoordinateY = 0;
@@ -78,7 +78,6 @@ export class MeshRenderer extends Renderer {
 
 	//SET GET
 	set selectedRenderer(selectedRenderer) { this._selectedRenderer = selectedRenderer; }
-	set pickDoNotRender(pdnr) { this._pickDoNotRender = pdnr; }
 	set pickObject3D   (po3d) { this._pickObject3D = po3d; }
 	get pickedID() { return this._pickedID; }
 	get pickedObject3D() { return this._pickedObject3D; }
@@ -148,9 +147,15 @@ export class MeshRenderer extends Renderer {
 
 		// Render picking objects
 		if(this._pickEnabled) {
+			this._pickEnabled = false;
 			this._renderPickingObjects(this._renderArrayManager.opaqueObjects, this._renderArrayManager.transparentObjects, camera);
-			if (this._pickDoNotRender)
-				return;
+			return;
+		}
+		if (this._pickSecondaryEnabled) {
+			this._pickSecondaryEnabled = false;
+			if (this._pickedObject3D && this._pickedObject3D.instanced)
+				this.pick_instance(this._pickedObject3D, camera);
+			return;
 		}
 
 		// Render opaque objects
@@ -180,7 +185,6 @@ export class MeshRenderer extends Renderer {
 		this._pickedID = (r[0] != 0xFFFFFFFF) ? r[0] : null;
 
 		console.log("MeshRenderer pickID:", this._pickedID);
-		this._pickEnabled = false;
 
 		if (this._pickObject3D) {
 			this._pickedObject3D = (this._pickedID !== null) ? this._pickLUA[this._pickedID] : null;
@@ -239,7 +243,7 @@ export class MeshRenderer extends Renderer {
 			const object = objects.get(i);
 
 			//SET PROGRAM
-			this._setupProgram(object, camera, object.material.requiredProgram(this).programID);
+			this._setupProgram(object, camera, object.material);
 
 			this._setup_material_settings(object.material);
 
@@ -257,9 +261,8 @@ export class MeshRenderer extends Renderer {
 				object.UINT_ID = this._pickLUA.length;
 				this._pickLUA.push(object);
 			}
-
 			//SET PROGRAM
-			this._setupProgram(object, camera, object.pickingMaterial.requiredProgram(this).programID);
+			this._setupProgram(object, camera, object.pickingMaterial);
 
 			this._setup_material_side(object.material.side);
 			this._setup_material_depth(true, object.material.depthFunc, true);
@@ -268,11 +271,12 @@ export class MeshRenderer extends Renderer {
 			this._drawObject(object);
 		}
 	}
-	_setupProgram(object, camera, programID){
+	_setupProgram(object, camera, material){
+		let programID = material.requiredProgram(this).programID
 		let program = this._compiledPrograms.get(programID);
 		program.use();
 
-		this._setup_uniforms(program, object, camera);
+		this._setup_uniforms(program, object, camera, material);
 		this._setup_attributes(program, object);
 	}
 	_drawObject(object){
@@ -414,10 +418,11 @@ export class MeshRenderer extends Renderer {
 	 * @param program The program to set uniform values for.
 	 * @param object Object with uniform values.
 	 * @param camera Camera observing the scene.
+	 * @param material Material to use (std / picking / outline)
 	 * @param globalClippingPlanes Global clipping planes.
 	 */
 	//GLOBAL UNIFORMS (common for all objects/mats in renderer)
-	_setup_uniforms(program, object, camera, globalClippingPlanes = undefined) {
+	_setup_uniforms(program, object, camera, material, globalClippingPlanes = undefined) {
 		let uniformSetter = program.uniformSetter;
 
 		// Reset the uniform validation
@@ -478,7 +483,7 @@ export class MeshRenderer extends Renderer {
 
 		this._setup_light_uniforms(uniformSetter);
 
-		this._setup_material_uniforms(object.material, uniformSetter, object);
+		this._setup_material_uniforms(material, uniformSetter, object);
 
 		// Check if all of the uniforms have been set
 		let notSet = uniformSetter.__validation.validate();
@@ -1158,10 +1163,36 @@ export class MeshRenderer extends Renderer {
 	}
 
 
-	pick(x, y, callback=null){
+	pick_setup(x, y, callback=null) {
 		this._pickEnabled = true;
 		this._pickCoordinateX = x;
 		this._pickCoordinateY = y;
 		this._pickCallback = callback;
+	}
+
+	/**
+	 * Pick an instance within an object.
+	 * Assumes pick callback has just been called so everything is setup correctly for
+	 * direct rendering of a single object (that was presumably just picked).
+	 */
+	pick_instance(object, camera) {
+		// Assuming UINT picking with R32UI color buffer. Set it to max_uint so 0 is a valid identifier.
+		this._gl.clearBufferuiv(this._gl.COLOR, 0, new Uint32Array([0xFFFFFFFF, 0, 0, 0]));
+		this._gl.clearBufferfi(this._gl.DEPTH_STENCIL, 0, 1.0, 0);
+
+		object.pickingMaterial.setUniform("u_PickInstance", true);
+		this._setupProgram(object, camera, object.pickingMaterial);
+		this._setup_material_side(object.material.side);
+		this._setup_material_depth(true, object.material.depthFunc, true);
+		this._drawObject(object);
+		object.pickingMaterial.setUniform("u_PickInstance", false);
+
+		let r = new Uint32Array(1);
+		this._gl.readPixels(this._pickCoordinateX, this._canvas.height - this._pickCoordinateY, 1, 1, this._gl.RED_INTEGER, this._gl.UNSIGNED_INT, r);
+		this._pickedID = (r[0] != 0xFFFFFFFF) ? r[0] : null;
+
+		console.log("MeshRenderer pick_instance InstanceID:", this._pickedID);
+
+		return this._pickedID;
 	}
 }

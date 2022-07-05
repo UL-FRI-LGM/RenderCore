@@ -58,6 +58,9 @@ in vec3 VPos;       // Vertex position
 
 #if (INSTANCED)
     uniform Material material;
+    #if (PICK_MODE_UINT)
+        flat out uint InstanceID;
+    #fi
 #fi
 
 #if (OUTLINE)
@@ -119,5 +122,9 @@ void main() {
 
         float dToCam = length(VPos_viewspace.xyz);
         v_ViewDirection_viewspace = -VPos_viewspace.xyz / dToCam;
+    #fi
+
+    #if (INSTANCED && PICK_MODE_UINT)
+        InstanceID = uint(gl_InstanceID);
     #fi
  }

@@ -32,7 +32,8 @@ export class ZSpriteBasicMaterial extends CustomShaderMaterial {
         } );
         for (const m of this.maps) o.addMap(m);
         o.instanceData = this.instanceData;
-        o.addSBFlag('PICK_MODE_UINT');
+        o.addSBFlag("PICK_MODE_UINT");
+        o.setUniform("u_PickInstance", false);
         return o;
     }
 

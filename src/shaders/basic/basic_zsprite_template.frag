@@ -76,6 +76,10 @@ in vec3 fragVPos;
     layout(location = 0) out vec4 objectID;
 #else if (PICK_MODE_UINT)
     uniform uint u_UINT_ID;
+    #if (INSTANCED)
+        uniform bool u_PickInstance;
+        flat in uint InstanceID;
+    #fi
     layout(location = 0) out uint objectID;
 #else if (OUTLINE)
     // in vec3 v_position_viewspace;
@@ -190,8 +194,12 @@ void main() {
         #if (PICK_MODE_RGB)
             objectID = vec4(u_RGB_ID, 1.0);
         #else if (PICK_MODE_UINT)
-            #if (PICK_INSTANCE)
-                objectID = uint(gl_InstanceID); // 0 is a valid result
+            #if (INSTANCED)
+                if (u_PickInstance) {
+                    objectID = InstanceID; // 0 is a valid result
+                } else {
+                    objectID = u_UINT_ID;
+                }
             #else
                 objectID = u_UINT_ID;
             #fi
