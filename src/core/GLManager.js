@@ -389,6 +389,10 @@ export class GLManager {
 		return this._textureManager.getTexture(reference);
 	}
 
+	getCubeTexture(reference) {
+		return this._textureManager.getCubeTexture(reference);
+	}
+
 	downloadTexture(reference, name) {
 		const texture = this._textureManager.getTexture(reference);
 		const fb = this._gl.createFramebuffer();

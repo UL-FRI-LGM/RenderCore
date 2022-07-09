@@ -2,6 +2,8 @@
  * Created by Primoz on 25. 07. 2016.
  */
 import {Texture} from '../textures/Texture.js'
+import { CubeTexture } from '../RenderCore.js';
+
 
 export class GLTextureManager {
 
@@ -13,6 +15,35 @@ export class GLTextureManager {
 		this._cached_textures = new Map();
 
 		this._colorClearFramebuffer = this._gl.createFramebuffer();
+
+
+		this._defaultTexture = new Texture(
+			undefined,
+			Texture.ClampToEdgeWrapping,
+			Texture.ClampToEdgeWrapping,
+			Texture.NearestFilter,
+			Texture.NearestFilter,
+			Texture.DEPTH_COMPONENT32F,
+			Texture.DEPTH_COMPONENT,
+			Texture.FLOAT,
+			0,
+			0
+		);
+		this.updateTexture(this._defaultTexture, false);
+		
+		this._defaultCubeTexture = new CubeTexture({
+			textures: undefined,
+			wrapS: Texture.ClampToEdgeWrapping,
+			wrapT: Texture.ClampToEdgeWrapping,
+			wrapR: Texture.ClampToEdgeWrapping,
+			minFilter: Texture.NearestFilter,
+			magFilter: Texture.NearestFilter,
+			internalFormat: Texture.DEPTH_COMPONENT32F,
+			format: Texture.DEPTH_COMPONENT,
+			type: Texture.FLOAT,
+			size: 0
+		});
+		this.updateCubeTexture(this._defaultCubeTexture, false);
 	}
 
 	updateTexture(texture, isRTT) {
@@ -195,6 +226,23 @@ export class GLTextureManager {
 	}
 
 	getTexture(reference) {
+		if(!this._cached_textures.get(reference)){
+			//console.warn("Warning: Texture reference not found: [" + reference + "]!");
+
+			return this._cached_textures.get(this._defaultTexture);
+		}
+
+
+		return this._cached_textures.get(reference);
+	}
+	getCubeTexture(reference) {
+		if(!this._cached_textures.get(reference)){
+			//console.warn("Warning: Texture reference not found: [" + reference + "]!");
+
+			return this._cached_textures.get(this._defaultCubeTexture);
+		}
+
+
 		return this._cached_textures.get(reference);
 	}
 
@@ -286,9 +334,7 @@ export class GLTextureManager {
 				return this._gl.R32UI;
 				break;
 			default:
-				console.warn("----------------------------------------------");
 				console.warn("Warning: Received unsupported texture format: [" + format + "]!");
-				console.warn("----------------------------------------------");
 				return this._gl.RGBA;
 				break;
 		}
@@ -376,9 +422,7 @@ export class GLTextureManager {
 				return this._gl.HALF_FLOAT;
 				break;
 			default:
-				console.warn("----------------------------------------------");
 				console.warn("Warning: Received unsupported texture type: [" + type + "] (using default)!");
-				console.warn("----------------------------------------------");
 				return this._gl.UNSIGNED_BYTE;
 				break;
 		}
