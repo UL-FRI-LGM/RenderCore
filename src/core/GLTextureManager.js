@@ -35,7 +35,7 @@ export class GLTextureManager {
 
 		this._gl.bindTexture(this._gl.TEXTURE_2D, glTexture);
 
-		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, true);
+		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, texture.flipy);
 
 		// Parse texture data
 		let internalFormat = this._formatToGL(texture._internalFormat);

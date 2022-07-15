@@ -72,6 +72,11 @@ export class MeshRenderer extends Renderer {
 		this._pickedID = 0;
 		this._pickedObject3D = null;
 		this._pickCallback = null;
+		//outline
+		this._outlineEnabled = false;
+		this._outlineArray = null;
+
+		// Has rendering actually been done (all programs loaded)
 		this.used = false;
 	}
 
@@ -145,6 +150,12 @@ export class MeshRenderer extends Renderer {
 
 		//RENDER OBJECTS
 
+		// Render outlined objects
+		if (this._outlineEnabled) {
+			this._outlineEnabled = false;
+			this._renderOutline(this._outlineArray, camera);
+			return;
+		}
 		// Render picking objects
 		if(this._pickEnabled) {
 			this._pickEnabled = false;
@@ -266,6 +277,22 @@ export class MeshRenderer extends Renderer {
 
 			this._setup_material_side(object.material.side);
 			this._setup_material_depth(true, object.material.depthFunc, true);
+
+			//COMPACT
+			this._drawObject(object);
+		}
+	}
+	_renderOutline(list, camera){
+		// Only render top-levels
+		for (let i = 0; i < list.length; i++) {
+			const object = list[i];
+
+			let mat = object.outlineMaterial ? object.outlineMaterial : this._defaultOutlineMat;
+
+			this._setupProgram(object, camera, mat);
+
+			this._setup_material_side(mat.side);
+			this._setup_material_depth(true, mat.depthFunc, true);
 
 			//COMPACT
 			this._drawObject(object);

@@ -107,6 +107,7 @@ const CoreControl = {
             // RC.Texture.R32F, RC.Texture.R32F, RC.Texture.FLOAT,
             RC.Texture.RGBA32F, RC.Texture.RGBA, RC.Texture.FLOAT,
             Nx, Ny);
+        this.tex_insta_pos.flipy = false;
 
         // Testing creation of texture from JS array, simple checker pattern.
         let at = new Uint8Array(2 * 2 * 2);
