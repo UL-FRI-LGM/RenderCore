@@ -172,8 +172,8 @@ export class Mesh extends Object3D {
 		this._instanced = instancedTranslation;
 
 		this._material.instancedTranslation = instancedTranslation;
-		this._pickingMaterial.instancedTranslation = instancedTranslation;
-		this._outlineMaterial.instancedTranslation = instancedTranslation;
+		if (this._pickingMaterial) this._pickingMaterial.instancedTranslation = instancedTranslation;
+		if (this._outlineMaterial) this._outlineMaterial.instancedTranslation = instancedTranslation;
 	}
 	set instanceCount(instanceCount) { this._instanceCount = instanceCount; }
 	// endregion

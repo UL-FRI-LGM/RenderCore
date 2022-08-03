@@ -14,14 +14,14 @@ camera.lookAt(new RC.Vector3(0, 0, 0), new RC.Vector3(0, 1, 0));
 const pLight = new RC.PointLight(new RC.Color("#FDB813"), 1.0);
 scene.add(pLight);
 
-const cluster = prepaireCluster(8);
+const cluster = prepareCluster(8);
 const cubeObject = cluster.object;
 const cubeInstances = cluster.instances;
 const cubePositions = cluster.positions;
 scene.add(cubeObject);
 
 
-function prepaireCluster(mult = 4, step = 1.0){
+function prepareCluster(mult = 4, step = 1.0){
     //cube
     //NON-INDEXED: 6 sides, 2 tris per side, 3 vertices per tri, 3 components(x, y, z) per vertex
     const cubeVertices = new Float32Array(6 * 2 * 3 * 3);

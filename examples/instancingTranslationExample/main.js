@@ -14,7 +14,7 @@ camera.lookAt(new RC.Vector3(0, 0, 0), new RC.Vector3(0, 1, 0));
 const pLight = new RC.PointLight(new RC.Color("#FDB813"), 1.0, 0.0, 1/64);
 scene.add(pLight);
 
-const cluster = prepaireCluster(8);
+const cluster = prepareCluster(8);
 const spriteObject = cluster.object;
 const spriteInstances = cluster.instances;
 const spritePositions = cluster.positions;
@@ -22,7 +22,7 @@ const spriteTranslations = cluster.translations;
 scene.add(spriteObject);
 
 
-function prepaireCluster(mult = 4, step = 1.0){
+function prepareCluster(mult = 4, step = 1.0){
 
     const spriteInstances = new Array();
     const spritePositions = new Array();
