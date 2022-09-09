@@ -252,13 +252,15 @@ export class Mesh extends Object3D {
 		this.modelViewMatrix.multiplyMatrices(camera.matrixWorldInverse, this._matrixWorld);
 		this.normalMatrix.getNormalMatrix(this._modelViewMatrix);
 	}
-	draw(gl, glManager){
+	draw(gl, glManager, instance_count=0){
 		if (this.geometry.drawWireframe) {
 			let buffer = glManager.getAttributeBuffer(this.geometry.wireframeIndices);
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
 
 			if(this._instanced || this._instancedTranslation){
-				gl.drawElementsInstanced(gl.LINES, this.geometry.wireframeIndices.count(), gl.UNSIGNED_INT, 0, this._instanceCount);
+				if (!instance_count)
+					instance_count = this._instanceCount;
+				gl.drawElementsInstanced(gl.LINES, this.geometry.wireframeIndices.count(), gl.UNSIGNED_INT, 0, instance_count);
 			}
 			else{
 				gl.drawElements(gl.LINES, this.geometry.wireframeIndices.count(), gl.UNSIGNED_INT, 0);
@@ -270,7 +272,9 @@ export class Mesh extends Object3D {
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
 
 			if(this._instanced || this._instancedTranslation){
-				gl.drawElementsInstanced(this.renderingPrimitive, this.geometry.indexCount, gl.UNSIGNED_INT, 4 * this.geometry.indexStart, this._instanceCount);
+				if (!instance_count)
+					instance_count = this._instanceCount;
+				gl.drawElementsInstanced(this.renderingPrimitive, this.geometry.indexCount, gl.UNSIGNED_INT, 4 * this.geometry.indexStart, instance_count);
 			}
 			else{
 				gl.drawElements(this.renderingPrimitive, this.geometry.indexCount, gl.UNSIGNED_INT, 4 * this.geometry.indexStart);
@@ -279,7 +283,9 @@ export class Mesh extends Object3D {
 		else {
 			//non indexed
 			if(this._instanced || this._instancedTranslation){
-				gl.drawArraysInstanced(this.renderingPrimitive, 0, this.geometry.vertices.count(), this._instanceCount);
+				if (!instance_count)
+					instance_count = this._instanceCount;
+				gl.drawArraysInstanced(this.renderingPrimitive, 0, this.geometry.vertices.count(), instance_count);
 			}
 			else{
 				gl.drawArrays(this.renderingPrimitive, 0, this.geometry.vertices.count());

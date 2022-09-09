@@ -16,15 +16,13 @@
 	 * @param array Buffer data.
 	 * @param itemSize Size of an item.
 	 */
-	constructor(array, itemSize) {
+	constructor(array, itemSize, divisor = 0) {
 		this._array = array;
 		this._itemSize = itemSize;
+		this._divisor = divisor; // Divisor used by instancing
 
 		// Tells if local copies are up to date
 		this._dirty = true;
-
-		//Divisor used by instancing
-		this._divisor = 0;
 
 		this._drawType = BufferAttribute.DRAW_TYPE.STATIC;
 		this._update = false;
@@ -103,38 +101,38 @@
 	}
 };
 
-export function Int8Attribute (array, itemSize) {
-	return new BufferAttribute(new Int8Array(array), itemSize);
+export function Int8Attribute (array, itemSize, divisor = 0) {
+	return new BufferAttribute(new Int8Array(array), itemSize, divisor);
 };
 
-export function Uint8Attribute (array, itemSize) {
-	return new BufferAttribute(new Uint8Array(array), itemSize);
+export function Uint8Attribute (array, itemSize, divisor = 0) {
+	return new BufferAttribute(new Uint8Array(array), itemSize, divisor);
 };
 
-export function Uint8ClampedAttribute (array, itemSize) {
-	return new BufferAttribute(new Uint8ClampedArray(array), itemSize);
+export function Uint8ClampedAttribute (array, itemSize, divisor = 0) {
+	return new BufferAttribute(new Uint8ClampedArray(array), itemSize, divisor);
 };
 
-export function Int16Attribute (array, itemSize) {
-	return new BufferAttribute(new Int16Array(array), itemSize);
+export function Int16Attribute (array, itemSize, divisor = 0) {
+	return new BufferAttribute(new Int16Array(array), itemSize, divisor);
 };
 
-export function Uint16Attribute (array, itemSize) {
-	return new BufferAttribute(new Uint16Array(array), itemSize);
+export function Uint16Attribute (array, itemSize, divisor = 0) {
+	return new BufferAttribute(new Uint16Array(array), itemSize, divisor);
 };
 
-export function Int32Attribute (array, itemSize) {
-	return new BufferAttribute(new Int32Array(array), itemSize);
+export function Int32Attribute (array, itemSize, divisor = 0) {
+	return new BufferAttribute(new Int32Array(array), itemSize, divisor);
 };
 
-export function Uint32Attribute (array, itemSize) {
-	return new BufferAttribute(new Uint32Array(array), itemSize);
+export function Uint32Attribute (array, itemSize, divisor = 0) {
+	return new BufferAttribute(new Uint32Array(array), itemSize, divisor);
 };
 
-export function Float32Attribute (array, itemSize) {
-	return new BufferAttribute(new Float32Array(array), itemSize);
+export function Float32Attribute (array, itemSize, divisor = 0) {
+	return new BufferAttribute(new Float32Array(array), itemSize, divisor);
 };
 
-export function Float64Attribute (array, itemSize) {
-	return new BufferAttribute(new Float64Array(array), itemSize);
+export function Float64Attribute (array, itemSize, divisor = 0) {
+	return new BufferAttribute(new Float64Array(array), itemSize, divisor);
 };

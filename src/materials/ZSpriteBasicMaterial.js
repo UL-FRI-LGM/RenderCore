@@ -1,10 +1,11 @@
 import {CustomShaderMaterial} from './CustomShaderMaterial.js';
 import {Color} from "../math/Color.js";
+import {Int32Attribute} from "../core/BufferAttribute.js";
 import {SPRITE_SPACE_SCREEN, SPRITE_SPACE_WORLD} from '../constants.js';
 
 
-export class ZSpriteBasicMaterial extends CustomShaderMaterial {
-
+export class ZSpriteBasicMaterial extends CustomShaderMaterial
+{
     /**
      * WARNING:
      * - constructor does not pass arguments to parent class
@@ -45,6 +46,8 @@ export class ZSpriteBasicMaterial extends CustomShaderMaterial {
         for (const m of this.maps) o.addMap(m);
         o.instanceData = this.instanceData;
         o.addSBFlag('OUTLINE');
+        o.setUniform("u_OutlineGivenInstances", false);
+        o.setAttribute("a_OutlineInstances", Int32Attribute([0], 1, 0x7fffffff));
         return o;
     }
 
@@ -58,7 +61,6 @@ export class ZSpriteBasicMaterial extends CustomShaderMaterial {
             this._onChangeListener.materialUpdate(update)
         }
     }
-
     get emissive() { return this._emissive; }
     set emissive(val) {
         this._emissive = val;
@@ -78,6 +80,25 @@ export class ZSpriteBasicMaterial extends CustomShaderMaterial {
             var update = {uuid: this._uuid, changes: {diffuse: this._diffuse.getHex()}};
             this._onChangeListener.materialUpdate(update)
         }
+    }
+
+    // Outline - setup / reset for instance list outlining.
+    // To be called on outline version (with OUTLINE SB-flag).
+    outline_instances_setup(instance_list) {
+        this.setUniform("u_OutlineGivenInstances", true);
+        let buf_attr = this.getAttribute("a_OutlineInstances");
+        buf_attr.array = new Int32Array(instance_list);
+        buf_attr.divisor = 1;
+        // leaks buffers in gl-attrib-manager
+        // this.setAttribute("a_OutlineInstances", Int32Attribute(instance_list, 1, 1));
+    }
+    outline_instances_reset() {
+        this.setUniform("u_OutlineGivenInstances", false);
+        let buf_attr = this.getAttribute("a_OutlineInstances");
+        buf_attr.array = new Int32Array([0]);
+        buf_attr.divisor = 0x7fffffff;
+        // leaks buffers in gl-attrib-manager
+        // this.setAttribute("a_OutlineInstances", Int32Attribute([0], 1, 0x7fffffff));
     }
 
     update(data) {

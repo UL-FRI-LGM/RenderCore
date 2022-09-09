@@ -272,13 +272,17 @@ export class MeshRenderer extends Renderer {
 				object.UINT_ID = this._pickLUA.length;
 				this._pickLUA.push(object);
 			}
-			//SET PROGRAM
-			this._setupProgram(object, camera, object.pickingMaterial);
 
-			this._setup_material_side(object.material.side);
-			this._setup_material_depth(true, object.material.depthFunc, true);
+			const mat = object.pickingMaterial;
+			// picking material attribs are not updated in standard Mesh update.
+			if (mat instanceof CustomShaderMaterial) {
+				this._glManager.updateCustomShaderAttributes(mat);
+			}
+			this._setupProgram(object, camera, mat);
 
-			//COMPACT
+			this._setup_material_side(mat.side);
+			this._setup_material_depth(true, mat.depthFunc, true);
+
 			this._drawObject(object);
 		}
 	}
@@ -287,15 +291,20 @@ export class MeshRenderer extends Renderer {
 		for (let i = 0; i < list.length; i++) {
 			const object = list[i];
 
-			let mat = object.outlineMaterial ? object.outlineMaterial : this._defaultOutlineMat;
-
+			const mat = object.outlineMaterial ? object.outlineMaterial : this._defaultOutlineMat;
+			// outline material attribs are not updated in standard Mesh update.
+			if (object.outlineMaterial && mat instanceof CustomShaderMaterial) {
+				this._glManager.updateCustomShaderAttributes(mat);
+			}
 			this._setupProgram(object, camera, mat);
 
 			this._setup_material_side(mat.side);
 			this._setup_material_depth(true, mat.depthFunc, true);
 
-			//COMPACT
-			this._drawObject(object);
+			let instance_count = 0;
+			if (mat.getUniform("u_OutlineGivenInstances"))
+				instance_count = mat.getAttribute("a_OutlineInstances").count();
+			this._drawObject(object, instance_count);
 		}
 	}
 	_setupProgram(object, camera, material){
@@ -304,11 +313,11 @@ export class MeshRenderer extends Renderer {
 		program.use();
 
 		this._setup_uniforms(program, object, camera, material);
-		this._setup_attributes(program, object);
+		this._setup_attributes(program, object, material);
 	}
-	_drawObject(object){
+	_drawObject(object, instance_count=0){
 		if (typeof object.draw !== "function") console.warn("Object " + object.type + " has no draw function");
-		object.draw(this._gl, this._glManager);
+		object.draw(this._gl, this._glManager, instance_count);
 	}
 
 	/**
@@ -319,15 +328,15 @@ export class MeshRenderer extends Renderer {
 	 * @param vertices Mesh vertices.
 	 */
 	//GLOBAL ATTRIBUTES
-	_setup_attributes(program, object) {
+	_setup_attributes(program, object, material) {
 		let attributeSetter = program.attributeSetter;
 		let attributes = Object.getOwnPropertyNames(attributeSetter);
 
 		let customAttributes;
 
 		// If material is a type of CustomShaderMaterial it may contain its own definition of attributes
-		if (object.material instanceof CustomShaderMaterial) {
-			customAttributes = object.material._attributes;
+		if (material instanceof CustomShaderMaterial) {
+			customAttributes = material._attributes;
 		}
 
 		let buffer;
