@@ -13,6 +13,13 @@
             "fragment": "lambert/lambert-GOURAUD.frag"
         }
     },
+    "lambert": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "lambert/lambert.vert",
+            "fragment": "lambert/lambert.frag"
+        }
+    },
 
     "phong": {
         "description": "Default gl2 program used for testing.",
