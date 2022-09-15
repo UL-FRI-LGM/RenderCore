@@ -18,7 +18,7 @@ export class GLTextureManager {
 
 
 		this._defaultTexture = new Texture(
-			undefined,
+			null,
 			Texture.ClampToEdgeWrapping,
 			Texture.ClampToEdgeWrapping,
 			Texture.NearestFilter,
@@ -32,7 +32,7 @@ export class GLTextureManager {
 		this.updateTexture(this._defaultTexture, false);
 		
 		this._defaultCubeTexture = new CubeTexture({
-			textures: undefined,
+			textures: null,
 			wrapS: Texture.ClampToEdgeWrapping,
 			wrapT: Texture.ClampToEdgeWrapping,
 			wrapR: Texture.ClampToEdgeWrapping,

@@ -4,12 +4,14 @@
 import {_Math} from '../math/Math.js';
 
 export class Texture {
+	static DEFAULT_IMAGE = null;
+
 
 	constructor(image, wrapS, wrapT, minFilter, magFilter, internalFormat, format, type, width = 1024, height = 1024) {
 		this._uuid = _Math.generateUUID();
 		this.type = "Texture";
 
-		this._image = (image) ? image : 	this.DefaultImage;
+		this._image = (image) ? image : Texture.DEFAULT_IMAGE;
 
 		// Filters
 		this._magFilter = magFilter !== undefined ? magFilter : 	this.LinearFilter;
