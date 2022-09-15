@@ -21,7 +21,7 @@ export class ZSpriteBasicMaterial extends CustomShaderMaterial {
         this.setUniform("SpriteSize", "SpriteSize" in args ? args.SpriteSize : [1.0, 1.0]);
 
         this.color = args.color ? args.color : new Color(Math.random() * 0xffffff);
-        this.emissive = args.emissive ? args.emissive : new Color(Math.random() * 0xffffff);
+        this.emissive = args.emissive ? args.emissive : new Color(Math.random() * 0x000000);
         this.diffuse = args.diffuse ? args.diffuse : new Color(Math.random() * 0xffffff);
     }
 

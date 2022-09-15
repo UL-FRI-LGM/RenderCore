@@ -13,7 +13,7 @@ export class SpriteBasicMaterial extends CustomShaderMaterial {
         this.programName = "basic_sprite";
 
         //ASSEMBLE MATERIAL
-        this.emissive = args.emissive ? args.emissive : new Color(Math.random() * 0xffffff);
+        this.emissive = args.emissive ? args.emissive : new Color(Math.random() * 0x000000);
         this.color = args.color ? args.color : new Color(Math.random() * 0xffffff);
         this.drawCircles = args.drawCircles ? args.drawCircles : false;
 

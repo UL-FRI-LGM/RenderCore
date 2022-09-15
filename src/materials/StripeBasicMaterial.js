@@ -9,7 +9,7 @@ export class StripeBasicMaterial extends CustomShaderMaterial {
         this.type = "StripeBasicMaterial";
         this.programName = "basic_stripe";
         this._color = new Color(Math.random() * 0xffffff);
-        this._emissive = new Color(Math.random() * 0xffffff);
+        this._emissive = new Color(Math.random() * 0x000000);
         this._lineWidth = 1.0;
     }
 
