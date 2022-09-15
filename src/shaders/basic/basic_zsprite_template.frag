@@ -22,6 +22,10 @@ struct PLight {
     vec3 color;
     float distance;
     float decay;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 #fi
 
@@ -105,6 +109,15 @@ in vec3 fragVPos;
 
 //FUNCTIONS
 //**********************************************************************************************************************
+#if (PLIGHTS || SLIGHTS)
+float calcAttenuation(float constant, float linear, float quadratic, float distance) {
+    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
+    //float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
+    
+    return 1.0 / (constant + linear * distance + quadratic * (distance * distance));
+}
+#fi
+
 #if (PLIGHTS)
     // Calculates the point light color contribution
     vec3 calcPointLight(PLight light) {
@@ -113,8 +126,7 @@ in vec3 fragVPos;
         if(light.distance > 0.0 && distance > light.distance) return vec3(0.0, 0.0, 0.0);
 
         // Attenuation
-        //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
-        float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
+        float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
 
         // Combine results
         vec3 diffuse = light.color * material.diffuse * attenuation;

@@ -11,6 +11,11 @@ export class SpotLight extends Light {
 
         this._distance = args.distance ? args.distance : 0;
 		this._decay = args.decay ? args.decay : 1;
+
+		this._constant = (args.constant !== undefined) ? args.constant : 1.0;
+		this._linear = (args.linear !== undefined) ? args.linear : 0.01;
+		this._quadratic = (args.quadratic !== undefined) ? args.quadratic : 0.0001;
+
         this._cutoff = args.cutoff ? args.cutoff : Math.PI/4.0;
         this._outerCutoff = args.outerCutoff ? args.outerCutoff : this.cutoff * 1.1;
         this._direction = args.direction ? args.direction : new Vector3(0, 0, -1);
@@ -41,6 +46,38 @@ export class SpotLight extends Light {
 			this._onChangeListener.objectUpdate(update)
 		}
 	}
+
+	get constant(){ return this._constant; }
+	set constant(constant) {
+		this._constant = constant;
+
+		// Notify onChange subscriber
+		if (this._onChangeListener) {
+			var update = {uuid: this._uuid, changes: {constant: this._constant}};
+			this._onChangeListener.objectUpdate(update)
+		}
+	}
+	get linear(){ return this._linear; }
+	set linear(linear) {
+		this._linear = linear;
+
+		// Notify onChange subscriber
+		if (this._onChangeListener) {
+			var update = {uuid: this._uuid, changes: {linear: this._linear}};
+			this._onChangeListener.objectUpdate(update)
+		}
+	}
+	get quadratic(){ return this._quadratic; }
+	set quadratic(quadratic) {
+		this._quadratic = quadratic;
+
+		// Notify onChange subscriber
+		if (this._onChangeListener) {
+			var update = {uuid: this._uuid, changes: {quadratic: this._quadratic}};
+			this._onChangeListener.objectUpdate(update)
+		}
+	}
+	
     get cutoff(){
         return this._cutoff;
     }

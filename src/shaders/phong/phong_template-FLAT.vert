@@ -18,6 +18,10 @@ struct PLight {
     vec3 color;
     float distance;
     float decay;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 #fi
 #if (SLIGHTS)
@@ -30,6 +34,10 @@ struct SLight {
     float cutoff;
     float outerCutoff;
     vec3 direction;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 #fi
 
@@ -106,6 +114,15 @@ uniform float alpha;
 
 //FUNCTIONS
 //**********************************************************************************************************************
+#if (PLIGHTS || SLIGHTS)
+float calcAttenuation(float constant, float linear, float quadratic, float distance) {
+    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
+    //float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
+    
+    return 1.0 / (constant + linear * distance + quadratic * (distance * distance));
+}
+#fi
+
 #if (DLIGHTS)
 vec3 calcDirectLight (DLight light, vec3 normal, vec3 viewDir) {
 
@@ -143,8 +160,7 @@ vec3 calcPointLight (vec3 fragVPos, PLight light, vec3 normal, vec3 viewDir) {
     float specularF = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
 
     // Attenuation
-    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
-    float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
+    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
 
     // Combine results
     vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
@@ -179,8 +195,7 @@ vec3 calcSpotLight (vec3 fragVPos, SLight light, vec3 normal, vec3 viewDir) {
     float specularF = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
 
     // Attenuation
-    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
-    float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
+    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
 
     // Combine results
     vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;

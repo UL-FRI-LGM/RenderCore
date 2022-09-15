@@ -35,6 +35,10 @@ struct PLight {
     float minBias;
     float maxBias;
     float shadowFar;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 #fi
 #if (SLIGHTS)
@@ -54,6 +58,10 @@ struct SLight {
     bool hardShadows;
     float minBias;
     float maxBias;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 #fi
 
@@ -186,6 +194,15 @@ in vec3 v_position_tangentspace;
 
 //FUNCTIONS
 //**********************************************************************************************************************
+#if (PLIGHTS || SLIGHTS)
+float calcAttenuation(float constant, float linear, float quadratic, float distance) {
+    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
+    //float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
+    
+    return 1.0 / (constant + linear * distance + quadratic * (distance * distance));
+}
+#fi
+
 #if (DLIGHTS)
 vec3 calcDirectLight (DLight light, vec3 normal, vec3 viewDir) {
 
@@ -287,8 +304,7 @@ vec3 calcPointLight (PLight light, vec3 normal, vec3 viewDir) {
     }
 
     // Attenuation
-    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
-    float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
+    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
 
     // Combine results
     vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
@@ -322,8 +338,7 @@ vec3 calcPointLight_tangentspace (PLight light, vec3 lightPosition, vec3 viewDir
     }
 
     // Attenuation
-    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
-    float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
+    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
 
     // Combine results
     //vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
@@ -381,8 +396,7 @@ vec3 calcSpotLight (SLight light, vec3 normal, vec3 viewDir) {
     }
 
     // Attenuation
-    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
-    float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
+    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
 
     // Combine results
     vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
@@ -425,8 +439,7 @@ vec3 calcSpotLight_tangentspace (SLight light, vec3 lightPosition, vec3 lightDir
     }
 
     // Attenuation
-    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
-    float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
+    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
 
     // Combine results
     //vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;

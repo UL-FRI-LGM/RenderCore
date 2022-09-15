@@ -129,7 +129,7 @@ const CoreControl = {
         const aLight = new RC.AmbientLight(new RC.Color("#FFFFFF"), 0.0625);
         scene.add(aLight);
 
-        const pLight = new RC.PointLight(new RC.Color("#FFFFFF"), 2.0, 0.0, 0.0625);
+        const pLight = new RC.PointLight(new RC.Color("#FFFFFF"), 2.0, 0.0, 0.0625, {constant: 1.0, linear: 0.1, quadratic: 0.01});
         pLight.position.set(0, 0, 8);
         scene.add(pLight);
 

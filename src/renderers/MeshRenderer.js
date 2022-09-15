@@ -375,6 +375,7 @@ export class MeshRenderer extends Renderer {
 					}
 					buffer = this._glManager.getAttributeBuffer(a_Translation);
 					attributeSetter["a_Translation"].set(buffer, 4, object.instanced, a_Translation.divisor);
+					break;
 				case "gl_InstanceID":
 					// For some reason gl_InstanceID is considered an attribute. Ignore.
 					break;
@@ -841,6 +842,16 @@ export class MeshRenderer extends Renderer {
 			if (uniformSetter[prefix + ".shadowFar"]) {
 				uniformSetter[prefix + ".shadowFar"].set(light.shadowFar);
 			}
+
+			if (uniformSetter[prefix + ".constant"]) {
+				uniformSetter[prefix + ".constant"].set(light.constant);
+			}
+			if (uniformSetter[prefix + ".linear"]) {
+				uniformSetter[prefix + ".linear"].set(light.linear);
+			}
+			if (uniformSetter[prefix + ".quadratic"]) {
+				uniformSetter[prefix + ".quadratic"].set(light.quadratic);
+			}
 		}
 
 		// SPOT LIGHTS
@@ -892,6 +903,16 @@ export class MeshRenderer extends Renderer {
 			}
 			if (uniformSetter[prefix + ".maxBias"]) {
 				uniformSetter[prefix + ".maxBias"].set(light.maxBias);
+			}
+
+			if (uniformSetter[prefix + ".constant"]) {
+				uniformSetter[prefix + ".constant"].set(light.constant);
+			}
+			if (uniformSetter[prefix + ".linear"]) {
+				uniformSetter[prefix + ".linear"].set(light.linear);
+			}
+			if (uniformSetter[prefix + ".quadratic"]) {
+				uniformSetter[prefix + ".quadratic"].set(light.quadratic);
 			}
 		}
 	}
@@ -1018,7 +1039,11 @@ export class MeshRenderer extends Renderer {
 					hardShadows: true,
 					minBias: 0.005,
 					maxBias: 0.05,
-					shadowFar: 128.0
+					shadowFar: 128.0,
+
+					constant: light.constant,
+					linear: light.linear,
+					quadratic: light.quadratic,
 				};
 
 				// Move the light to camera space
@@ -1077,7 +1102,11 @@ export class MeshRenderer extends Renderer {
 					castShadows: undefined,
 					hardShadows: true,
 					minBias: 0.005,
-					maxBias: 0.05
+					maxBias: 0.05,
+
+					constant: light.constant,
+					linear: light.linear,
+					quadratic: light.quadratic,
 				};
 
 				// Move the light to camera space

@@ -35,6 +35,10 @@ struct PLight {
     float minBias;
     float maxBias;
     float shadowFar;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 #fi
 #if (SLIGHTS)
@@ -54,6 +58,10 @@ struct SLight {
     bool hardShadows;
     float minBias;
     float maxBias;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 #fi
 

@@ -18,6 +18,10 @@ precision mediump int;
 //     vec3 color;
 //     float distance;
 //     float decay;
+
+//     float constant;
+//     float linear;
+//     float quadratic;
 // };
 // #fi
 // #if (SLIGHTS)
@@ -29,6 +33,10 @@ precision mediump int;
 //     float cutoff;
 //     float outerCutoff;
 //     vec3 direction;
+
+//     float constant;
+//     float linear;
+//     float quadratic;
 // };
 // #fi
 

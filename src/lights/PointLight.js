@@ -16,6 +16,10 @@ export class PointLight extends Light {
 		this._distance = (distance !== undefined) ? distance : 0;
 		this._decay = (decay !== undefined) ? decay : 1;
 
+		this._constant = (args.constant !== undefined) ? args.constant : 1.0;
+		this._linear = (args.linear !== undefined) ? args.linear : 0.01;
+		this._quadratic = (args.quadratic !== undefined) ? args.quadratic : 0.0001;
+
 		const cameraXp = new PerspectiveCamera(90, 1, 8, 128);
 		const cameraXn = new PerspectiveCamera(90, 1, 8, 128);
 		const cameraYp = new PerspectiveCamera(90, 1, 8, 128);
@@ -92,6 +96,37 @@ export class PointLight extends Light {
 			this._onChangeListener.objectUpdate(update)
 		}
     }
+
+	get constant(){ return this._constant; }
+	set constant(constant) {
+		this._constant = constant;
+
+		// Notify onChange subscriber
+		if (this._onChangeListener) {
+			var update = {uuid: this._uuid, changes: {constant: this._constant}};
+			this._onChangeListener.objectUpdate(update)
+		}
+	}
+	get linear(){ return this._linear; }
+	set linear(linear) {
+		this._linear = linear;
+
+		// Notify onChange subscriber
+		if (this._onChangeListener) {
+			var update = {uuid: this._uuid, changes: {linear: this._linear}};
+			this._onChangeListener.objectUpdate(update)
+		}
+	}
+	get quadratic(){ return this._quadratic; }
+	set quadratic(quadratic) {
+		this._quadratic = quadratic;
+
+		// Notify onChange subscriber
+		if (this._onChangeListener) {
+			var update = {uuid: this._uuid, changes: {quadratic: this._quadratic}};
+			this._onChangeListener.objectUpdate(update)
+		}
+	}
 
 
 	toJson() {
