@@ -91,7 +91,7 @@ export class GLManager {
 	 * Updates object geometry attributes (creates GL buffers or updates them if they already exist)
 	 * @param object
 	 */
-	updateObjectData(object) {
+	updateObjectData(object, material) {
 		// BufferedGeometry
 		let geometry = object.geometry;
 
@@ -141,9 +141,6 @@ export class GLManager {
 		}
 		// endregion
 
-		// region MATERIAL ATTRIBUTES
-		let material = object.material;
-
 		// Update textures
 		let textures = material.maps;
 
@@ -174,8 +171,8 @@ export class GLManager {
 		if (instanceData) this._textureManager.updateTexture(instanceData, false);
 
 		// CustomShaderMaterial may specify extra attributes
-		if (object.material instanceof CustomShaderMaterial) {
-			this.updateCustomShaderAttributes(object.material);
+		if (material instanceof CustomShaderMaterial) {
+			this.updateCustomShaderAttributes(material);
 		}
 		//endregion
 	}

@@ -164,7 +164,7 @@ export class MeshRenderer extends Renderer {
 		}
 		if (this._pickSecondaryEnabled) {
 			this._pickSecondaryEnabled = false;
-			if (this._pickedObject3D && this._pickedObject3D.instanced)
+			if (this._pickedObject3D)
 				this.pick_instance(this._pickedObject3D, camera);
 			return;
 		}
@@ -274,10 +274,8 @@ export class MeshRenderer extends Renderer {
 			}
 
 			const mat = object.pickingMaterial;
-			// picking material attribs are not updated in standard Mesh update.
-			if (mat instanceof CustomShaderMaterial) {
-				this._glManager.updateCustomShaderAttributes(mat);
-			}
+			this._glManager.updateObjectData(object, mat);
+
 			this._setupProgram(object, camera, mat);
 
 			this._setup_material_side(mat.side);
@@ -292,10 +290,8 @@ export class MeshRenderer extends Renderer {
 			const object = list[i];
 
 			const mat = object.outlineMaterial ? object.outlineMaterial : this._defaultOutlineMat;
-			// outline material attribs are not updated in standard Mesh update.
-			if (object.outlineMaterial && mat instanceof CustomShaderMaterial) {
-				this._glManager.updateCustomShaderAttributes(mat);
-			}
+			this._glManager.updateObjectData(object, mat);
+
 			this._setupProgram(object, camera, mat);
 
 			this._setup_material_side(mat.side);
@@ -417,7 +413,8 @@ export class MeshRenderer extends Renderer {
 					buffer = this._glManager.getAttributeBuffer(a_Translation);
 					attributeSetter["a_Translation"].set(buffer, 4, object.instanced, a_Translation.divisor);
 				case "gl_InstanceID":
-					// For some reason gl_InstanceID is considered an attribute. Ignore.
+				case "gl_VertexID":
+					// For some reason gl_InstanceID and gl_VertexID are considered attributes. Ignore.
 					break;
 				default:
 					let found = false;
