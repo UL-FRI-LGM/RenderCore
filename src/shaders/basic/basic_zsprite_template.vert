@@ -58,11 +58,18 @@ in vec3 VPos;       // Vertex position
 
 #if (INSTANCED)
     uniform Material material;
+    #if (PICK_MODE_UINT)
+        flat out uint InstanceID;
+    #fi
+    #if (OUTLINE)
+        uniform bool u_OutlineGivenInstances;
+        in  int  a_OutlineInstances;
+    #fi
 #fi
 
 #if (OUTLINE)
-out vec3 v_normal_viewspace;
-out vec3 v_ViewDirection_viewspace;
+    out vec3 v_normal_viewspace;
+    out vec3 v_ViewDirection_viewspace;
 #fi
 
 //MAIN
@@ -72,8 +79,13 @@ void main() {
     vec4 VPos_viewspace;
 
     #if (INSTANCED)
+        int iID = gl_InstanceID;
+        #if (OUTLINE)
+            if (u_OutlineGivenInstances)
+                iID = a_OutlineInstances;
+        #fi
         int   tsx = textureSize(material.instanceData, 0).x;
-        ivec2 tc  = ivec2(gl_InstanceID % tsx, gl_InstanceID / tsx);
+        ivec2 tc  = ivec2(iID % tsx, iID / tsx);
         vec4  pos = texelFetch(material.instanceData, tc, 0);
         // see also texelFetchOffset about how to get neigboring texels
 
@@ -119,5 +131,9 @@ void main() {
 
         float dToCam = length(VPos_viewspace.xyz);
         v_ViewDirection_viewspace = -VPos_viewspace.xyz / dToCam;
+    #fi
+
+    #if (INSTANCED && PICK_MODE_UINT)
+        InstanceID = uint(iID);
     #fi
  }

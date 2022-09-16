@@ -38,11 +38,13 @@ export class PickingShaderMaterial extends CustomShaderMaterial {
 
 
             if(pickMode === PickingShaderMaterial.PICK_MODE.RGB){
+                this.removeUniform("u_PickInstance");
                 this.rmSBFlag("PICK_MODE_UINT");
                 this.addSBFlag("PICK_MODE_RGB");
             }else if(pickMode === PickingShaderMaterial.PICK_MODE.UINT){
                 this.rmSBFlag("PICK_MODE_RGB");
                 this.addSBFlag("PICK_MODE_UINT");
+                this.setUniform("u_PickInstance", false);
             }else{
                 console.error("Unknown pick mode: [" + pickMode + "].");
             }

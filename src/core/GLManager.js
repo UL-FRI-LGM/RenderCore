@@ -81,11 +81,17 @@ export class GLManager {
 		}
 	}
 
+	updateCustomShaderAttributes(material) {
+		// Update GL version of all of the custom attributes
+		for (const name of Object.keys(material._attributes))
+			this._attributeManager.updateAttribute(material._attributes[name], this._gl.ARRAY_BUFFER);
+	}
+
 	/**
 	 * Updates object geometry attributes (creates GL buffers or updates them if they already exist)
 	 * @param object
 	 */
-	updateObjectData(object) {
+	updateObjectData(object, material) {
 		// BufferedGeometry
 		let geometry = object.geometry;
 
@@ -135,9 +141,6 @@ export class GLManager {
 		}
 		// endregion
 
-		// region MATERIAL ATTRIBUTES
-		let material = object.material;
-
 		// Update textures
 		let textures = material.maps;
 
@@ -168,15 +171,8 @@ export class GLManager {
 		if (instanceData) this._textureManager.updateTexture(instanceData, false);
 
 		// CustomShaderMaterial may specify extra attributes
-		if (object.material instanceof CustomShaderMaterial) {
-			let customAttributes = object.material._attributes;
-
-			// Update GL version of all of the custom attributes
-			for (let name in customAttributes) {
-				if (customAttributes.hasOwnProperty(name)) {
-					this._attributeManager.updateAttribute(customAttributes[name], this._gl.ARRAY_BUFFER);
-				}
-			}
+		if (material instanceof CustomShaderMaterial) {
+			this.updateCustomShaderAttributes(material);
 		}
 		//endregion
 	}

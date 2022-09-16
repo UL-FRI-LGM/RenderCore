@@ -38,6 +38,10 @@ export class Texture {
 		this._width = width;
 		this._height = height;
 
+		// Set UNPACK_FLIP_Y_WEBGL - this is needed for Image data source.
+		// Set it to false when loading data from raw arrays where first data is at (0,0).
+		this._flipy = true;
+
 		this._dirty = true;
 	}
 
@@ -83,6 +87,9 @@ export class Texture {
 	}
 	get height() {
 		return this._height;
+	}
+	get flipy() {
+		return this._flipy;
 	}
 	// endregion
 
@@ -143,6 +150,13 @@ export class Texture {
 	set height(value) {
 		if (value !== this._height) {
 			this._height = value;
+			this._dirty = true;
+		}
+	}
+
+	set flipy(value) {
+		if (value !== this._flipy) {
+			this._flipy = value;
 			this._dirty = true;
 		}
 	}

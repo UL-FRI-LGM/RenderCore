@@ -16,6 +16,8 @@ layout(location = 0) out vec4 objectID;
 #fi
 #if(PICK_MODE_UINT)
 layout(location = 0) out uint objectID;
+uniform bool u_PickInstance;
+flat in uint InstanceID;
 #fi
 
 
@@ -26,6 +28,9 @@ void main() {
     objectID = vec4(u_RGB_ID, 1.0);
     #fi
     #if(PICK_MODE_UINT)
-    objectID = u_UINT_ID;
+    if (u_PickInstance)
+        objectID = InstanceID;
+    else
+        objectID = u_UINT_ID;
     #fi
 }

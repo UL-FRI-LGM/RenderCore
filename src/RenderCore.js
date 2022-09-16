@@ -35,6 +35,7 @@ export {SphericalHarmonics3} from './math/SphericalHarmonics3.js';
 
 // Loaders
 export {Cache} from './loaders/Cache.js';
+export {ImageCache, TextureCache} from './loaders/ImageCache.js';
 export {LoadingManager} from './loaders/LoadingManager.js';
 export {XHRLoader} from './loaders/XHRLoader.js';
 export {ShaderLoader} from './loaders/ShaderLoader.js';

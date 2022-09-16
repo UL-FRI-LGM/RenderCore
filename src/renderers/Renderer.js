@@ -65,6 +65,9 @@ export class Renderer {
 
 		//viewport
 		this._viewport = {x: 0, y: 0, width: this._canvas.width, height: this._canvas.height};
+
+		//logLevel: 0 - error, 1 - warning, 2 - info, 3 - debug
+		this._logLevel = 2;
 	}
 
 	render(scene, camera, renderTarget, cubeTarget = false, side = 0) {
@@ -203,7 +206,8 @@ export class Renderer {
 
 		// Called when the program template is loaded.. Initiates shader compilation
 		let onLoad = function (programTemplateSrc) {
-			console.log("(Down)loaded: " + program.programID + ": " + programName + '.');
+			if (scope._logLevel >= 2)
+				console.log("(Down)loaded: " + program.programID + ": " + programName + '.');
 			scope._glProgramManager.addTemplate(programTemplateSrc);
 			scope._loadingPrograms.delete(program.programID);
 		};
@@ -216,7 +220,8 @@ export class Renderer {
 
 		// Check if the program is already loading
 		if (!this._loadingPrograms.has(program.programID)) {
-			console.log("(Down)loading: " + program.programID + ": " + programName + '.');
+			if (this._logLevel >= 2)
+				console.log("(Down)loading: " + program.programID + ": " + programName + '.');
 			this._loadingPrograms.set(program.programID, program);
 
 			// Initiate loading

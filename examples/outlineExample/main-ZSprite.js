@@ -107,6 +107,7 @@ const CoreControl = {
             // RC.Texture.R32F, RC.Texture.R32F, RC.Texture.FLOAT,
             RC.Texture.RGBA32F, RC.Texture.RGBA, RC.Texture.FLOAT,
             Nx, Ny);
+        this.tex_insta_pos.flipy = false;
 
         // Testing creation of texture from JS array, simple checker pattern.
         let at = new Uint8Array(2 * 2 * 2);
@@ -265,6 +266,8 @@ const CoreControl = {
         sprite.instanced = true;
         sprite.instanceCount = this.tex_insta_num;
         sprite.drawOutline = true;
+        // outline only 100-th and first 10 odd ones, skipping instance 0.
+        sprite.outlineMaterial.outline_instances_setup([100, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
         scene.add(sprite);
 
         let sm2 = new RC.ZSpriteBasicMaterial( { SpriteMode: RC.SPRITE_SPACE_WORLD, SpriteSize: [8, 8],
@@ -449,6 +452,7 @@ function iterateSceneR(object, callback) {
 
 const OriginalMats = [];
 const MultiMats = [];
+const InstaCountMap = new Map();
 const RenderPass_MainShader = new RC.RenderPass(
     // Rendering pass type
     RC.RenderPass.BASIC,
@@ -512,6 +516,8 @@ const RenderPass_MainMulti = new RC.RenderPass(
                     MultiMats.push(object._outlineMaterial);
                 else
                     MultiMats.push(multi);
+                if (object._instanced && object._outlineMaterial.getUniform("u_OutlineGivenInstances"))
+                    InstaCountMap.set(object, object._instanceCount);
             }
         });
     },
@@ -524,7 +530,8 @@ const RenderPass_MainMulti = new RC.RenderPass(
             if(object.drawOutline) {
                 object.material = MultiMats[m_index];
                 m_index++;
-
+                if (object._instanced && object._outlineMaterial.getUniform("u_OutlineGivenInstances"))
+                    object._instanceCount = object._outlineMaterial.getAttribute("a_OutlineInstances").count();
                 object.visible = true;
             }else if (object instanceof RC.Scene || object instanceof RC.Group){
                 object.visible = true;
@@ -537,6 +544,9 @@ const RenderPass_MainMulti = new RC.RenderPass(
     },
 
     function(textureMap, additionalData) {
+        for (const [key, value] of InstaCountMap) {
+            key._instanceCount = value;
+        }
     },
 
     // Target
