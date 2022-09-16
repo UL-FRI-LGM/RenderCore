@@ -61,6 +61,8 @@ export class Material {
 		this._heightMap = null;
 		this._instanceData = null;
 
+		this._normalFlat = false;
+
 		this._heightScale = 0.125;
 		this._blinn = true;
 
@@ -415,6 +417,15 @@ export class Material {
 	get normalMap() { return this._normalMap; }
 	get heightMap() { return this._heightMap; }
 	get instanceData() { return this._instanceData; }
+
+	get normalFlat() { return this._normalFlat; }
+	set normalFlat(normalFlat){
+		// Invalidate required program template
+		this._requiredProgramTemplate = null;
+
+		this._normalFlat = normalFlat;
+	}
+
 	get programName(){ return this._programName; }
 	get programName2() {
 		switch (this.shadingType) {
@@ -581,6 +592,8 @@ export class Material {
 		if(this._specularMap) this._flags.push("SPECULAR_MAP");
 		if(this._normalMap) this._flags.push("NORMAL_MAP");
 		if(this._heightMap) this._flags.push("HEIGHT_MAP");
+
+		if(this._normalFlat) this._flags.push("NORMAL_FLAT");
 	}
 
 	toJson() {

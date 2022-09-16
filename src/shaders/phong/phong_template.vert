@@ -93,7 +93,9 @@ uniform mat3 NMat;  // Normal Matrix
 in mat4 MMat;
 #fi
 in vec3 VPos;       // Vertex position
+#if (!NORMAL_MAP && !NORMAL_FLAT)
 in vec3 VNorm;      // Vertex normal
+#fi
 
 #if (TEXTURE || DIFFUSE_MAP || SPECULAR_MAP || NORMAL_MAP)
     in vec2 uv;          // Texture coordinate
@@ -106,7 +108,9 @@ in vec3 VNorm;      // Vertex normal
 
 // Output transformed vertex position, normal and texture coordinate
 out vec3 fragVPos;
+#if (!NORMAL_MAP && !NORMAL_FLAT)
 out vec3 fragVNorm;
+#fi
 #if (TEXTURE || DIFFUSE_MAP || SPECULAR_MAP || NORMAL_MAP)
 out vec2 fragUV;
 #fi
@@ -243,13 +247,15 @@ void main() {
     gl_Position = PMat * VPos4;
     fragVPos = vec3(VPos4) / VPos4.w;
 
-    // Transform normal
-    //fragVNorm = vec3(NMat * VNorm);
-    #if (!INSTANCED)
-    fragVNorm = vec3(NMat * VNorm);
-    #fi
-    #if (INSTANCED)
-    fragVNorm = vec3(NMat * mat3(MMat) * VNorm);
+    #if (!NORMAL_MAP && !NORMAL_FLAT)
+        // Transform normal
+        //fragVNorm = vec3(NMat * VNorm);
+        #if (!INSTANCED)
+        fragVNorm = vec3(NMat * VNorm);
+        #fi
+        #if (INSTANCED)
+        fragVNorm = vec3(NMat * mat3(MMat) * VNorm);
+        #fi
     #fi
 
     #if (TEXTURE || DIFFUSE_MAP || SPECULAR_MAP || NORMAL_MAP)

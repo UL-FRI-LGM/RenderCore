@@ -131,8 +131,10 @@ float alpha = 1.0;
 #fi
 
 // From vertex shader
-in vec3 fragVNorm;
 in vec3 fragVPos;
+#if (!NORMAL_MAP && !NORMAL_FLAT)
+in vec3 fragVNorm;
+#fi
 
 #if (TEXTURE || DIFFUSE_MAP || SPECULAR_MAP || NORMAL_MAP)
     in vec2 fragUV;
@@ -707,31 +709,39 @@ void main() {
     #fi
 
 
-     #if (TEXTURE || DIFFUSE_MAP || SPECULAR_MAP || NORMAL_MAP)
-     vec2 texCoords = fragUV;
-     #fi
+    #if (TEXTURE || DIFFUSE_MAP || SPECULAR_MAP || NORMAL_MAP)
+        vec2 texCoords = fragUV;
+    #fi
 
 
     #if (!NORMAL_MAP)
-    vec3 viewDir = normalize(-fragVPos);
+        #if (NORMAL_FLAT)
+            vec3 fdx = dFdx(fragVPos);
+            vec3 fdy = dFdy(fragVPos);
+            vec3 normal = normalize(cross(fdx, fdy));
 
-        #if (HEIGHT_MAP)
-        texCoords = parallaxOffset(texCoords, viewDir);
-        if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0) discard;
+            //vec3 viewDir = vec3(0.0, 0.0, -1.0); //view direction in viewspace!
+        #else if (!NORMAL_FLAT)
+            vec3 normal = normalize(fragVNorm);
         #fi
 
-    vec3 normal = normalize(fragVNorm);
-    #else
-    vec3 viewDir = normalize(-v_position_tangentspace);
+        vec3 viewDir = normalize(-fragVPos);
 
         #if (HEIGHT_MAP)
-        texCoords = parallaxOffset(texCoords, viewDir);
-        if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0) discard;
+            texCoords = parallaxOffset(texCoords, viewDir);
+            if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0) discard;
+        #fi
+    #else
+        vec3 viewDir = normalize(-v_position_tangentspace);
+
+        #if (HEIGHT_MAP)
+            texCoords = parallaxOffset(texCoords, viewDir);
+            if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0) discard;
         #fi
         
-    vec3 normal = texture(material.normalMap, texCoords).rgb;
-    normal = normal*2.0 - 1.0;   
-    normal = normalize(normal);
+        vec3 normal = texture(material.normalMap, texCoords).rgb;
+        normal = normal*2.0 - 1.0;   
+        normal = normalize(normal);
     #fi
 
  
