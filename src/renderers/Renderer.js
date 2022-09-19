@@ -332,6 +332,7 @@ export class Renderer {
 		return this._autoClear;
 	}
 
+	get clearColor() { return this._glManager.clearColor; }
 	set clearColor(hexColor) {
 		let components = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexColor);
 		if (components) {

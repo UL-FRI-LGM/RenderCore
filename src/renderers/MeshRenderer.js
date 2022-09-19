@@ -513,6 +513,9 @@ export class MeshRenderer extends Renderer {
 		if (uniformSetter["time"] !== undefined) {
 			uniformSetter["time"].set((new Date).getMilliseconds());
 		}
+		if (uniformSetter["u_clearColor"] !== undefined) {
+			uniformSetter["u_clearColor"].set(this.clearColor.toArray());
+		}
 
 
 		this._setup_light_uniforms(uniformSetter);

@@ -476,6 +476,10 @@ export class GLManager {
 		this._gl.clear(bits);
 	};
 
+	get clearColor() { return this._clearColor; }
+	set clearColor(clearColor) {
+		this.setClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+	}
 	/**
 	 * Sets clear color values
 	 * @param r Red
