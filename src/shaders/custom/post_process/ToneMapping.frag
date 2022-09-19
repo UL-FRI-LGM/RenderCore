@@ -16,6 +16,7 @@ struct Material {
 
 
 uniform Material material;
+uniform vec4 u_clearColor;
 uniform float MODE;
 uniform float gamma;
 uniform float exposure;
@@ -24,7 +25,7 @@ uniform float exposure;
     in vec2 fragUV;
 #fi
 
-out vec4 color;
+out vec4 ldrColor;
 
 
 //MAIN
@@ -34,20 +35,21 @@ void main() {
         //FINAL SHADER
         //const float gamma = 2.2;
         //const float exposure = 1.0;
-        vec3 hdrColor = texture(material.texture0, fragUV).rgb; //input color
+        vec4 hdrColor = texture(material.texture0, fragUV).rgba; //input color
     
         vec3 mapped;
         if (MODE == MODE_REINHARD){
             // reinhard tone mapping
-            mapped = hdrColor / (hdrColor + vec3(1.0));
+            mapped = hdrColor.rgb / (hdrColor.rgb + vec3(1.0));
         }else if (MODE == MODE_EXPOSURE){
             // exposure tone mapping
-            mapped = vec3(1.0) - exp(-hdrColor * exposure);
+            mapped = vec3(1.0) - exp(-hdrColor.rgb * exposure);
         }
         
         // gamma correction 
         mapped = pow(mapped, vec3(1.0 / gamma));
     
-        color = vec4(mapped, 1.0);
+        //ldrColor = vec4(mapped, 1.0);
+        ldrColor = mix(vec4(u_clearColor.rgb, 1.0), vec4(mapped, 1.0), hdrColor.a);
     #fi
 }
