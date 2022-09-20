@@ -105,6 +105,7 @@ const CoreControl = {
         renderQueue.pushRenderPass(RenderPass_MainShader); //normal scene render
         renderQueue.pushRenderPass(RenderPass_MainMulti); //render normals, view direction, depth, ... of outlined objects
         renderQueue.pushRenderPass(RenderPass_Outline); //computes outline based on multi render pass
+        renderQueue.pushRenderPass(RenderPass_Blend);
 
         return renderQueue;
     },
@@ -459,6 +460,42 @@ const RenderPass_Outline = new RC.RenderPass(
     },
 
     // Target
+    RC.RenderPass.TEXTURE,
+
+    // Viewport
+    { width: predef_width, height: predef_height },
+
+    // Bind depth texture to this ID
+    null,
+
+    [
+        {id: "color_outline", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
+    ]
+);
+
+const blendingMaterial = new RC.CustomShaderMaterial("blendingAdditive");
+blendingMaterial.lights = false; 
+const RenderPass_Blend = new RC.RenderPass(
+    // Rendering pass type
+    RC.RenderPass.POSTPROCESS,
+
+    // Initialize function
+    (textureMap, additionalData) => {},
+
+    // Preprocess function
+    (textureMap, additionalData) => {
+        return {
+            material: blendingMaterial, 
+            textures: [
+                textureMap["color_outline"],
+                textureMap["color_main"]
+            ]
+        };
+    },
+
+    (textureMap, additionalData) => {},
+
+    // Target
     RC.RenderPass.SCREEN,
 
     // Viewport
@@ -468,6 +505,6 @@ const RenderPass_Outline = new RC.RenderPass(
     null,
 
     [
-        {id: "color_outline", textureConfig: RC.RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG}
+        {id: "null", textureConfig: RC.RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG}
     ]
 );

@@ -90,7 +90,7 @@ void main() {
 
 
         // Depth Threshold
-        //float depthThreshold = _DepthThreshold * (1.0 - depthBL); //(1.0 - depthBL) - depth close is dark [0 - 1]
+        //float depthThreshold = _DepthThreshold * (1.0 - depthBL); //(1.0 - depthBL) instead of depthBL - depth close is dark [0 - 1]
         float depthThreshold = _DepthThreshold * (1.0 - depthBL) * normalThreshold;
         edgeDepth = edgeDepth > depthThreshold ? 1.0 : 0.0;
 
@@ -104,7 +104,7 @@ void main() {
 
 
         // Edge decision
-        float edge = max(edgeDepth, edgeNormal);
+        float edge = max(edgeDepth, edgeNormal); //edge is either 0 or 1
         // Edge color
         vec4 edgeColor = vec4(edgeColor.rgb, edgeColor.a * edge);
 
@@ -116,13 +116,16 @@ void main() {
         //color = vec4(texture(material.texture2, fragUV).rgb,  1.0); //VIEWDIR
         //color = vec4(vec3(texture(material.texture2, fragUV).rg, 0.0),  1.0); //VIEWDIR (ignore blue)
         //color = vec4(texture(material.texture3, fragUV).rgb,  1.0); //ORIGINAL
-        
+
+        //blend to output      
         /*if(edge == 1.0){
             color = edgeColor;
         }else{
             color = texture(material.texture3, fragUV).rgba;
         }*/
-
-        color = edgeColor * edge + texture(material.texture3, fragUV).rgba * (1.0 - edge);
+        //color = edgeColor * edge + texture(material.texture3, fragUV).rgba * (1.0 - edge);
+                
+        //edge is either 0 or 1 (alpha is either 0 or edgeColor.a), mask to output
+        color = edgeColor;
 	#fi
 }

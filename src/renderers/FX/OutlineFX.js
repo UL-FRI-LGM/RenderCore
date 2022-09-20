@@ -2,9 +2,7 @@ import { FX } from "./FX.js";
 import { CustomShaderMaterial } from "../../materials/CustomShaderMaterial.js";
 import { RenderPass } from "./../RenderPass.js";
 import { FRONT_AND_BACK_SIDE } from "../../constants.js";
-import { Scene } from "../../core/Scene.js";
-import { Group } from "../../objects/Group.js";
-import { Light } from "../../lights/Light.js";
+import { Mesh } from "../../RenderCore.js";
 
 
 const predef_width = document.body.clientWidth;
@@ -14,6 +12,7 @@ const predef_height = document.body.clientHeight;
 export class OutlineFX extends FX {
     static MODE_DEPTH = 0;
     static MODE_DISTANCE = 1;
+
 
     constructor(renderer, INPUTS = {}, args = {}, OUTPUTS = {}) {
         super(renderer, INPUTS, OUTPUTS);
@@ -26,7 +25,7 @@ export class OutlineFX extends FX {
         this.inputs.normal = this.inputs.normal ? this.inputs.normal : new FX.input("normal_outline");
         this.inputs.viewDir = this.inputs.viewDir ? this.inputs.viewDir : new FX.input("viewDir_outline");
 
-        this.outputs.color = this.outputs.color ? this.outputs.color : new FX.output("color_outline");
+        this.outputs.color = this.outputs.color ? this.outputs.color : new FX.output("OUTLINE_FX_OUT");
 
         args.scale = args.scale ? args.scale : 1.0;
         args.edgeColor = args.edgeColor ? args.edgeColor : [0.1, 0.3, 0.1, 1.0];
@@ -36,9 +35,12 @@ export class OutlineFX extends FX {
         args.depthNormalThresholdScale = args.depthNormalThresholdScale ? args.depthNormalThresholdScale : 7.0;
 
 
-        this._outline = new CustomShaderMaterial("outline", {scale: args.scale, edgeColor: args.edgeColor, _DepthThreshold: args.depthThreshold, _NormalThreshold: args.normalThreshold, _DepthNormalThreshold: args.depthNormalThreshold, _DepthNormalThresholdScale: args.depthNormalThresholdScale});
-        this._outline.lights = false;
-        const outline = this._outline;
+        this.outline = new CustomShaderMaterial("outline", {scale: args.scale, edgeColor: args.edgeColor, _DepthThreshold: args.depthThreshold, _NormalThreshold: args.normalThreshold, _DepthNormalThreshold: args.depthNormalThreshold, _DepthNormalThresholdScale: args.depthNormalThresholdScale});
+
+        this.gaussBlurHorizontal = new CustomShaderMaterial("gaussBlur", {horizontal: true, power: 1.0});
+        this.gaussBlurVertical = new CustomShaderMaterial("gaussBlur", {horizontal: false, power: 1.0});
+
+        this.blending = new CustomShaderMaterial("blendingAdditive");
 
 
         const visibility = {};
@@ -51,7 +53,8 @@ export class OutlineFX extends FX {
             // Initialize function
             function (textureMap, additionalData) {
                 FX.iterateSceneR(INPUTS.scene, function(object){
-                    if (object instanceof Scene || object instanceof Group || object instanceof Light) return;
+                    if(!(object instanceof Mesh)) return;
+
 
                     visibility[object._uuid] = object.visible;
                     origiMats[object._uuid] = object.material;
@@ -63,7 +66,8 @@ export class OutlineFX extends FX {
             // Preprocess function
             function (textureMap, additionalData) {
                 FX.iterateSceneR(INPUTS.scene, function(object){
-                    if (object instanceof Scene || object instanceof Group || object instanceof Light) return;
+                    if(!(object instanceof Mesh)) return;
+
 
                     if(!origiMats[object._uuid] || !multiMats[object._uuid]){
                         visibility[object._uuid] = object.visible;
@@ -85,7 +89,8 @@ export class OutlineFX extends FX {
 
             function (textureMap, additionalData) {
                 FX.iterateSceneR(INPUTS.scene, function(object){
-                    if (object instanceof Scene || object instanceof Group || object instanceof Light) return;
+                    if(!(object instanceof Mesh)) return;
+
 
                     if(!origiMats[object._uuid] || !multiMats[object._uuid]){
                         visibility[object._uuid] = object.visible;
@@ -127,16 +132,22 @@ export class OutlineFX extends FX {
             RenderPass.POSTPROCESS,
 
             // Initialize function
-            function (textureMap, additionalData) {
-            },
+            (textureMap, additionalData) => {},
 
             // Preprocess function
-            function (textureMap, additionalData) {
-                return {material: outline, textures: [textureMap[INPUTS.depth.name], textureMap[INPUTS.normal.name], textureMap[INPUTS.viewDir.name], textureMap[INPUTS.color.name]]};
+            (textureMap, additionalData) => {
+                return {
+                    material: this.outline, 
+                    textures: [
+                        textureMap[INPUTS.depth.name], 
+                        textureMap[INPUTS.normal.name], 
+                        textureMap[INPUTS.viewDir.name], 
+                        textureMap[INPUTS.color.name]
+                    ]
+                };
             },
 
-            function (textureMap, additionalData) {
-            },
+            (textureMap, additionalData) => {},
 
             // Target
             RenderPass.TEXTURE,
@@ -152,9 +163,126 @@ export class OutlineFX extends FX {
             ]
         );
 
+        const RenderPass_GaussH = new RenderPass(
+            // Rendering pass type
+            RenderPass.POSTPROCESS,
+
+            // Initialize function
+            (textureMap, additionalData) => {},
+
+            // Preprocess function
+            (textureMap, additionalData) => {
+                return {material: this.gaussBlurHorizontal, textures: [textureMap["color_outline"]]};
+            },
+
+            (textureMap, additionalData) => {},
+
+            // Target
+            RenderPass.TEXTURE,
+
+            // Viewport
+            { width: predef_width, height: predef_height },
+
+            // Bind depth texture to this ID
+            null,
+
+            [
+                {id: "gauss_h", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
+            ]
+        );
+
+        const RenderPass_GaussV = new RenderPass(
+            // Rendering pass type
+            RenderPass.POSTPROCESS,
+
+            // Initialize function
+            (textureMap, additionalData) => {},
+
+            // Preprocess function
+            (textureMap, additionalData) => {
+                return {material: this.gaussBlurVertical, textures: [textureMap["gauss_h"]]};
+            },
+
+            (textureMap, additionalData) => {},
+
+            // Target
+            RenderPass.TEXTURE,
+
+            // Viewport
+            { width: predef_width, height: predef_height },
+
+            // Bind depth texture to this ID
+            null,
+
+            [
+                {id: "gauss_hv", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
+            ]
+        );
+
+        const RenderPass_Blend = new RenderPass(
+            // Rendering pass type
+            RenderPass.POSTPROCESS,
+
+            // Initialize function
+            (textureMap, additionalData) => {},
+
+            // Preprocess function
+            (textureMap, additionalData) => {
+                return {
+                    material: this.blending, 
+                    textures: [
+                        textureMap["gauss_hv"],
+                        textureMap[INPUTS.color.name]
+                    ]
+                };
+            },
+
+            (textureMap, additionalData) => {},
+
+            // Target
+            RenderPass.TEXTURE,
+
+            // Viewport
+            { width: predef_width, height: predef_height },
+
+            // Bind depth texture to this ID
+            null,
+
+            [
+                {id: OUTPUTS.color.name, textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
+            ]
+        );
+
 
         this.pushRenderPass(RenderPass_Multi);
         this.pushRenderPass(RenderPass_Outline);
+
+        this.pushRenderPass(RenderPass_GaussH);
+        this.pushRenderPass(RenderPass_GaussV);
+
+        this.pushRenderPass(RenderPass_Blend);
+    }
+
+
+    get outline() { return this._outline; }
+    set outline(outline) {
+        this._outline = outline;
+        this._outline.lights = false;
+    }
+    get gaussBlurVertical() { return this._gaussBlurVertical; }
+    set gaussBlurVertical(gaussBlurVertical) {
+        this._gaussBlurVertical = gaussBlurVertical;
+        this._gaussBlurVertical.lights = false;
+    }
+    get gaussBlurHorizontal() { return this._gaussBlurHorizontal; }
+    set gaussBlurHorizontal(gaussBlurHorizontal) {
+        this._gaussBlurHorizontal = gaussBlurHorizontal;
+        this._gaussBlurHorizontal.lights = false;
+    }
+    get blending() { return this._blending; }
+    set blending(blending) {
+        this._blending = blending;
+        this._blending.lights = false; 
     }
 
     set scale(scale){
