@@ -27,6 +27,7 @@ export class OutlineFX extends FX {
 
         this.outputs.color = this.outputs.color ? this.outputs.color : new FX.output("OUTLINE_FX_OUT");
 
+
         args.scale = args.scale ? args.scale : 1.0;
         args.edgeColor = args.edgeColor ? args.edgeColor : [0.1, 0.3, 0.1, 1.0];
         args.depthThreshold = args.depthThreshold ? args.depthThreshold : 6.0;
@@ -41,6 +42,9 @@ export class OutlineFX extends FX {
         this.gaussBlurVertical = new CustomShaderMaterial("gaussBlur", {horizontal: false, power: 1.0});
 
         this.blending = new CustomShaderMaterial("blendingAdditive");
+
+
+        this.power = (args.power !== undefined) ? args.power : 1.0;
 
 
         const visibility = {};
@@ -302,6 +306,14 @@ export class OutlineFX extends FX {
     }
     set depthNormalThresholdScale(depthNormalThresholdScale){
         this._outline.setUniform("_DepthNormalThresholdScale", depthNormalThresholdScale);
+    }
+    
+    get power() { return this._power; }
+    set power(power) {
+        this._power = power;
+
+        this.gaussBlurHorizontal.setUniform("power", power);
+        this.gaussBlurVertical.setUniform("power", power);
     }
 
 };
