@@ -44,14 +44,6 @@ in vec3 VPos;       // Vertex position
     out vec2 fragUV;
 #fi
 
-#if (PLIGHTS)
-    out vec3 fragVPos;
-#fi
-
-#if (POINTS)
-    uniform float pointSize;
-#fi
-
 #if (CLIPPING_PLANES)
     out vec3 vViewPosition;
 #fi
@@ -106,11 +98,6 @@ void main() {
         vec4 VPos_clipspace = PMat * VPos_viewspace;
         gl_Position = VPos_clipspace + vec4(VPos.xy * 2.0 * SpriteSize.xy / viewport * VPos_clipspace.w, 0.0, 0.0);
     }
-
-    #if (PLIGHTS)
-        // Pass vertex position to fragment shader
-        fragVPos = vec3(VPos_viewspace) / VPos_viewspace.w;
-    #fi
 
     #if (COLORS)
         // Pass vertex color to fragment shader
