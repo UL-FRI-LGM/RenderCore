@@ -1,4 +1,13 @@
 {
+    "custom_blendingAdditive": {
+        "description": "Default gl2 program used for testing.",
+        "shaders": {
+            "vertex": "custom/blending/additive.vert",
+            "fragment": "custom/blending/additive.frag"
+        }
+    },
+
+
     "lambert-FLAT": {
         "description": "Default gl2 program used for testing.",
         "shaders": {
