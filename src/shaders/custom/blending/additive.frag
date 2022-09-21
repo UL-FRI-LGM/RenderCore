@@ -63,7 +63,8 @@ void main() {
         #elif (SRC_A_ONE_MINUS_SRC_ALPHA)
             #define SRC_A (1.0 - srcA)
         #else
-            #define SRC_A (srcA)
+            //#define SRC_A (srcA)
+            #define SRC_A (min(srcA, 1.0))
         #fi
 
         #if (DST_A_ONE)
@@ -73,7 +74,8 @@ void main() {
         #elif (DST_A_ONE_MINUS_SRC_ALPHA)
             #define DST_A (1.0 - srcA)
         #else
-            #define DST_A (1.0 - srcA)
+            //#define DST_A (1.0 - srcA)
+            #define DST_A (1.0 - min(srcA, 1.0))
         #fi
 
 
