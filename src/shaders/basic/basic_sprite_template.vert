@@ -63,7 +63,6 @@ void main() {
     // //vec4 VCenter_viewspace = MVMat * vec4(center, 1.0);
     #if (!INSTANCED && !INSTANCED_TRANSLATION)
     vec4 VPos_viewspace = MVMat * vec4(VPos, 1.0);
-    VPos_viewspace = MVMat * vec4(VPos + a_Translation.xyz, 1.0);
     #fi
     #if (INSTANCED)
     vec4 VPos_viewspace = MVMat * a_MMat * vec4(VPos, 1.0);
