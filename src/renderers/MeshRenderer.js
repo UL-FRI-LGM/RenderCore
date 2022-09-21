@@ -684,7 +684,7 @@ export class MeshRenderer extends Renderer {
 		for (let i = 0; i < cubeTextures.length; i++) {
 			const cubeTexture = "material.cubeTexture" + i;
 			if (uniformSetter[cubeTexture] !== undefined) {
-				uniformSetter[cubeTexture].set(this._glManager.getTexture(cubeTextures[i]), 20+i);
+				uniformSetter[cubeTexture].set(this._glManager.getCubeTexture(cubeTextures[i]), 20+i);
 			}else{
 				// console.warn("---------------------------------------------------");
 				// console.warn(object);
@@ -867,7 +867,7 @@ export class MeshRenderer extends Renderer {
 				uniformSetter[prefix + ".VPMat"].set(light.VPMat.elements);
 			}
 			if (uniformSetter[prefix + ".shadowmap"] !== undefined) {
-				uniformSetter[prefix + ".shadowmap"].set(this._glManager.getTexture(light.shadowmap), 10+i);
+				uniformSetter[prefix + ".shadowmap"].set(this._glManager.getCubeTexture(light.shadowmap), 10+i);
 			}
 			if (uniformSetter[prefix + ".castShadows"]) {
 				uniformSetter[prefix + ".castShadows"].set(light.castShadows);
