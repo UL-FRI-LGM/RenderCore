@@ -230,7 +230,13 @@ vec3 calcDirectLight (DLight light, vec3 normal, vec3 viewDir) {
     }
 
     // Combine results
-    vec3 diffuse  = light.color  * diffuseF * material.diffuse;
+    // vec3 diffuse  = light.color * diffuseF  * material.diffuse;
+    // vec3 specular = light.color * specularF * material.specular;
+    #if (COLORS)
+        vec3 diffuse  = light.color * diffuseF  * (fragVColor.rgb + material.diffuse);
+    #else
+        vec3 diffuse  = light.color * diffuseF  * material.diffuse;
+    #fi
     vec3 specular = light.color * specularF * material.specular;
 
     return (diffuse + specular);
@@ -259,8 +265,8 @@ vec3 calcDirectLight_tangentspace (DLight light, vec3 lightDirection, vec3 viewD
     }
 
     // Combine results
-    //vec3 diffuse  = light.color  * diffuseF * material.diffuse;
-    //vec3 specular = light.color * specularF * material.specular;
+    // vec3 diffuse  = light.color * diffuseF  * material.diffuse;
+    // vec3 specular = light.color * specularF * material.specular;
     #if (!DIFFUSE_MAP)
         vec3 diffuse  = light.color * diffuseF  * material.diffuse;
     #else
@@ -309,7 +315,13 @@ vec3 calcPointLight (PLight light, vec3 normal, vec3 viewDir) {
     float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
 
     // Combine results
-    vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
+    // vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
+    // vec3 specular = light.color * specularF * material.specular * attenuation;
+    #if (COLORS)
+        vec3 diffuse  = light.color * diffuseF  * (fragVColor.rgb + material.diffuse) * attenuation;
+    #else
+        vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
+    #fi
     vec3 specular = light.color * specularF * material.specular * attenuation;
 
     return (diffuse + specular);
@@ -401,7 +413,13 @@ vec3 calcSpotLight (SLight light, vec3 normal, vec3 viewDir) {
     float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
 
     // Combine results
-    vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
+    // vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
+    // vec3 specular = light.color * specularF * material.specular * attenuation;
+    #if (COLORS)
+        vec3 diffuse  = light.color * diffuseF  * (fragVColor.rgb + material.diffuse) * attenuation;
+    #else
+        vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
+    #fi
     vec3 specular = light.color * specularF * material.specular * attenuation;
 
     return (diffuse + specular) * intensity;
@@ -830,9 +848,6 @@ void main() {
         #end
     #fi
 
-    #if (COLORS)
-        color[0] += vec4(fragVColor.rgb, alpha);
-    #fi
 
     color[1] = vec4(normal, 1.0);
     color[2] = vec4(abs(fragVPos), 1.0);
