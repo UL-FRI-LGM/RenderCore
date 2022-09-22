@@ -59,7 +59,7 @@ export class Material {
 		this._specularMap = null;
 		this._normalMap = null;
 		this._heightMap = null;
-		this._instanceData = null;
+		this._instanceData = [];
 
 		this._normalFlat = false;
 
@@ -491,11 +491,11 @@ export class Material {
 
 		this._heightMap = heightMap;
 	}
-	set instanceData(instanceData){
+	addInstanceData(instanceDatum){
 		// Invalidate required program template
 		this._requiredProgramTemplate = null;
 
-		this._instanceData = instanceData;
+		this._instanceData.push(instanceDatum);
 	}
 
 	/**

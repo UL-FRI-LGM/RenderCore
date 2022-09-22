@@ -74,6 +74,13 @@
             "fragment": "basic/basic_zsprite_template.frag"
         }
     },
+    "basic_zline": {
+        "description": "ZLine instanced through texture; supports PICKING and OUTLINE modes.",
+        "shaders": {
+            "vertex": "basic/basic_zline_template.vert",
+            "fragment": "basic/basic_zline_template.frag"
+        }
+    },
 
     "basic_stripe": {
         "description": "Default gl2 program used for testing.",

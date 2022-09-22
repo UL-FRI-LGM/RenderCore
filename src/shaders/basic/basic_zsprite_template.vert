@@ -11,7 +11,7 @@ precision mediump float;
 struct Material {
     vec3 emissive;
     vec3 diffuse;
-    sampler2D instanceData;
+    sampler2D instanceData0;
     // The following could (should, really) be an int attribute with divisor 1
     // #if (OUTLINE)
     //    isampler2D instance_indices;
@@ -76,9 +76,9 @@ void main() {
             if (u_OutlineGivenInstances)
                 iID = a_OutlineInstances;
         #fi
-        int   tsx = textureSize(material.instanceData, 0).x;
+        int   tsx = textureSize(material.instanceData0, 0).x;
         ivec2 tc  = ivec2(iID % tsx, iID / tsx);
-        vec4  pos = texelFetch(material.instanceData, tc, 0);
+        vec4  pos = texelFetch(material.instanceData0, tc, 0);
         // see also texelFetchOffset about how to get neigboring texels
 
         VPos_viewspace = MVMat * vec4(pos.xyz, 1.0);

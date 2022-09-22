@@ -652,10 +652,10 @@ export class MeshRenderer extends Renderer {
 		}
 
 		const instanceData = material.instanceData;
-		if(instanceData) {
-			const texture = "material.instanceData";
+		for (let i = 0; i < instanceData.length; i++) {
+			const texture = "material.instanceData" + i;
 			if (uniformSetter[texture] !== undefined) {
-				uniformSetter[texture].set(this._glManager.getTexture(instanceData), 4);
+				uniformSetter[texture].set(this._glManager.getTexture(instanceData[i]), 10+i);
 			}else{
 				// console.warn("---------------------------------------------------");
 				// console.warn(object);
