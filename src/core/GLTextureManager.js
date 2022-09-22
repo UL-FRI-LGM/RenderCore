@@ -60,7 +60,7 @@ export class GLTextureManager {
 		}
 
 		// Check if the texture needs to be updated
-		if (!texture.dirty) {
+		if (!texture.dirty && !newTexture) {
 				return glTexture;
 		}
 
@@ -134,7 +134,7 @@ export class GLTextureManager {
 		}
 
 		// Check if the texture needs to be updated
-		if (!texture.dirty) {
+		if (!texture.dirty && !newTexture) {
 				return glTexture;
 		}
 
