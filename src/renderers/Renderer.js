@@ -310,8 +310,10 @@ export class Renderer {
 	/**
 	 * Clears cached attributes such as position arrays, indices and uv coordinates as well as cached textures.
 	 */
-	clearCachedAttributes() {
-		this._glManager.clearAttributeBuffers();
+	dispose() {
+		this._glManager.deleteAttributeBuffers();
+		this._glManager.deleteFrameBuffers();
+		this._glManager.deleteTextures();
 	}
 
 	/**

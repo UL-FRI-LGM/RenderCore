@@ -226,24 +226,22 @@ export class GLTextureManager {
 	}
 
 	getTexture(reference) {
-		if(!this._cached_textures.get(reference)){
+		if(this._cached_textures.has(reference)){
+			return this._cached_textures.get(reference);
+		}else{
 			//console.warn("Warning: Texture reference not found: [" + reference + "]!");
 
 			return this._cached_textures.get(this._defaultTexture);
 		}
-
-
-		return this._cached_textures.get(reference);
 	}
 	getCubeTexture(reference) {
-		if(!this._cached_textures.get(reference)){
-			//console.warn("Warning: Texture reference not found: [" + reference + "]!");
+		if(this._cached_textures.has(reference)){
+			return this._cached_textures.get(reference);
+		}else{
+			//console.warn("Warning: Cube texture reference not found: [" + reference + "]!");
 
 			return this._cached_textures.get(this._defaultCubeTexture);
 		}
-
-
-		return this._cached_textures.get(reference);
 	}
 
 	clearBoundTexture() {
@@ -263,14 +261,15 @@ export class GLTextureManager {
 		this._gl.clearColor(currentClearColor[0], currentClearColor[1], currentClearColor[2], currentClearColor[3]);
 	}
 
-	clearTextures() {
+	deleteTexture(texture, glTexture) {
+		this._cached_textures.delete(texture);
+		this._gl.deleteTexture(glTexture);
+	}
+	deleteTextures() {
 		// Delete all cached textures
-		for (var texture in this._cached_textures.values()) {
-				this._gl.deleteTexture(texture);
+		for (const [key_texture, val_glTexture] of this._cached_textures) {
+			this.deleteTexture(key_texture, val_glTexture);
 		}
-
-		// Clear map
-		this._cached_textures.clear();
 	}
 
 	// region CONSTANT CONVERSION

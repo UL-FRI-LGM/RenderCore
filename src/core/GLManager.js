@@ -447,12 +447,18 @@ export class GLManager {
 		}
 	}
 
-	getAttributeBuffer (attribute) {
-		return this._attributeManager.getCachedBuffer(attribute);
+	getGLBuffer (attribute) {
+		return this._attributeManager.getGLBuffer(attribute);
 	}
 
-	clearAttributeBuffers() {
-		this._attributeManager.clearBuffers();
+	deleteAttributeBuffers() {
+		this._attributeManager.deleteBuffers();
+	}
+	deleteFrameBuffers() {
+		this._fboManager.deleteFrameBuffers();
+	}
+	deleteTextures() {
+		this._textureManager.deleteTextures();
 	}
 
 	//region CLEARING FUNCTIONS

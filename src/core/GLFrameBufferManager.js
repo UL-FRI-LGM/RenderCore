@@ -2,7 +2,7 @@
  * Created by Primoz on 4. 11. 2016.
  */
 
-export class GLFrameBufferManager {
+ export class GLFrameBufferManager {
 
 	constructor(gl) {
 		this._gl = gl;
@@ -31,13 +31,14 @@ export class GLFrameBufferManager {
 		this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
 	}
 
-	clearFrameBuffers() {
+	deleteFrameBuffer(framebuffer, glFramebuffer) {
+		this._cached_fbos.delete(framebuffer);
+		this._gl.deleteFramebuffer(glFramebuffer);
+	}
+	deleteFrameBuffers() {
 		// Delete all cached FBO-s
-		for (var framebuffer in this._cached_fbos.values()) {
-			this._gl.deleteFramebuffer(framebuffer);
+		for (const [key_framebuffer, val_glFramebuffer] of this._cached_fbos) {
+			this.deleteFrameBuffer(key_framebuffer, val_glFramebuffer);
 		}
-
-		// Clear map
-		this._cached_fbos.clear();
 	}
 };

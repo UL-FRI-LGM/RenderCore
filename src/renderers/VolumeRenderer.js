@@ -65,7 +65,7 @@ export class VolumeRenderer extends Renderer {
             this._setup_uniforms(program, vol, camera);
 
             // Draw the quad
-            let buffer = this._glManager.getAttributeBuffer(this.quadIdx);
+            let buffer = this._glManager.getGLBuffer(this.quadIdx);
             this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, buffer);
 
             this._gl.drawElements(this._gl.TRIANGLES, this.quadIdx.count(), this._gl.UNSIGNED_INT, 0)
@@ -85,9 +85,9 @@ export class VolumeRenderer extends Renderer {
         let attributeSetter = program.attributeSetter;
 
         // Setup quad attributes
-        attributeSetter["VPos"].set(this._glManager.getAttributeBuffer(this.quadVtx), 3);
+        attributeSetter["VPos"].set(this._glManager.getGLBuffer(this.quadVtx), 3);
         if (attributeSetter["uv"]) {
-            attributeSetter["uv"].set(this._glManager.getAttributeBuffer(this.quadUv), 3);
+            attributeSetter["uv"].set(this._glManager.getGLBuffer(this.quadUv), 3);
         }
     }
 };

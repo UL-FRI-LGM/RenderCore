@@ -30,38 +30,29 @@ export class GLAttributeManager {
 	 * @param bufferType WebGL buffer type
 	 */
 	updateAttribute (attribute, bufferType) {
+		let newBuffer = false;
+		let glBuffer = this._cached_buffers.get(attribute);
+
+		if(glBuffer === undefined){
+			glBuffer = this._gl.createBuffer();
+			this._cached_buffers.set(attribute, glBuffer);
+			newBuffer = true;
+
+			attribute.dirty = true;
+		}
+
 		// If the WebGL buffer property is undefined, create a new buffer (attribute not found in properties)
 		if (attribute.dirty) {
-			this.createBuffer(attribute, bufferType);
+			this._gl.bindBuffer(bufferType, glBuffer);
+			this._gl.bufferData(bufferType, attribute.array, this.DRAW_TYPE.get(attribute.drawType)); // Write the data to buffer
+	
+			attribute.dirty = false; // Mark attribute not dirty
 		}else if (attribute._update){
-			this.updateBuffer(attribute, bufferType);
+			this._gl.bindBuffer(bufferType, glBuffer);
+			this._gl.bufferSubData(bufferType, 0, attribute.array);
+
+			attribute._update = false;
 		}
-	}
-
-	/**
-	 * Creates new WebGL buffer which is then added as property to attribute from properties
-	 * @param attribute Properties attribute
-	 * @param buffer Object WebGLBuffer
-	 * @param bufferType Type of WebGL buffer that is to be created
-	 */
-	createBuffer (attribute, bufferType) {
-		// Check if this attribute is already defined in the global properties
-		const buffer = this.getCachedBuffer(attribute);
-
-		this._gl.bindBuffer(bufferType, buffer);
-		this._gl.bufferData(bufferType, attribute.array, this.DRAW_TYPE.get(attribute.drawType)); // Write the data to buffer
-
-		attribute.dirty = false; // Mark attribute not dirty
-	}
-
-	updateBuffer (attribute, bufferType) {
-		// Check if this attribute is already defined in the global properties
-		const buffer = this.getCachedBuffer(attribute);
-
-		this._gl.bindBuffer(bufferType, buffer);
-		this._gl.bufferSubData(bufferType, 0, attribute.array);
-
-		attribute._update = false;
 	}
 
 	/**
@@ -69,32 +60,31 @@ export class GLAttributeManager {
 	 * @param {BufferAttribute} attribute An attribute whose WebGL buffer should be retrieved
 	 * @returns {map} Attributes WebGL buffer container
 	 */
-	getCachedBuffer (attribute) {
-		// Check if the buffer is already cached for this object
-		let buffer = this._cached_buffers.get(attribute);
-
-		// If the buffer for this object was not found. Create a new buffer and cache it.
-		if (buffer === undefined) {
-			buffer = this._gl.createBuffer();
-			this._cached_buffers.set(attribute, buffer);
-			attribute.dirty = true;
+	 getGLBuffer (attribute) {
+		if(this._cached_buffers.has(attribute)){
+			return this._cached_buffers.get(attribute);
+		}else{
+			console.error("Warning: GLBuffer not found: [" + attribute + "]!");
+			
+			return null;
 		}
-
-		return buffer;
 	}
 
 	/**
 	 * Deletes cached WebGL buffer for the given attribute object
 	 * @param {BufferAttribute} attribute An attribute whose local version will be deleted
 	 */
-	deleteCachedBuffer (attribute) {
-		this._cached_buffers.delete(attribute);
+	deleteBuffer(buffer, glBuffer) {
+		this._cached_buffers.delete(buffer);
+		this._gl.deleteBuffer(glBuffer);
 	}
 
 	/**
 	 * Clears buffer cache
 	 */
-	clearBuffers () {
-		this._cached_buffers.clear();
+	deleteBuffers() {
+		for (const [key_buffer, val_glBuffer] of this._cached_buffers) {
+			this.deleteBuffer(key_buffer, val_glBuffer);
+		}
 	}
 };

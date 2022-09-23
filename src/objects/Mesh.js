@@ -254,8 +254,8 @@ export class Mesh extends Object3D {
 	}
 	draw(gl, glManager, instance_count=0){
 		if (this.geometry.drawWireframe) {
-			let buffer = glManager.getAttributeBuffer(this.geometry.wireframeIndices);
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+			const glBuffer = glManager.getGLBuffer(this.geometry.wireframeIndices);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, glBuffer);
 
 			if(this._instanced || this._instancedTranslation){
 				if (!instance_count)
@@ -268,8 +268,8 @@ export class Mesh extends Object3D {
 		}
 		else if (this.geometry.indices) {
 			//indexed
-			let buffer = glManager.getAttributeBuffer(this.geometry.indices);
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+			const glBuffer = glManager.getGLBuffer(this.geometry.indices);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, glBuffer);
 
 			if(this._instanced || this._instancedTranslation){
 				if (!instance_count)
