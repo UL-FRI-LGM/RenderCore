@@ -26,8 +26,8 @@ export class GLTextureManager {
 			Texture.DEPTH_COMPONENT32F,
 			Texture.DEPTH_COMPONENT,
 			Texture.FLOAT,
-			0,
-			0
+			1,
+			1
 		);
 		this.updateTexture(this._defaultTexture, false);
 		
@@ -41,7 +41,7 @@ export class GLTextureManager {
 			internalFormat: Texture.DEPTH_COMPONENT32F,
 			format: Texture.DEPTH_COMPONENT,
 			type: Texture.FLOAT,
-			size: 0
+			size: 1
 		});
 		this.updateCubeTexture(this._defaultCubeTexture, false);
 	}
