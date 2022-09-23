@@ -17,9 +17,15 @@ uniform float pointSize;
 in mat4 MMat;
 #fi
 in vec3 VPos;       // Vertex position
+#if (!NORMAL_FLAT)
 in vec3 VNorm;      // Vertex normal
+#fi
 
+#if (NORMAL_FLAT)
+out vec3 v_position_viewspace;
+#else if (!NORMAL_FLAT)
 out vec3 v_normal_viewspace;
+#fi
 out vec3 v_ViewDirection_viewspace;
 
 #if (CLIPPING_PLANES)
@@ -33,10 +39,19 @@ void main() {
     // View position and normal
     #if (INSTANCED)
         vec4 VPos4 = MVMat * MMat * vec4(VPos, 1.0);
+        #if (!NORMAL_FLAT)
         v_normal_viewspace = normalize(NMat * mat3(MMat) * VNorm);
+        #fi
     #else
         vec4 VPos4 = MVMat * vec4(VPos, 1.0);
+        #if (!NORMAL_FLAT)
         v_normal_viewspace = normalize(NMat * VNorm);
+        #fi
+    #fi
+
+    // Position
+    #if (NORMAL_FLAT)
+    v_position_viewspace = VPos4.xyz;
     #fi
 
     // View direction

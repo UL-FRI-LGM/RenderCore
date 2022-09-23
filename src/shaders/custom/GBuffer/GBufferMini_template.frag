@@ -4,7 +4,14 @@ precision mediump float;
 
 //UIO
 //**********************************************************************************************************************//
+#if (NORMAL_FLAT)
+in vec3 v_position_viewspace;
+vec3 fdx = dFdx(v_position_viewspace);
+vec3 fdy = dFdy(v_position_viewspace);
+vec3 v_normal_viewspace = normalize(cross(fdx, fdy));
+#else if (!NORMAL_FLAT)
 in vec3 v_normal_viewspace;
+#fi
 in vec3 v_ViewDirection_viewspace;
 
 layout (location = 0) out vec4 vn_viewspace;
