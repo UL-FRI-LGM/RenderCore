@@ -7,7 +7,6 @@ struct Material {
         sampler2D texture0; //MODIFIABLE, VOLATILE! (DEPTH TEXTURE)
         sampler2D texture1; //MODIFIABLE, VOLATILE! (NORMAL TEXTURE)
         sampler2D texture2; //MODIFIABLE, VOLATILE! (VIEWDIR TEXTURE)
-        sampler2D texture3; //ORIGINAL
     #fi
 };
 
