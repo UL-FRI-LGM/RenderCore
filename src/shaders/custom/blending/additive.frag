@@ -58,9 +58,9 @@ void main() {
 
         #if (SRC_A_ONE)
             #define SRC_A (1.0)
-        #elif (SRC_A_SRC_ALPHA)
+        #else if (SRC_A_SRC_ALPHA)
             #define SRC_A (srcA)
-        #elif (SRC_A_ONE_MINUS_SRC_ALPHA)
+        #else if (SRC_A_ONE_MINUS_SRC_ALPHA)
             #define SRC_A (1.0 - srcA)
         #else
             //#define SRC_A (srcA)
@@ -69,9 +69,9 @@ void main() {
 
         #if (DST_A_ONE)
             #define DST_A (1.0)
-        #elif (DST_A_SRC_ALPHA)
+        #else if (DST_A_SRC_ALPHA)
             #define DST_A (srcA)
-        #elif (DST_A_ONE_MINUS_SRC_ALPHA)
+        #else if (DST_A_ONE_MINUS_SRC_ALPHA)
             #define DST_A (1.0 - srcA)
         #else
             //#define DST_A (1.0 - srcA)
