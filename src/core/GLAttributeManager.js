@@ -20,8 +20,33 @@ export class GLAttributeManager {
 				[BufferAttribute.DRAW_TYPE.DYNAMIC, gl.DYNAMIC_DRAW]
 			]
 		);
+		this.TARGET = new Map(
+			[
+				[BufferAttribute.TARGET.ARRAY_BUFFER, gl.ARRAY_BUFFER], 
+				[BufferAttribute.TARGET.ELEMENT_ARRAY_BUFFER, gl.ELEMENT_ARRAY_BUFFER], 
+				[BufferAttribute.TARGET.COPY_READ_BUFFER, gl.COPY_READ_BUFFER], 
+				[BufferAttribute.TARGET.COPY_WRITE_BUFFER, gl.COPY_WRITE_BUFFER], 
+				[BufferAttribute.TARGET.TRANSFORM_FEEDBACK_BUFFER, gl.TRANSFORM_FEEDBACK_BUFFER], 
+				[BufferAttribute.TARGET.UNIFORM_BUFFER, gl.UNIFORM_BUFFER], 
+				[BufferAttribute.TARGET.PIXEL_PACK_BUFFER, gl.PIXEL_PACK_BUFFER], 
+				[BufferAttribute.TARGET.PIXEL_UNPACK_BUFFER, gl.PIXEL_UNPACK_BUFFER]
+			]
+		);
 	}
 
+
+	createGLBuffer(attribute){
+		const glBuffer = this._gl.createBuffer();
+		const bufferType = (attribute.target) ? this.TARGET.get(attribute.target) : this._gl.ARRAY_BUFFER;
+		const usage = this.DRAW_TYPE.get(attribute.drawType);
+		this._gl.bindBuffer(bufferType, glBuffer);
+		this._gl.bufferData(bufferType, attribute.size, usage); //allocation
+	
+		this._cached_buffers.set(attribute, glBuffer);
+
+
+		return glBuffer;
+	}
 
 	/**
 	 * Checks if the given attribute is already tracked in the global properties and has its WebGL buffer set (if not it creates a new buffer).
@@ -29,28 +54,28 @@ export class GLAttributeManager {
 	 * @param {BufferAttribute} attribute Object attribute
 	 * @param bufferType WebGL buffer type
 	 */
-	updateAttribute (attribute, bufferType) {
-		let newBuffer = false;
-		let glBuffer = this._cached_buffers.get(attribute);
+	updateAttribute (attribute) {
+		const glBuffer = this._cached_buffers.get(attribute);
+		const bufferType = (attribute.target) ? this.TARGET.get(attribute.target) : this._gl.ARRAY_BUFFER;
 
-		if(glBuffer === undefined){
-			glBuffer = this._gl.createBuffer();
-			this._cached_buffers.set(attribute, glBuffer);
-			newBuffer = true;
+		// let newBuffer = false;
+		// let glBuffer = this._cached_buffers.get(attribute);
 
-			attribute.dirty = true;
-		}
+		// if(glBuffer === undefined){
+		// 	glBuffer = this._gl.createBuffer();
+		// 	this._cached_buffers.set(attribute, glBuffer);
+		// 	newBuffer = true;
+
+		// 	attribute.dirty = true;
+		// }
 
 		// If the WebGL buffer property is undefined, create a new buffer (attribute not found in properties)
-		if (attribute.dirty) {
+		if (attribute.dirty || attribute._update) {
 			this._gl.bindBuffer(bufferType, glBuffer);
-			this._gl.bufferData(bufferType, attribute.array, this.DRAW_TYPE.get(attribute.drawType)); // Write the data to buffer
-	
-			attribute.dirty = false; // Mark attribute not dirty
-		}else if (attribute._update){
-			this._gl.bindBuffer(bufferType, glBuffer);
-			this._gl.bufferSubData(bufferType, 0, attribute.array);
+			//this._gl.bufferSubData(bufferType, 0, attribute.array); // Write the data to buffer
+			this._gl.bufferSubData(bufferType, 0, attribute.array, 0, 0);
 
+			attribute.dirty = false; // Mark attribute not dirty
 			attribute._update = false;
 		}
 	}
@@ -62,11 +87,18 @@ export class GLAttributeManager {
 	 */
 	 getGLBuffer (attribute) {
 		if(this._cached_buffers.has(attribute)){
-			return this._cached_buffers.get(attribute);
+			const glBuffer = this._cached_buffers.get(attribute);
+			if(attribute.dirty) this.updateAttribute(attribute);
+
+
+			return glBuffer; 
 		}else{
-			console.error("Warning: GLBuffer not found: [" + attribute + "]!");
+			//console.error("Warning: GLBuffer not found: [" + attribute + "]!");
+			const glBuffer = this.createGLBuffer(attribute);
+			if(attribute.dirty) this.updateAttribute(attribute);
 			
-			return null;
+
+			return glBuffer;
 		}
 	}
 

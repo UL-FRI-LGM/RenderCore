@@ -82,10 +82,9 @@ export class Geometry {
 			return;
 		}
 
-		console.log(indices);
 
 		// Create new buffer geometry for the wireframe
-		this._wireframeIndices = new BufferAttribute(new Uint32Array(indices), 1);
+		this.wireframeIndices = new BufferAttribute(new Uint32Array(indices), 1);
 	}
 	checkContamination(buffer, x, y, triIndex){
 		triIndex = triIndex*6 - 3*6;
@@ -178,11 +177,11 @@ export class Geometry {
 	 */
 	computeVertexNormals() {
 
-		if (this._vertices) {
-			var positions = this._vertices.array;
+		if (this.vertices) {
+			var positions = this.vertices.array;
 
 			if (!this._normals) {
-				this._normals = new BufferAttribute(new Float32Array(positions.length), 3);
+				this.normals = new BufferAttribute(new Float32Array(positions.length), 3);
 			}
 			else {
 				// reset existing normals to zero
@@ -205,8 +204,8 @@ export class Geometry {
 
 
 			// Vertices are indexed
-			if (this._indices) {
-				var indices = this._indices.array;
+			if (this.indices) {
+				var indices = this.indices.array;
 
 				for (var i = 0; i < indices.length; i += 3 ) {
 					vA = indices[i] * 3;
@@ -266,10 +265,10 @@ export class Geometry {
 		}
 	}
 	computeVertexTangents(){
-		if(this._indices){
-			const indices = this._indices;
-			const vertices = this._vertices;
-			const UVs = this._uv;
+		if(this.indices){
+			const indices = this.indices;
+			const vertices = this.vertices;
+			const UVs = this.uv;
 
 			const v1 = new Vector3();
 			const v2 = new Vector3();
@@ -342,10 +341,10 @@ export class Geometry {
 				tangents[indices.array[i + 2]*vertices.itemSize + 2] = tangent.z;
 			}
 
-			this._tangents = new Float32Attribute(tangents, vertices.itemSize);
+			this.tangents = new Float32Attribute(tangents, vertices.itemSize);
 		}else{
-			const vertices = this._vertices;
-			const UVs = this._uv;
+			const vertices = this.vertices;
+			const UVs = this.uv;
 
 			const v1 = new Vector3();
 			const v2 = new Vector3();
@@ -415,14 +414,14 @@ export class Geometry {
 				tangents[i*vertices.itemSize + 8] = tangent.z;
 			}
 
-			this._tangents = new Float32Attribute(tangents, vertices.itemSize);
+			this.tangents = new Float32Attribute(tangents, vertices.itemSize);
 		}
 	}
 	computeVertexBitangents(){
-		if(this._indices){
-			const indices = this._indices;
-			const vertices = this._vertices;
-			const UVs = this._uv;
+		if(this.indices){
+			const indices = this.indices;
+			const vertices = this.vertices;
+			const UVs = this.uv;
 
 			const v1 = new Vector3();
 			const v2 = new Vector3();
@@ -494,10 +493,10 @@ export class Geometry {
 				bitangents[indices.array[i + 2]*vertices.itemSize + 2] = bitangent.z;
 			}
 
-			this._bitangents = new Float32Attribute(bitangents, vertices.itemSize);
+			this.bitangents = new Float32Attribute(bitangents, vertices.itemSize);
 		} else {
-			const vertices = this._vertices;
-			const UVs = this._uv;
+			const vertices = this.vertices;
+			const UVs = this.uv;
 
 			const v1 = new Vector3();
 			const v2 = new Vector3();
@@ -568,7 +567,7 @@ export class Geometry {
 			}
 
 
-			this._bitangents = new Float32Attribute(bitangents, vertices.itemSize);
+			this.bitangents = new Float32Attribute(bitangents, vertices.itemSize);
 		}
 	}
 
@@ -577,12 +576,12 @@ export class Geometry {
 	 */
 	computeVertexNormalsIdxRange(start, count) {
 
-		if ( ! this._vertices || ! this._indices) return;
+		if ( ! this.vertices || ! this.indices) return;
 
-		var positions = this._vertices.array;
+		var positions = this.vertices.array;
 
 		if (!this._normals) {
-			this._normals = new BufferAttribute(new Float32Array(positions.length), 3);
+			this.normals = new BufferAttribute(new Float32Array(positions.length), 3);
 		}
 		else {
 			// reset existing normals to zero
@@ -604,7 +603,7 @@ export class Geometry {
 			ab = new Vector3();
 
 
-		var indices = this._indices.array;
+		var indices = this.indices.array;
 
 		for (var i = start, i_end = start + count; i < i_end; i += 3 ) {
 			vA = indices[i] * 3;
@@ -724,7 +723,12 @@ export class Geometry {
 	 *
 	 * @returns Geometry normals.
 	 */
-	get normals() { return this._normals; }
+	get normals() { 
+		if(this._normals === null) this.computeVertexNormals();
+
+
+		return this._normals; 
+	}
 	get tangents() { return this._tangents; }
 	get bitangents() { return this._bitangents; }
 
@@ -747,7 +751,12 @@ export class Geometry {
 	 *
 	 * @returns Wireframe indices.
 	 */
-	get wireframeIndices() { return this._wireframeIndices; }
+	get wireframeIndices() { 
+		if(this._wireframeIndices === null) this.buildWireframeBuffer();
+
+
+		return this._wireframeIndices; 
+	}
 
 	get MMat() { return this._MMat; }
 	get translation() { return this._translation; }
@@ -795,6 +804,9 @@ export class Geometry {
 			var update = {uuid: this._uuid, changes: {array: this._indices.array.buffer.slice(0), itemSize: this._indices.itemSize}};
 			this._onChangeListener.geometryUpdate(update)
 		}
+
+		//add target type to descriptor
+		this._indices.target = BufferAttribute.TARGET.ELEMENT_ARRAY_BUFFER;
 	}
 
 	/**
@@ -810,6 +822,9 @@ export class Geometry {
 			var update = {uuid: this._uuid, changes: {array: this._vertices.array.buffer.slice(0), itemSize: this._vertices.itemSize}};
 			this._onChangeListener.geometryUpdate(update)
 		}
+
+		//add target type to descriptor
+		this._vertices.target = BufferAttribute.TARGET.ARRAY_BUFFER;
 	}
 
 	/**
@@ -825,6 +840,9 @@ export class Geometry {
 			var update = {uuid: this._uuid, changes: {array: this._normals.array.buffer.slice(0), itemSize: this._normals.itemSize}};
 			this._onChangeListener.geometryUpdate(update)
 		}
+
+		//add target type to descriptor
+		this._normals.target = BufferAttribute.TARGET.ARRAY_BUFFER;
 	}
 	set tangents(values) {
 		this._tangents = values;
@@ -834,6 +852,9 @@ export class Geometry {
 			var update = {uuid: this._uuid, changes: {array: this._tangents.array.buffer.slice(0), itemSize: this._tangents.itemSize}};
 			this._onChangeListener.geometryUpdate(update)
 		}
+
+		//add target type to descriptor
+		this._tangents.target = BufferAttribute.TARGET.ARRAY_BUFFER;
 	}
 	set bitangents(values) {
 		this._bitangents = values;
@@ -843,6 +864,9 @@ export class Geometry {
 			var update = {uuid: this._uuid, changes: {array: this._bitangents.array.buffer.slice(0), itemSize: this._bitangents.itemSize}};
 			this._onChangeListener.geometryUpdate(update)
 		}
+
+		//add target type to descriptor
+		this._bitangents.target = BufferAttribute.TARGET.ARRAY_BUFFER;
 	}
 
 	/**
@@ -858,6 +882,9 @@ export class Geometry {
 			var update = {uuid: this._uuid, changes: {array: this._vertColor.array.buffer.slice(0), itemSize: this._vertColor.itemSize}};
 			this._onChangeListener.geometryUpdate(update)
 		}
+
+		//add target type to descriptor
+		this._vertColor.target = BufferAttribute.TARGET.ARRAY_BUFFER;
 	}
 
 	/**
@@ -865,17 +892,37 @@ export class Geometry {
 	 *
 	 * @param values UV coordinates.
 	 */
-	set uv(values) { this._uv = values; }
+	set uv(values) { 
+		this._uv = values; 
+
+		//add target type to descriptor
+		this._uv.target = BufferAttribute.TARGET.ARRAY_BUFFER;
+	}
 
 	/**
 	 * Set wireframe indices.
 	 *
 	 * @param values Wireframe indices.
 	 */
-	set wireframeIndices(values) { this._wireframeIndices = values; }
+	set wireframeIndices(values) { 
+		this._wireframeIndices = values; 
+	
+		//add target type to descriptor
+		this._wireframeIndices.target = BufferAttribute.TARGET.ELEMENT_ARRAY_BUFFER;
+	}
 
-	set MMat(MMat) { this._MMat = MMat; }
-	set translation(translation) { this._translation = translation; }
+	set MMat(MMat) { 
+		this._MMat = MMat; 
+	
+		//add target type to descriptor
+		this._MMat.target = BufferAttribute.TARGET.ARRAY_BUFFER;
+	}
+	set translation(translation) { 
+		this._translation = translation;
+		
+		//add target type to descriptor
+		this._translation.target = BufferAttribute.TARGET.ARRAY_BUFFER;
+	}
 
 	/**
 	 * Turn wireframe drawing on or off.
@@ -962,27 +1009,27 @@ export class Geometry {
 		for (var prop in data) {
 			switch (prop) {
 				case "indices":
-					this._indices = Uint32Attribute(data.indices.array, data.indices.itemSize);
+					this.indices = Uint32Attribute(data.indices.array, data.indices.itemSize);
 					delete data.indices;
 					break;
 				case "vertices":
-					this._vertices = Float32Attribute(data.vertices.array, data.vertices.itemSize);
+					this.vertices = Float32Attribute(data.vertices.array, data.vertices.itemSize);
 					delete data.vertices;
 					break;
 				case "normals":
-					this._normals = Float32Attribute(data.normals.array, data.normals.itemSize);
+					this.normals = Float32Attribute(data.normals.array, data.normals.itemSize);
 					delete data.normals;
 					break;
 				case "tangents":
-					this._normals = Float32Attribute(data.tangents.array, data.tangents.itemSize);
+					this.tangents = Float32Attribute(data.tangents.array, data.tangents.itemSize);
 					delete data.tangents;
 					break;
 				case "bitangents":
-					this._normals = Float32Attribute(data.bitangents.array, data.bitangents.itemSize);
+					this.bitangents = Float32Attribute(data.bitangents.array, data.bitangents.itemSize);
 					delete data.bitangents;
 					break;
 				case "vertColor":
-					this._vertColor = Float32Attribute(data.vertColor.array, data.vertColor.itemSize);
+					this.vertColor = Float32Attribute(data.vertColor.array, data.vertColor.itemSize);
 					delete data.vertColor;
 					break;
 				default:

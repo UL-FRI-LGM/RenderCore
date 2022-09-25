@@ -1,8 +1,18 @@
 /**
  * Created by Ziga, Primoz & Sebastien on 1.4.2016.
  */
-
- export class BufferAttribute {
+//Descriptor of GLBuffer 
+export class BufferAttribute {
+	static TARGET = {
+		ARRAY_BUFFER: 0,
+		ELEMENT_ARRAY_BUFFER: 1,
+		COPY_READ_BUFFER: 2,
+		COPY_WRITE_BUFFER: 3,
+		TRANSFORM_FEEDBACK_BUFFER: 4,
+		UNIFORM_BUFFER: 5,
+		PIXEL_PACK_BUFFER: 6,
+		PIXEL_UNPACK_BUFFER: 7
+	};
 	static DRAW_TYPE = {
 		STATIC: 0,
 		STREAMING: 1,
@@ -16,7 +26,7 @@
 	 * @param array Buffer data.
 	 * @param itemSize Size of an item.
 	 */
-	constructor(array, itemSize, divisor = 0) {
+	constructor(array, itemSize, divisor = 0, args = {}) {
 		this._array = array;
 		this._itemSize = itemSize;
 		this._divisor = divisor; // Divisor used by instancing
@@ -26,6 +36,8 @@
 
 		this._drawType = BufferAttribute.DRAW_TYPE.STATIC;
 		this._update = false;
+
+		this.target = (args.target !== undefined) ? args.target : BufferAttribute.TARGET.ARRAY_BUFFER;
 	}
 
 	/**
@@ -84,6 +96,11 @@
 	 */
 	get itemSize() { return this._itemSize; }
 
+	//size in bytes
+	get size() {
+		return this.array.byteLength;
+	}
+
 	/**
 	 * Check if buffer was modified.
 	 *
@@ -95,6 +112,10 @@
 	set divisor(divisor) { this._divisor = divisor; }
 
 	get drawType() { return this._drawType; }
+
+	get target() { return this._target; }
+	set target(target) { this._target = target; }
+
 
 	update(){
 		this._update = true;

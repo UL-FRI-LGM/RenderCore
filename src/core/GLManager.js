@@ -81,11 +81,11 @@ export class GLManager {
 		}
 	}
 
-	updateCustomShaderAttributes(material) {
-		// Update GL version of all of the custom attributes
-		for (const name of Object.keys(material._attributes))
-			this._attributeManager.updateAttribute(material._attributes[name], this._gl.ARRAY_BUFFER);
-	}
+	// updateCustomShaderAttributes(material) {
+	// 	// Update GL version of all of the custom attributes
+	// 	for (const name of Object.keys(material._attributes))
+	// 		this._attributeManager.updateAttribute(material._attributes[name], this._gl.ARRAY_BUFFER);
+	// }
 
 	/**
 	 * Updates object geometry attributes (creates GL buffers or updates them if they already exist)
@@ -95,51 +95,52 @@ export class GLManager {
 		// BufferedGeometry
 		let geometry = object.geometry;
 
-		// region GEOMETRY ATTRIBUTES
-		if (geometry.indices !== null) {
-			this._attributeManager.updateAttribute(geometry.indices, this._gl.ELEMENT_ARRAY_BUFFER);
-		}
+		// // region GEOMETRY ATTRIBUTES
+		// if (geometry.indices !== null) {
+		// 	this._attributeManager.updateAttribute(geometry.indices, this._gl.ELEMENT_ARRAY_BUFFER);
+		// }
 
-		if (geometry.vertices != null) {
-			this._attributeManager.updateAttribute(geometry.vertices, this._gl.ARRAY_BUFFER);
-		}
+		// if (geometry.vertices != null) {
+		// 	this._attributeManager.updateAttribute(geometry.vertices, this._gl.ARRAY_BUFFER);
+		// }
 
-		if (geometry.drawWireframe && !(object instanceof Point) && !(object instanceof Line)) {
-			if (geometry.wireframeIndices === null) {
-				geometry.buildWireframeBuffer();
-			}
+		// if (geometry.drawWireframe && !(object instanceof Point) && !(object instanceof Line)) {
+		// 	if (geometry.wireframeIndices === null) {
+		// 		geometry.buildWireframeBuffer();
+		// 	}
 
-			this._attributeManager.updateAttribute(geometry.wireframeIndices, this._gl.ELEMENT_ARRAY_BUFFER);
-		}
+		// 	this._attributeManager.updateAttribute(geometry.wireframeIndices, this._gl.ELEMENT_ARRAY_BUFFER);
+		// }
 
-		if (geometry.normals != null) {
-			this._attributeManager.updateAttribute(geometry.normals, this._gl.ARRAY_BUFFER);
-		}
+		// if (geometry.normals != null) {
+		// 	this._attributeManager.updateAttribute(geometry.normals, this._gl.ARRAY_BUFFER);
+		// }
 
-		if (geometry.tangents != null) {
-			this._attributeManager.updateAttribute(geometry.tangents, this._gl.ARRAY_BUFFER);
-		}
+		// if (geometry.tangents != null) {
+		// 	this._attributeManager.updateAttribute(geometry.tangents, this._gl.ARRAY_BUFFER);
+		// }
 
-		if (geometry.bitangents != null) {
-			this._attributeManager.updateAttribute(geometry.bitangents, this._gl.ARRAY_BUFFER);
-		}
+		// if (geometry.bitangents != null) {
+		// 	this._attributeManager.updateAttribute(geometry.bitangents, this._gl.ARRAY_BUFFER);
+		// }
 
-		if (geometry._vertColor != null) {
-			this._attributeManager.updateAttribute(geometry._vertColor, this._gl.ARRAY_BUFFER);
-		}
+		// if (geometry._vertColor != null) {
+		// 	this._attributeManager.updateAttribute(geometry._vertColor, this._gl.ARRAY_BUFFER);
+		// }
 
-		if (geometry._uv != null) {
-			this._attributeManager.updateAttribute(geometry._uv, this._gl.ARRAY_BUFFER);
-		}
+		// if (geometry._uv != null) {
+		// 	this._attributeManager.updateAttribute(geometry._uv, this._gl.ARRAY_BUFFER);
+		// }
 
-		if (geometry.MMat != null) {
-			this._attributeManager.updateAttribute(geometry.MMat, this._gl.ARRAY_BUFFER);
-		}
+		// if (geometry.MMat != null) {
+		// 	this._attributeManager.updateAttribute(geometry.MMat, this._gl.ARRAY_BUFFER);
+		// }
 
-		if (geometry.translation != null) {
-			this._attributeManager.updateAttribute(geometry.translation, this._gl.ARRAY_BUFFER);
-		}
-		// endregion
+		// if (geometry.translation != null) {
+		// 	this._attributeManager.updateAttribute(geometry.translation, this._gl.ARRAY_BUFFER);
+		// }
+		// // endregion
+
 
 		// Update textures
 		let textures = material.maps;
@@ -170,11 +171,12 @@ export class GLManager {
 		const instanceData = material.instanceData;
 		if (instanceData) this._textureManager.updateTexture(instanceData, false);
 
-		// CustomShaderMaterial may specify extra attributes
-		if (material instanceof CustomShaderMaterial) {
-			this.updateCustomShaderAttributes(material);
-		}
-		//endregion
+		
+		// // CustomShaderMaterial may specify extra attributes
+		// if (material instanceof CustomShaderMaterial) {
+		// 	this.updateCustomShaderAttributes(material);
+		// }
+		// //endregion
 	}
 
 	initRenderTarget(renderTarget) {
