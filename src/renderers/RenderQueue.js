@@ -99,7 +99,7 @@ export class RenderQueue {
 				cachedTexture.width = viewportRP.width;
 				cachedTexture.height = viewportRP.height;
 
-				// Add texture ass draw buffer to render target
+				// Add texture as draw buffer to render target
 				this._renderTarget.addDrawBuffer(cachedTexture);
 			}
 			else {
@@ -132,10 +132,21 @@ export class RenderQueue {
 						viewportRP.height
 					);
 				}
+				texture.clearFunction = texConfig.clearFunction;
 
 				this._renderTarget.addDrawBuffer(texture);
 				// Bind depth texture to the given ID ID
 				this._textureMap[texID] = texture;
+
+				cachedTexture = texture;
+			}
+			// If clearColorArray is null, buffer will not be cleared without warning.
+			// clearColorArray, when set, should be appropriate 4-element native array for the buffer format.
+			// When clear color is not set, the buffer will be cleared with renderer's clear color.
+			if (texTemplate.clearColorArray !== undefined) {
+				cachedTexture.clearColorArray = texTemplate.clearColorArray;
+			} else {
+				delete cachedTexture.clearColorArray;
 			}
 		}
 	}
@@ -150,10 +161,10 @@ export class RenderQueue {
 	}
 
 	render_pass_idx(i) {
-		this.render_pass(this._renderQueue[i]);
+		this.render_pass(this._renderQueue[i], i);
 	}
 
-	render_pass(renderPass) {
+	render_pass(renderPass, i) {
 		// Check if the render pass is initialized
 		if (!renderPass._isInitialized) {
 			renderPass._initialize(this._textureMap, this._forwardedAdditionalData);
@@ -319,7 +330,7 @@ export class RenderQueue {
 		this.render_begin();
 
 		for (let i = 0; i < this._renderQueue.length; i++) {
-			this.render_pass(this._renderQueue[i]);
+			this.render_pass(this._renderQueue[i], i);
 		}
 
 		return this.render_end();

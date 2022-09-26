@@ -6,9 +6,6 @@ precision mediump float;
 //**********************************************************************************************************************//
 #if (NORMAL_FLAT)
 in vec3 v_position_viewspace;
-vec3 fdx = dFdx(v_position_viewspace);
-vec3 fdy = dFdy(v_position_viewspace);
-vec3 v_normal_viewspace = normalize(cross(fdx, fdy));
 #else if (!NORMAL_FLAT)
 in vec3 v_normal_viewspace;
 #fi
@@ -55,6 +52,12 @@ void main() {
     #fi
 
     //******************************************************************************************************************//
+
+    #if (NORMAL_FLAT)
+        vec3 fdx = dFdx(v_position_viewspace);
+        vec3 fdy = dFdy(v_position_viewspace);
+        vec3 v_normal_viewspace = normalize(cross(fdx, fdy));
+    #fi
 
     vn_viewspace = vec4(v_normal_viewspace, 0.0);
     vd_viewspace = vec4(v_ViewDirection_viewspace, 0.0);
