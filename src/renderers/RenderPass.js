@@ -163,8 +163,9 @@ RenderPass.DEFAULT_R32I_TEXTURE_CONFIG = {
 	minFilter: Texture.LinearFilter,
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.R32I,
-	format: Texture.RED,
-	type: Texture.INT
+	format: Texture.RED_INTEGER,
+	type: Texture.INT,
+	clearFunction: 2
 };
 RenderPass.DEFAULT_R32UI_TEXTURE_CONFIG = {
 	wrapS: Texture.ClampToEdgeWrapping,
@@ -183,7 +184,8 @@ RenderPass.DEFAULT_RGB_TEXTURE_CONFIG = {
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.RGB,
 	format: Texture.RGB,
-	type: Texture.UNSIGNED_BYTE
+	type: Texture.UNSIGNED_BYTE,
+	clearFunction: 3
 };
 
 RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG = {
@@ -194,7 +196,7 @@ RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG = {
 	internalFormat: Texture.RGBA,
 	format: Texture.RGBA,
 	type: Texture.UNSIGNED_BYTE,
-	clearFunction: 128
+	clearFunction: 3
 };
 
 RenderPass.DEFAULT_RGBA_NEAREST_TEXTURE_CONFIG = {
@@ -204,7 +206,8 @@ RenderPass.DEFAULT_RGBA_NEAREST_TEXTURE_CONFIG = {
 	magFilter: Texture.NearestFilter,
 	internalFormat: Texture.RGBA,
 	format: Texture.RGBA,
-	type: Texture.UNSIGNED_BYTE
+	type: Texture.UNSIGNED_BYTE,
+	clearFunction: 3
 };
 
 
@@ -216,7 +219,8 @@ RenderPass.DEFAULT_R16F_TEXTURE_CONFIG = {
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.R16F,
 	format: Texture.RED,
-	type: Texture.HALF_FLOAT
+	type: Texture.HALF_FLOAT,
+	clearFunction: 3
 };
 RenderPass.DEFAULT_R16F_TEXTURE_CUBE_MAP_CONFIG = {
 	wrapS: Texture.ClampToEdgeWrapping,
@@ -227,7 +231,7 @@ RenderPass.DEFAULT_R16F_TEXTURE_CUBE_MAP_CONFIG = {
 	internalFormat: Texture.R16F,
 	format: Texture.RED,
 	type: Texture.HALF_FLOAT,
-	clearFunction: 128
+	clearFunction: 3
 };
 RenderPass.NEAREST_R16F_TEXTURE_CUBE_MAP_CONFIG = {
 	wrapS: Texture.ClampToEdgeWrapping,
@@ -238,7 +242,7 @@ RenderPass.NEAREST_R16F_TEXTURE_CUBE_MAP_CONFIG = {
 	internalFormat: Texture.R16F,
 	format: Texture.RED,
 	type: Texture.HALF_FLOAT,
-	clearFunction: 128
+	clearFunction: 3
 };
 RenderPass.DEFAULT_RGB16F_TEXTURE_CONFIG = {
 	wrapS: Texture.ClampToEdgeWrapping,
@@ -247,7 +251,8 @@ RenderPass.DEFAULT_RGB16F_TEXTURE_CONFIG = {
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.RGB16F,
 	format: Texture.RGBA,
-	type: Texture.HALF_FLOAT
+	type: Texture.HALF_FLOAT,
+	clearFunction: 3
 };
 RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG = {
 	wrapS: Texture.ClampToEdgeWrapping,
@@ -257,7 +262,7 @@ RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG = {
 	internalFormat: Texture.RGBA16F,
 	format: Texture.RGBA,
 	type: Texture.HALF_FLOAT,
-	clearFunction: 128
+	clearFunction: 3
 };
 RenderPass.NEAREST_RGBA16F_TEXTURE_CONFIG = {
 	wrapS: Texture.ClampToEdgeWrapping,
@@ -267,7 +272,7 @@ RenderPass.NEAREST_RGBA16F_TEXTURE_CONFIG = {
 	internalFormat: Texture.RGBA16F,
 	format: Texture.RGBA,
 	type: Texture.HALF_FLOAT,
-	clearFunction: 128
+	clearFunction: 3
 };
 
 RenderPass.FLOAT_RGB_TEXTURE_CONFIG = {
@@ -277,7 +282,8 @@ RenderPass.FLOAT_RGB_TEXTURE_CONFIG = {
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.RGBA16F,
 	format: Texture.RGBA,
-	type: Texture.HALF_FLOAT
+	type: Texture.HALF_FLOAT,
+	clearFunction: 3
 };
 
 RenderPass.FULL_FLOAT_RGB_TEXTURE_CONFIG = {
@@ -287,7 +293,8 @@ RenderPass.FULL_FLOAT_RGB_TEXTURE_CONFIG = {
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.RGBA16F,
 	format: Texture.RGBA,
-	type: Texture.FLOAT
+	type: Texture.FLOAT,
+	clearFunction: 3
 };
 
 RenderPass.FULL_FLOAT_RGB_NEAREST_TEXTURE_CONFIG = {
@@ -297,7 +304,8 @@ RenderPass.FULL_FLOAT_RGB_NEAREST_TEXTURE_CONFIG = {
 	magFilter: Texture.NearestFilter,
 	internalFormat: Texture.RGBA16F,
 	format: Texture.RGBA,
-	type: Texture.FLOAT
+	type: Texture.FLOAT,
+	clearFunction: 3
 };
 
 //32F
@@ -308,5 +316,6 @@ RenderPass.FULL_FLOAT_R32F_TEXTURE_CONFIG = {
 	magFilter: Texture.LinearFilter,
 	internalFormat: Texture.R32F,
 	format: Texture.RED,
-	type: Texture.FLOAT
+	type: Texture.FLOAT,
+	clearFunction: 3
 };

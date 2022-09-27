@@ -66,7 +66,9 @@ export class GLTextureManager {
 
 		this._gl.bindTexture(this._gl.TEXTURE_2D, glTexture);
 
-		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, texture.flipy);
+		if (texture.flipy) {
+			this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, true);
+		}
 
 		// Parse texture data
 		let internalFormat = this._formatToGL(texture._internalFormat);
@@ -110,6 +112,10 @@ export class GLTextureManager {
 		// Generate mipmaps
 		if (texture._generateMipmaps) {
 				this._gl.generateMipmap(this._gl.TEXTURE_2D);
+		}
+
+		if (texture.flipy) {
+			this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
 		}
 
 		this._gl.bindTexture(this._gl.TEXTURE_2D, null);
@@ -413,6 +419,9 @@ export class GLTextureManager {
 				break;
 			case Texture.UNSIGNED_INT:
 				return this._gl.UNSIGNED_INT;
+				break;
+			case Texture.INT:
+				return this._gl.INT;
 				break;
 			case Texture.FLOAT:
 				return this._gl.FLOAT;

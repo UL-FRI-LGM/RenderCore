@@ -99,7 +99,7 @@ export class RenderQueue {
 				cachedTexture.width = viewportRP.width;
 				cachedTexture.height = viewportRP.height;
 
-				// Add texture ass draw buffer to render target
+				// Add texture as draw buffer to render target
 				this._renderTarget.addDrawBuffer(cachedTexture);
 			}
 			else {
@@ -132,178 +132,208 @@ export class RenderQueue {
 						viewportRP.height
 					);
 				}
+				texture.clearFunction = texConfig.clearFunction;
 
 				this._renderTarget.addDrawBuffer(texture);
 				// Bind depth texture to the given ID ID
 				this._textureMap[texID] = texture;
+
+				cachedTexture = texture;
+			}
+			// If clearColorArray is null, buffer will not be cleared without warning.
+			// clearColorArray, when set, should be appropriate 4-element native array for the buffer format.
+			// When clear color is not set, the buffer will be cleared with renderer's clear color.
+			if (texTemplate.clearColorArray !== undefined) {
+				cachedTexture.clearColorArray = texTemplate.clearColorArray;
+			} else {
+				delete cachedTexture.clearColorArray;
 			}
 		}
 	}
 
-	render() {
+	render_begin() {
+		if (this._saved_vp) {
+			console.error("RenderQueue.render_begin called without an intervening end.");
+			return;
+		}
 		// Store current renderer viewport
-		let cleanupViewport = this._renderer.getViewport();
+		this._saved_vp = this._renderer.getViewport();
+	}
 
-		for (let i = 0; i < this._renderQueue.length; i++) {
-			let renderPass = this._renderQueue[i];
+	render_pass_idx(i) {
+		this.render_pass(this._renderQueue[i], i);
+	}
 
-			// Check if the render pass is initialized
-			if (!renderPass._isInitialized) {
-				renderPass._initialize(this._textureMap, this._forwardedAdditionalData);
-				renderPass._isInitialized = true;
-			}
+	render_pass(renderPass, i) {
+		// Check if the render pass is initialized
+		if (!renderPass._isInitialized) {
+			renderPass._initialize(this._textureMap, this._forwardedAdditionalData);
+			renderPass._isInitialized = true;
+		}
 
-			let viewportRP = renderPass.viewport;
+		let viewportRP = renderPass.viewport;
 
-			// Execute preprocess step
-			let preprocOutput = renderPass.preprocess(this._textureMap, this._forwardedAdditionalData);
+		// Execute preprocess step
+		let preprocOutput = renderPass.preprocess(this._textureMap, this._forwardedAdditionalData);
 
-			// If prepossessing step outputs null skip this render pass.
-			if (preprocOutput === null) {
-				continue;
-			}
+		// If prepossessing step outputs null skip this render pass.
+		if (preprocOutput === null) {
+			return;
+		}
 
-			// Determine the render pass type
-			if (renderPass.type === RenderPass.BASIC) {
-				// This is a BASIC scene rendering render pass
+		// Determine the render pass type
+		if (renderPass.type === RenderPass.BASIC) {
+			// This is a BASIC scene rendering render pass
 
-				// Validate preprocess output
-				if (preprocOutput.scene === undefined || !(preprocOutput.scene instanceof Scene) ||
-					preprocOutput.camera === undefined || !(preprocOutput.camera instanceof Camera)) {
-					console.error("Render pass " + i + " has invalid preprocess output!");
-					return;
-				}
-
-				// Render to specified target
-				if (renderPass.target === RenderPass.SCREEN) {
-					// RENDER TO SCREEN
-					// Set requested viewport
-					this._renderer.updateViewport(viewportRP.width, viewportRP.height);
-
-					// Render to screen
-					this._renderer.render(preprocOutput.scene, preprocOutput.camera);
-				}
-				else if (renderPass.target === RenderPass.TEXTURE) {
-					// RENDER TO TEXTURE
-					// Setup render target as the render pass specifies
-					this._setupRenderTarget(renderPass);
-
-					// Render to render target
-					this._renderer.render(preprocOutput.scene, preprocOutput.camera, this._renderTarget)
-				}
-				else if (renderPass.target === RenderPass.TEXTURE_CUBE_MAP) {
-					// RENDER TO TEXTURE_CUBE_MAP
-					// Setup render target as the render pass specifies
-					this._setupRenderTarget(renderPass);
-
-					// Render to render target
-					this._renderer.render(preprocOutput.scene, preprocOutput.camera, this._renderTarget, true, renderPass.side);
-				}
-				else {
-					console.error("Unknown render pass " + i + " target.");
-					return;
-				}
-			}
-			else if (renderPass.type === RenderPass.TEXTURE_MERGE) {
-				// This is a texture merging render pass
-
-				// Validate preprocess output
-				if (preprocOutput.material === undefined || !(preprocOutput.material instanceof CustomShaderMaterial) ||
-					preprocOutput.textures === undefined || !Array.isArray(preprocOutput.textures)) {
-					console.error("Render pass " + i + " has invalid preprocess output!");
-					return;
-				}
-
-				// Remove possible previous maps
-				preprocOutput.material.clearMaps();
-
-				// Add textures to material
-				for (let i = 0; i < preprocOutput.textures.length; i++) {
-					preprocOutput.material.addMap(preprocOutput.textures[i]);
-				}
-
-				// Set quad material so that the correct shader will be used
-				this._textureMergeQuad.material = preprocOutput.material;
-
-				// Render to specified target
-				if (renderPass.target === RenderPass.SCREEN) {
-					// RENDER TO SCREEN
-					// Set requested viewport
-					this._renderer.updateViewport(viewportRP.width, viewportRP.height);
-
-					// Render to screen
-					this._renderer.render(this._textureMergeScene, this._textureMergeCamera);
-				}
-				else if (renderPass.target === RenderPass.TEXTURE) {
-					// RENDER TO TEXTURE
-					// Setup render target as the render pass specifies
-					this._setupRenderTarget(renderPass);
-
-					// Render to render target
-					this._renderer.render(this._textureMergeScene, this._textureMergeCamera, this._renderTarget);
-				}
-				else {
-					console.error("Unknown render pass " + i + " target.");
-					return;
-				}
-			}
-			else if (renderPass.type === RenderPass.POSTPROCESS) {
-				// This is a texture merging render pass
-
-				// Validate preprocess output
-				if (preprocOutput.material === undefined || !(preprocOutput.material instanceof CustomShaderMaterial) ||
-					preprocOutput.textures === undefined || !Array.isArray(preprocOutput.textures)) {
-					console.error("Render pass " + i + " has invalid preprocess output!");
-					return;
-				}
-
-				// Remove possible previous maps
-				preprocOutput.material.clearMaps();
-
-				// Add textures to material
-				for (let i = 0; i < preprocOutput.textures.length; i++) {
-					preprocOutput.material.addMap(preprocOutput.textures[i]);
-				}
-
-				// Set quad material so that the correct shader will be used
-				this._textureMergeQuad.material = preprocOutput.material;
-
-				// Render to specified target
-				if (renderPass.target === RenderPass.SCREEN) {
-					// RENDER TO SCREEN
-					// Set requested viewport
-					this._renderer.updateViewport(viewportRP.width, viewportRP.height);
-
-					// Render to screen
-					this._renderer.render(this._textureMergeScene, this._textureMergeCamera);
-				}
-				else if (renderPass.target === RenderPass.TEXTURE) {
-					// RENDER TO TEXTURE
-					// Setup render target as the render pass specifies
-					this._setupRenderTarget(renderPass);
-
-					// Render to render target
-					this._renderer.render(this._textureMergeScene, this._textureMergeCamera, this._renderTarget);
-				}
-				else {
-					console.error("Unknown render pass " + i + " target.");
-					return;
-				}
-			}
-			else {
-				console.error("Render queue contains RenderPass of unsupported type!");
+			// Validate preprocess output
+			if (preprocOutput.scene === undefined || !(preprocOutput.scene instanceof Scene) ||
+				preprocOutput.camera === undefined || !(preprocOutput.camera instanceof Camera)) {
+				console.error("Render pass " + i + " has invalid preprocess output!");
 				return;
 			}
 
-			// Postprocessing step
-			renderPass.postprocess(this._textureMap, this._forwardedAdditionalData);
+			// Render to specified target
+			if (renderPass.target === RenderPass.SCREEN) {
+				// RENDER TO SCREEN
+				// Set requested viewport
+				this._renderer.updateViewport(viewportRP.width, viewportRP.height);
+
+				// Render to screen
+				this._renderer.render(preprocOutput.scene, preprocOutput.camera);
+			}
+			else if (renderPass.target === RenderPass.TEXTURE) {
+				// RENDER TO TEXTURE
+				// Setup render target as the render pass specifies
+				this._setupRenderTarget(renderPass);
+
+				// Render to render target
+				this._renderer.render(preprocOutput.scene, preprocOutput.camera, this._renderTarget)
+			}
+			else if (renderPass.target === RenderPass.TEXTURE_CUBE_MAP) {
+				// RENDER TO TEXTURE_CUBE_MAP
+				// Setup render target as the render pass specifies
+				this._setupRenderTarget(renderPass);
+
+				// Render to render target
+				this._renderer.render(preprocOutput.scene, preprocOutput.camera, this._renderTarget, true, renderPass.side);
+			}
+			else {
+				console.error("Unknown render pass " + i + " target.");
+				return;
+			}
+		}
+		else if (renderPass.type === RenderPass.TEXTURE_MERGE) {
+			// This is a texture merging render pass
+
+			// Validate preprocess output
+			if (preprocOutput.material === undefined || !(preprocOutput.material instanceof CustomShaderMaterial) ||
+				preprocOutput.textures === undefined || !Array.isArray(preprocOutput.textures)) {
+				console.error("Render pass " + i + " has invalid preprocess output!");
+				return;
+			}
+
+			// Remove possible previous maps
+			preprocOutput.material.clearMaps();
+
+			// Add textures to material
+			for (let i = 0; i < preprocOutput.textures.length; i++) {
+				preprocOutput.material.addMap(preprocOutput.textures[i]);
+			}
+
+			// Set quad material so that the correct shader will be used
+			this._textureMergeQuad.material = preprocOutput.material;
+
+			// Render to specified target
+			if (renderPass.target === RenderPass.SCREEN) {
+				// RENDER TO SCREEN
+				// Set requested viewport
+				this._renderer.updateViewport(viewportRP.width, viewportRP.height);
+
+				// Render to screen
+				this._renderer.render(this._textureMergeScene, this._textureMergeCamera);
+			}
+			else if (renderPass.target === RenderPass.TEXTURE) {
+				// RENDER TO TEXTURE
+				// Setup render target as the render pass specifies
+				this._setupRenderTarget(renderPass);
+
+				// Render to render target
+				this._renderer.render(this._textureMergeScene, this._textureMergeCamera, this._renderTarget);
+			}
+			else {
+				console.error("Unknown render pass " + i + " target.");
+				return;
+			}
+		}
+		else if (renderPass.type === RenderPass.POSTPROCESS) {
+			// This is a texture merging render pass
+
+			// Validate preprocess output
+			if (preprocOutput.material === undefined || !(preprocOutput.material instanceof CustomShaderMaterial) ||
+				preprocOutput.textures === undefined || !Array.isArray(preprocOutput.textures)) {
+				console.error("Render pass " + i + " has invalid preprocess output!");
+				return;
+			}
+
+			// Remove possible previous maps
+			preprocOutput.material.clearMaps();
+
+			// Add textures to material
+			for (let i = 0; i < preprocOutput.textures.length; i++) {
+				preprocOutput.material.addMap(preprocOutput.textures[i]);
+			}
+
+			// Set quad material so that the correct shader will be used
+			this._textureMergeQuad.material = preprocOutput.material;
+
+			// Render to specified target
+			if (renderPass.target === RenderPass.SCREEN) {
+				// RENDER TO SCREEN
+				// Set requested viewport
+				this._renderer.updateViewport(viewportRP.width, viewportRP.height);
+
+				// Render to screen
+				this._renderer.render(this._textureMergeScene, this._textureMergeCamera);
+			}
+			else if (renderPass.target === RenderPass.TEXTURE) {
+				// RENDER TO TEXTURE
+				// Setup render target as the render pass specifies
+				this._setupRenderTarget(renderPass);
+
+				// Render to render target
+				this._renderer.render(this._textureMergeScene, this._textureMergeCamera, this._renderTarget);
+			}
+			else {
+				console.error("Unknown render pass " + i + " target.");
+				return;
+			}
+		}
+		else {
+			console.error("Render queue contains RenderPass of unsupported type!");
+			return;
 		}
 
+		// Postprocessing step
+		renderPass.postprocess(this._textureMap, this._forwardedAdditionalData);
+	}
+
+	render_end() {
 		// Restore viewport to original value
-		this._renderer.updateViewport(cleanupViewport.width, cleanupViewport.height);
+		this._renderer.updateViewport(this._saved_vp.width, this._saved_vp.height);
+		delete this._saved_vp;
 
 		return {textures: this._textureMap,
 				additionalData: this._forwardedAdditionalData};
+	}
+
+	render() {
+		this.render_begin();
+
+		for (let i = 0; i < this._renderQueue.length; i++) {
+			this.render_pass(this._renderQueue[i], i);
+		}
+
+		return this.render_end();
 	}
 
 	addTexture(name, texture) {

@@ -32,7 +32,7 @@ export class ZSpriteBasicMaterial extends CustomShaderMaterial
             color: this.color, emissive: this.emissive, diffuse: this.diffuse
         } );
         for (const m of this.maps) o.addMap(m);
-        o.instanceData = this.instanceData;
+        o._instanceData = this._instanceData;
         o.addSBFlag("PICK_MODE_UINT");
         o.setUniform("u_PickInstance", false);
         return o;
@@ -44,7 +44,7 @@ export class ZSpriteBasicMaterial extends CustomShaderMaterial
             color: this.color, emissive: this.emissive, diffuse: this.diffuse
         } );
         for (const m of this.maps) o.addMap(m);
-        o.instanceData = this.instanceData;
+        o._instanceData = this._instanceData;
         o.addSBFlag('OUTLINE');
         o.setUniform("u_OutlineGivenInstances", false);
         o.setAttribute("a_OutlineInstances", Int32Attribute([0], 1, 0x7fffffff));

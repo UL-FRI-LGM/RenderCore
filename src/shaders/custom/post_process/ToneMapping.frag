@@ -49,7 +49,9 @@ void main() {
         // gamma correction 
         mapped = pow(mapped, vec3(1.0 / gamma));
     
-        //ldrColor = vec4(mapped, 1.0);
-        ldrColor = mix(vec4(u_clearColor.rgb, 1.0), vec4(mapped, 1.0), hdrColor.a);
+        if (hdrColor.a == 0.0)
+            ldrColor = vec4(u_clearColor.rgb, 1.0);
+        else
+            ldrColor = vec4(mapped, 1.0);
     #fi
 }

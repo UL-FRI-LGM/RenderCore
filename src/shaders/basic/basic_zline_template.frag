@@ -1,8 +1,10 @@
 #version 300 es
 precision mediump float;
+precision highp sampler2D;
+precision highp isampler2D;
 
 //DEF
-//**********************************************************************************************************************
+//-----------------------------------------------------------------------------
 
 #define SPRITE_SPACE_WORLD 0.0
 #define SPRITE_SPACE_SCREEN 1.0
@@ -10,9 +12,10 @@ precision mediump float;
 struct Material {
     vec3 emissive;
     vec3 diffuse;
-    #if (INSTANCED)
-        sampler2D instanceData0;
-    #fi
+
+    sampler2D  instanceData0;
+    isampler2D instanceData1;
+
     #if (TEXTURE)
         #for I_TEX in 0 to NUM_TEX
             sampler2D texture##I_TEX;
@@ -22,7 +25,7 @@ struct Material {
 
 
 //UIO
-//**********************************************************************************************************************
+//-----------------------------------------------------------------------------
 
 uniform Material material;
 uniform vec3 ambient;
@@ -46,10 +49,9 @@ uniform vec3 ambient;
     layout(location = 0) out vec4 objectID;
 #else if (PICK_MODE_UINT)
     uniform uint u_UINT_ID;
-    #if (INSTANCED)
-        uniform bool u_PickInstance;
-        flat in uint InstanceID;
-    #fi
+
+    uniform bool u_PickInstance;
+    flat in uint InstanceID;
     layout(location = 0) out uint objectID;
 #else if (OUTLINE)
     // in vec3 v_position_viewspace;
@@ -78,7 +80,7 @@ uniform vec3 ambient;
 
 
 //MAIN
-//**********************************************************************************************************************
+//-----------------------------------------------------------------------------
 void main() {
 
     #if (CLIPPING_PLANES)
@@ -120,15 +122,11 @@ void main() {
         #if (PICK_MODE_RGB)
             objectID = vec4(u_RGB_ID, 1.0);
         #else if (PICK_MODE_UINT)
-            #if (INSTANCED)
-                if (u_PickInstance) {
-                    objectID = InstanceID; // 0 is a valid result
-                } else {
-                    objectID = u_UINT_ID;
-                }
-            #else
+            if (u_PickInstance) {
+                objectID = InstanceID; // 0 is a valid result
+            } else {
                 objectID = u_UINT_ID;
-            #fi
+            }
         #else
             outColor = color;
         #fi

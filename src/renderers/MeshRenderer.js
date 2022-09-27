@@ -289,7 +289,9 @@ export class MeshRenderer extends Renderer {
 		for (let i = 0; i < list.length; i++) {
 			const object = list[i];
 
-			const mat = object.outlineMaterial ? object.outlineMaterial : this._defaultOutlineMat;
+			const mat = object.outlineMaterial ? object.outlineMaterial :
+						  (object.material.normalFlat ? this._defaultOutlineMatFlat : this._defaultOutlineMat);
+
 			this._glManager.updateObjectData(object, mat);
 
 			this._setupProgram(object, camera, mat);
@@ -652,10 +654,10 @@ export class MeshRenderer extends Renderer {
 		}
 
 		const instanceData = material.instanceData;
-		if(instanceData) {
-			const texture = "material.instanceData";
+		for (let i = 0; i < instanceData.length; i++) {
+			const texture = "material.instanceData" + i;
 			if (uniformSetter[texture] !== undefined) {
-				uniformSetter[texture].set(this._glManager.getTexture(instanceData), 4);
+				uniformSetter[texture].set(this._glManager.getTexture(instanceData[i]), 10+i);
 			}else{
 				// console.warn("---------------------------------------------------");
 				// console.warn(object);
