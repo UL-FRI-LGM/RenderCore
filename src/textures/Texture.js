@@ -43,6 +43,7 @@ export class Texture {
 		this._flipy = true;
 
 		this._dirty = true;
+		this.idleTime = 0;
 	}
 
 	applyConfig(texConfig) {

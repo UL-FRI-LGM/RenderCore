@@ -38,6 +38,7 @@ export class BufferAttribute {
 		this._update = false;
 
 		this.target = (args.target !== undefined) ? args.target : BufferAttribute.TARGET.ARRAY_BUFFER;
+		this.idleTime = 0;
 	}
 
 	/**

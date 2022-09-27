@@ -47,6 +47,9 @@ export class GLTextureManager {
 	}
 
 	updateTexture(texture, isRTT) {
+		texture.idleTime = 0;
+
+
 		let newTexture = false;
 
 		// Check if the texture is already created and cached
@@ -127,6 +130,9 @@ export class GLTextureManager {
 	}
 
 	updateCubeTexture(texture, isRTT = false) {
+		texture.idleTime = 0;
+
+
 		let newTexture = false;
 
 		// Check if the texture is already created and cached
@@ -232,6 +238,8 @@ export class GLTextureManager {
 	}
 
 	getTexture(reference) {
+		reference.idleTime = 0;
+
 		if(this._cached_textures.has(reference)){
 			return this._cached_textures.get(reference);
 		}else{
@@ -241,6 +249,8 @@ export class GLTextureManager {
 		}
 	}
 	getCubeTexture(reference) {
+		reference.idleTime = 0;
+
 		if(this._cached_textures.has(reference)){
 			return this._cached_textures.get(reference);
 		}else{
@@ -270,11 +280,25 @@ export class GLTextureManager {
 	deleteTexture(texture, glTexture) {
 		this._cached_textures.delete(texture);
 		this._gl.deleteTexture(glTexture);
+
+		texture.dirty = true;
 	}
-	deleteTextures() {
+	deleteTextures(checkIdleTime = false, idleTimeDelta = 1000) {
 		// Delete all cached textures
+		if(checkIdleTime){
+			for (const [key_texture, val_glTexture] of this._cached_textures) {
+				if(key_texture.idleTime >= idleTimeDelta) this.deleteTexture(key_texture, val_glTexture);
+			}
+		}else{
+			for (const [key_texture, val_glTexture] of this._cached_textures) {
+				this.deleteTexture(key_texture, val_glTexture);
+			}
+		}
+	}
+
+	incrementTime(){
 		for (const [key_texture, val_glTexture] of this._cached_textures) {
-			this.deleteTexture(key_texture, val_glTexture);
+			key_texture.idleTime = key_texture.idleTime + 1;
 		}
 	}
 

@@ -35,7 +35,7 @@ export class GLAttributeManager {
 	}
 
 
-	createGLBuffer(attribute){
+	_createGLBuffer(attribute){
 		const glBuffer = this._gl.createBuffer();
 		const bufferType = (attribute.target) ? this.TARGET.get(attribute.target) : this._gl.ARRAY_BUFFER;
 		const usage = this.DRAW_TYPE.get(attribute.drawType);
@@ -54,7 +54,7 @@ export class GLAttributeManager {
 	 * @param {BufferAttribute} attribute Object attribute
 	 * @param bufferType WebGL buffer type
 	 */
-	updateAttribute (attribute) {
+	_updateAttribute (attribute) {
 		const glBuffer = this._cached_buffers.get(attribute);
 		const bufferType = (attribute.target) ? this.TARGET.get(attribute.target) : this._gl.ARRAY_BUFFER;
 
@@ -86,16 +86,18 @@ export class GLAttributeManager {
 	 * @returns {map} Attributes WebGL buffer container
 	 */
 	 getGLBuffer (attribute) {
+		attribute.idleTime = 0;
+
 		if(this._cached_buffers.has(attribute)){
 			const glBuffer = this._cached_buffers.get(attribute);
-			if(attribute.dirty) this.updateAttribute(attribute);
+			if(attribute.dirty) this._updateAttribute(attribute);
 
 
 			return glBuffer; 
 		}else{
 			//console.error("Warning: GLBuffer not found: [" + attribute + "]!");
-			const glBuffer = this.createGLBuffer(attribute);
-			if(attribute.dirty) this.updateAttribute(attribute);
+			const glBuffer = this._createGLBuffer(attribute);
+			if(attribute.dirty) this._updateAttribute(attribute);
 			
 
 			return glBuffer;
@@ -109,14 +111,28 @@ export class GLAttributeManager {
 	deleteBuffer(buffer, glBuffer) {
 		this._cached_buffers.delete(buffer);
 		this._gl.deleteBuffer(glBuffer);
+
+		buffer.dirty = true; //so it will be updated when created again
 	}
 
 	/**
 	 * Clears buffer cache
 	 */
-	deleteBuffers() {
+	deleteBuffers(checkIdleTime = false, idleTimeDelta = 1000) {
+		if(checkIdleTime){
+			for (const [key_buffer, val_glBuffer] of this._cached_buffers) {
+				if(key_buffer.idleTime >= idleTimeDelta) this.deleteBuffer(key_buffer, val_glBuffer);
+			}
+		}else{
+			for (const [key_buffer, val_glBuffer] of this._cached_buffers) {
+				this.deleteBuffer(key_buffer, val_glBuffer);
+			}
+		}
+	}
+
+	incrementTime(){
 		for (const [key_buffer, val_glBuffer] of this._cached_buffers) {
-			this.deleteBuffer(key_buffer, val_glBuffer);
+			key_buffer.idleTime = key_buffer.idleTime + 1;
 		}
 	}
 };
