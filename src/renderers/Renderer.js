@@ -338,6 +338,7 @@ export class Renderer {
 	set clearColor(hexColor) {
 		let components = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexColor);
 		if (components) {
+			// Is this correct for INT/UINT buffers? See also GLManager.clearSeparate()
 			this._glManager.setClearColor(parseInt(components[1], 16) / 255, parseInt(components[2], 16) / 255, parseInt(components[3], 16) / 255, parseInt(components[4], 16) / 255);
 		}
 	}

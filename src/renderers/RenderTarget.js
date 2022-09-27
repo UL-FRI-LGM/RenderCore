@@ -50,7 +50,7 @@ export class RenderTarget {
 		this._depthTexture = texture;
 	}
 
-	addDepthTexture(isCube) {
+	addDepthTexture(isCube=false) {
 		if(isCube){
 			this._depthTexture = new CubeTexture({
 				textures: undefined,

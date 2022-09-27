@@ -144,7 +144,6 @@ export class GLManager {
 
 		// Update textures
 		let textures = material.maps;
-
 		for (let i = 0; i < textures.length; i++) {
 			this._textureManager.updateTexture(textures[i], false);
 		}
@@ -169,7 +168,9 @@ export class GLManager {
 		if (heightMap) this._textureManager.updateTexture(heightMap, false);
 
 		const instanceData = material.instanceData;
-		if (instanceData) this._textureManager.updateTexture(instanceData, false);
+		for (let i = 0; i < instanceData.length; i++) {
+			this._textureManager.updateTexture(instanceData[i], false);
+		}
 
 		
 		// // CustomShaderMaterial may specify extra attributes
@@ -353,30 +354,31 @@ export class GLManager {
 	clearSeparate(renderTarget){
 		const drawBuffersLength = renderTarget.sizeDrawBuffers();
 
-
+		this._gl.depthMask(true);
 		//console.warn(renderTarget.depthTexture);
 		//this._gl.clearBufferfi(this._gl.DEPTH_STENCIL, 0, 1.0, 0);
 		this._gl.clearBufferfv(this._gl.DEPTH, 0, new Float32Array([1.0, 1.0, 1.0, 1.0]));
-		
 
 		//const cc = [0, 0, 0, 0];
 		const cc = this._clearColor.toArray();
-		for (let i = 0; i < drawBuffersLength; i++) {
+		for (let idx = 0; idx < drawBuffersLength; idx++) {
 			///console.warn(renderTarget._drawBuffers[i]);
-			const clearIndex = i;
-			
-			if(renderTarget._drawBuffers[i].clearFunction === 0){
-				//console.warn("No clear.");
+			const tex = renderTarget._drawBuffers[idx];
+
+			if (tex.clearColorArray === null)
 				continue;
-			}else if(renderTarget._drawBuffers[i].clearFunction === 1){
-				this._gl.clearBufferuiv(this._gl.COLOR, clearIndex, new Uint32Array(cc));
-			}else if(renderTarget._drawBuffers[i].clearFunction === 2){
-				this._gl.clearBufferiv(this._gl.COLOR, clearIndex, new Int32Array(cc));
-			}else if(renderTarget._drawBuffers[i].clearFunction === 3){
-				this._gl.clearBufferfv(this._gl.COLOR, clearIndex, new Float32Array(cc));
+
+			if(tex.clearFunction === 1){
+				let cca = tex.clearColorArray ? tex.clearColorArray : new Uint32Array(cc);
+				this._gl.clearBufferuiv(this._gl.COLOR, idx, cca);
+			}else if(tex.clearFunction === 2){
+				let cca = tex.clearColorArray ? tex.clearColorArray : new Int32Array(cc);
+				this._gl.clearBufferiv(this._gl.COLOR, idx, cca);
+			}else if(tex.clearFunction === 3){
+				let cca = tex.clearColorArray ? tex.clearColorArray : new Float32Array(cc);
+				this._gl.clearBufferfv(this._gl.COLOR, idx, cca);
 			}else{
-				//console.warn(renderTarget._drawBuffers[i].clearFunction);
-				this._gl.clearBufferfv(this._gl.COLOR, clearIndex, new Float32Array(cc));
+				console.error("Unsupported value for clearFunction", renderTarget._drawBuffers[i].clearFunction);
 			}
 		}
 	}

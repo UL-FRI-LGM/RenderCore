@@ -158,8 +158,10 @@ export class Mesh extends Object3D {
 	}
 	set pickable(pickable) {
 		super.pickable = pickable;
-		if (pickable && ! this._pickingMaterial)
+		if (pickable && ! this._pickingMaterial) {
 			this.pickingMaterial = new PickingShaderMaterial("TRIANGLES");
+			this.pickingMaterial.side = this.material.side;
+		}
 	}
 	set instanced(instanced) {
 		this._instanced = instanced;

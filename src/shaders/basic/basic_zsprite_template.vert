@@ -11,7 +11,7 @@ precision mediump float;
 struct Material {
     vec3 emissive;
     vec3 diffuse;
-    sampler2D instanceData;
+    sampler2D instanceData0;
     // The following could (should, really) be an int attribute with divisor 1
     // #if (OUTLINE)
     //    isampler2D instance_indices;
@@ -42,14 +42,6 @@ in vec3 VPos;       // Vertex position
 #if (TEXTURE)
     in vec2 uv;
     out vec2 fragUV;
-#fi
-
-#if (PLIGHTS)
-    out vec3 fragVPos;
-#fi
-
-#if (POINTS)
-    uniform float pointSize;
 #fi
 
 #if (CLIPPING_PLANES)
@@ -84,9 +76,9 @@ void main() {
             if (u_OutlineGivenInstances)
                 iID = a_OutlineInstances;
         #fi
-        int   tsx = textureSize(material.instanceData, 0).x;
+        int   tsx = textureSize(material.instanceData0, 0).x;
         ivec2 tc  = ivec2(iID % tsx, iID / tsx);
-        vec4  pos = texelFetch(material.instanceData, tc, 0);
+        vec4  pos = texelFetch(material.instanceData0, tc, 0);
         // see also texelFetchOffset about how to get neigboring texels
 
         VPos_viewspace = MVMat * vec4(pos.xyz, 1.0);
@@ -106,11 +98,6 @@ void main() {
         vec4 VPos_clipspace = PMat * VPos_viewspace;
         gl_Position = VPos_clipspace + vec4(VPos.xy * 2.0 * SpriteSize.xy / viewport * VPos_clipspace.w, 0.0, 0.0);
     }
-
-    #if (PLIGHTS)
-        // Pass vertex position to fragment shader
-        fragVPos = vec3(VPos_viewspace) / VPos_viewspace.w;
-    #fi
 
     #if (COLORS)
         // Pass vertex color to fragment shader
