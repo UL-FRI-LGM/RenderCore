@@ -238,7 +238,7 @@ export class GLTextureManager {
 	}
 
 	getTexture(reference) {
-		reference.idleTime = 0;
+		if(reference) reference.idleTime = 0;
 
 		if(this._cached_textures.has(reference)){
 			return this._cached_textures.get(reference);
@@ -249,7 +249,7 @@ export class GLTextureManager {
 		}
 	}
 	getCubeTexture(reference) {
-		reference.idleTime = 0;
+		if(reference) reference.idleTime = 0;
 
 		if(this._cached_textures.has(reference)){
 			return this._cached_textures.get(reference);
