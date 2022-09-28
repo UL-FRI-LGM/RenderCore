@@ -97,6 +97,7 @@ export {VolumeBasicMaterial} from './materials/VolumeBasicMaterial.js';
 export {SpriteBasicMaterial} from './materials/SpriteBasicMaterial.js';
 export {PickingShaderMaterial} from './materials/PickingShaderMaterial.js';
 export {StripeBasicMaterial} from './materials/StripeBasicMaterial.js';
+export {StripesBasicMaterial} from './materials/StripesBasicMaterial.js';
 export {PointBasicMaterial} from './materials/PointBasicMaterial.js';
 export {Text2DMaterial} from './materials/Text2DMaterial.js';
 export {SkyBox2BasicMaterial} from './materials/SkyBox2BasicMaterial.js';
@@ -127,6 +128,8 @@ export {SkyBox2} from './objects/SkyBox2.js';
 export {SkyDome} from './objects/SkyDome.js'
 export {Point} from './objects/Point.js';
 export {Stripe} from './objects/Stripe.js';
+export {Stripes} from './objects/Stripes.js';
+export {StripesGeometry} from './objects/StripesGeometry.js';
 export {VertexNormal} from './objects/VertexNormal.js';
 export {Text2D} from './objects/Text2D.js';
 export {Grid} from './objects/Grid.js';

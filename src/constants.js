@@ -38,6 +38,18 @@ export const SmoothShading = 4;
 export const SPRITE_SPACE_WORLD = 0;
 export const SPRITE_SPACE_SCREEN = 1;
 
+// Stripe modes
+export const STRIPE_SPACE_WORLD = 0;
+export const STRIPE_SPACE_SCREEN = 1;
+export const STRIPE_CAP_DEFAULT = 0;
+export const STRIPE_CAP_BUTT = 1;
+export const STRIPE_CAP_SQUARE = 2;
+export const STRIPE_CAP_ROUND = 3;
+export const STRIPE_JOIN_DEFAULT = 0;
+export const STRIPE_JOIN_MITER = 1;
+export const STRIPE_JOIN_BEVEL = 2;
+export const STRIPE_JOIN_ROUND = 3;
+
 //Text2D modes
 export const TEXT2D_SPACE_WORLD = 0;
 export const TEXT2D_SPACE_SCREEN = 1;
