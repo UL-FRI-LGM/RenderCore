@@ -290,7 +290,7 @@ export class Renderer {
 		let rttViewport = renderTarget._viewport;
 
 		// Setup viewport
-		this._gl.viewport(rttViewport.x, rttViewport.y, rttViewport.z, rttViewport.w);
+		this.updateViewport(rttViewport.z, rttViewport.w, rttViewport.x, rttViewport.y);
 
 		if(cubeTarget){
 			this._glManager.initRenderTargetCube(renderTarget, side);
@@ -301,7 +301,8 @@ export class Renderer {
 
 	_cleanupRenderTarget() {
 		this._currentRenderTarget = null;
-		this._gl.viewport(0, 0, this._canvas.width, this._canvas.height);
+
+		this.updateViewport(this._canvas.width, this._canvas.height);
 
 		this._glManager.cleanupRenderTarget();
 	}
@@ -415,7 +416,7 @@ export class Renderer {
 		const width = (reference)? reference.width : this.getViewport().width;
 		const height = (reference)? reference.height : this.getViewport().height;
 
-		const pickedUINT = new Uint32Array(1);
+		const pickedUINT = new Uint32Array(4);
 
 		//PREP
 		if(reference){
@@ -426,7 +427,7 @@ export class Renderer {
 		}
 
 		//READ
-		this._gl.readPixels(pickX, height-pickY, 1, 1, this._gl.RED_INTEGER, this._gl.UNSIGNED_INT, pickedUINT);
+		this._gl.readPixels(pickX, height-pickY, 1, 1, this._gl.RGBA_INTEGER, this._gl.UNSIGNED_INT, pickedUINT);
 
 		//CLEAN
 		if(reference){
