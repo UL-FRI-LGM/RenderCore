@@ -191,11 +191,11 @@ export class MeshRenderer extends Renderer {
 		this._renderPickableObjects(opaqueObjects, camera);
 		this._renderPickableObjects(transparentObjects, camera);
 
-		let r = new Uint32Array(1);
-		this._gl.readPixels(this._pickCoordinateX, this._canvas.height - this._pickCoordinateY, 1, 1, this._gl.RED_INTEGER, this._gl.UNSIGNED_INT, r);
+		let r = new Uint32Array(4);
+		this._gl.readBuffer(this._gl.COLOR_ATTACHMENT0);
+		this._gl.readPixels(this._pickCoordinateX, this._pickCoordinateY, 1, 1,
+			                this._gl.RGBA_INTEGER, this._gl.UNSIGNED_INT, r);
 		this._pickedID = (r[0] != 0xFFFFFFFF) ? r[0] : null;
-
-		console.log("MeshRenderer pickID:", this._pickedID);
 
 		if (this._pickObject3D) {
 			this._pickedObject3D = (this._pickedID !== null) ? this._pickLUA[this._pickedID] : null;
@@ -1254,8 +1254,10 @@ export class MeshRenderer extends Renderer {
 		this._drawObject(object);
 		object.pickingMaterial.setUniform("u_PickInstance", false);
 
-		let r = new Uint32Array(1);
-		this._gl.readPixels(this._pickCoordinateX, this._canvas.height - this._pickCoordinateY, 1, 1, this._gl.RED_INTEGER, this._gl.UNSIGNED_INT, r);
+		let r = new Uint32Array(4);
+		this._gl.readBuffer(this._gl.COLOR_ATTACHMENT0);
+		this._gl.readPixels(this._pickCoordinateX, this._pickCoordinateY, 1, 1,
+			                this._gl.RGBA_INTEGER, this._gl.UNSIGNED_INT, r);
 		this._pickedID = (r[0] != 0xFFFFFFFF) ? r[0] : null;
 
 		console.log("MeshRenderer pick_instance InstanceID:", this._pickedID);

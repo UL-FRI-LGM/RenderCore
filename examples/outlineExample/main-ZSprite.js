@@ -157,8 +157,8 @@ const CoreControl = {
     },
 
     initializeRenderer: function(canvas){
-        const renderer = new RC.MeshRenderer(canvas, RC.WEBGL2, {antialias: false, stencil: true});
-        renderer.clearColor = "#ffffffff";
+        const renderer = new RC.MeshRenderer(canvas, RC.WEBGL2, {antialias: false, stencil: false});
+        renderer.clearColor = "#ffffff00";
         renderer.addShaderLoaderUrls("../../src/shaders");
 
         RC.GLManager.sCheckFrameBuffer = false;
@@ -174,7 +174,10 @@ const CoreControl = {
         renderQueue.pushRenderPass(RenderPass_MainShader); //normal scene render
         renderQueue.pushRenderPass(RenderPass_MainMulti); //render normals, view direction, depth, ... of outlined objects
         renderQueue.pushRenderPass(RenderPass_Outline); //computes outline based on multi render pass
-
+        renderQueue.pushRenderPass(RP_GaussH);
+        renderQueue.pushRenderPass(RP_GaussV);
+        renderQueue.pushRenderPass(RP_Blend);
+        // renderQueue.pushRenderPass(RP_ToneMapToScreen);
         return renderQueue;
     },
     initializeRendererManager: function(renderer){
@@ -264,7 +267,7 @@ const CoreControl = {
                                                 emissive: new RC.Color(0, 1, 0),
                                                 diffuse: new RC.Color(0, 0, 0) } );
         sm.transparent = true;
-        sm.opacity = 0.5;
+        // sm.opacity = 0.5;
         // sm.depthWrite = false;
         sm.addMap(this.texDot);
         sm.addInstanceData(this.tex_insta_pos);
@@ -527,7 +530,7 @@ const RenderPass_MainShader = new RC.RenderPass(
     "depthDefaultDefaultMaterials",
 
     [
-        {id: "color_main", textureConfig: RC.RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG},
+        {id: "color_main", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
     ]
 );
 
@@ -594,8 +597,12 @@ const RenderPass_MainMulti = new RC.RenderPass(
     ]
 );
 
-
-const outlineMaterial = new RC.CustomShaderMaterial("outline", {scale: Math.E, edgeColor: [0.7, 0.1, 0.5, 1.0], _DepthThreshold: 6.0, _NormalThreshold: 0.4, _DepthNormalThreshold: 0.5, _DepthNormalThresholdScale: 7.0});
+const outlineMaterial = new RC.CustomShaderMaterial("outline",
+  { scale: 1,
+    edgeColor: [0.5, 0.01, 0.25, 1.0],
+    _DepthThreshold: 6.0, _NormalThreshold: 0.4,
+    _DepthNormalThreshold: 0.5, _DepthNormalThresholdScale: 7.0 }
+);
 outlineMaterial.lights = false;
 const RenderPass_Outline = new RC.RenderPass(
     // Rendering pass type
@@ -607,14 +614,17 @@ const RenderPass_Outline = new RC.RenderPass(
 
     // Preprocess function
     function (textureMap, additionalData) {
-        return {material: outlineMaterial, textures: [textureMap["depthDefaultMultiMaterials"], textureMap["normal"], textureMap["viewDir"], textureMap["color_main"]]};
+        return {material: outlineMaterial,
+                textures: [textureMap["depthDefaultMultiMaterials"],
+                           textureMap["normal"],
+                           textureMap["viewDir"]]};
     },
 
     function(textureMap, additionalData) {
     },
 
     // Target
-    RC.RenderPass.SCREEN,
+    RC.RenderPass.TEXTURE,
 
     // Viewport
     { width: predef_width, height: predef_height },
@@ -623,6 +633,80 @@ const RenderPass_Outline = new RC.RenderPass(
     null,
 
     [
-        {id: "color_outline", textureConfig: RC.RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG}
+        {id: "color_outline", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
     ]
+);
+
+const RP_GaussH_mat = new RC.CustomShaderMaterial("gaussBlur", {horizontal: true, power: 4.0});
+RP_GaussH_mat.lights = false;
+
+const RP_GaussH = new RC.RenderPass(
+    RC.RenderPass.POSTPROCESS,
+    (textureMap, additionalData) => {},
+    (textureMap, additionalData) => {
+        return {material: RP_GaussH_mat, textures: [textureMap["color_outline"]]};
+    },
+    (textureMap, additionalData) => {},
+    RC.RenderPass.TEXTURE,
+    { width: predef_width, height: predef_height },
+    null,
+    [
+        {id: "gauss_h", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
+    ]
+);
+
+const RP_GaussV_mat = new RC.CustomShaderMaterial("gaussBlur", {horizontal: false, power: 4.0});
+RP_GaussV_mat.lights = false;
+
+const RP_GaussV = new RC.RenderPass(
+    RC.RenderPass.POSTPROCESS,
+    (textureMap, additionalData) => {},
+    (textureMap, additionalData) => {
+        return {material: RP_GaussV_mat, textures: [textureMap["gauss_h"]]};
+    },
+    (textureMap, additionalData) => {},
+    RC.RenderPass.TEXTURE,
+    { width: predef_width, height: predef_height },
+    null,
+    [
+        {id: "gauss_hv", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
+    ]
+);
+
+const RP_Blend_mat = new RC.CustomShaderMaterial("blendingAdditive");
+RP_Blend_mat.lights = false;
+
+const RP_Blend = new RC.RenderPass(
+    RC.RenderPass.POSTPROCESS,
+    (textureMap, additionalData) => {},
+    (textureMap, additionalData) => {
+        return {material: RP_Blend_mat,
+                textures: [textureMap["gauss_hv"],
+                           textureMap["color_main"]]};
+    },
+    (textureMap, additionalData) => {},
+    // Target
+    RC.RenderPass.SCREEN,
+    { width: predef_width, height: predef_height },
+    null,
+    [
+        {id: "color_final", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
+    ]
+);
+
+const RP_ToneMapToScreen_mat = new RC.CustomShaderMaterial("ToneMapping",
+    { MODE: 1.0, gamma: 1.0, exposure: 2.0 });
+    // u_clearColor set from MeshRenderer
+RP_ToneMapToScreen_mat.lights = false;
+
+const RP_ToneMapToScreen = new RC.RenderPass(
+    RC.RenderPass.POSTPROCESS,
+    function (textureMap, additionalData) {},
+    function (textureMap, additionalData) {
+        return { material: RP_ToneMapToScreen_mat,
+                 textures: [ textureMap["color_final"] ] };
+    },
+    function (textureMap, additionalData) {},
+    RC.RenderPass.SCREEN,
+    { width: predef_width, height: predef_height }
 );
