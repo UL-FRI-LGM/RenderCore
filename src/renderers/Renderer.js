@@ -209,20 +209,20 @@ export class Renderer {
 			if (scope._logLevel >= 2)
 				console.log("(Down)loaded: " + program.programID + ": " + programName + '.');
 			scope._glProgramManager.addTemplate(programTemplateSrc);
-			scope._loadingPrograms.delete(program.programID);
+			scope._loadingPrograms.delete(program.name);
 		};
 
 		// Something went wrong while fetching the program templates
 		let onError = function (event) {
 			console.error("Failed to load program: " + program.programID + ": " + programName + '.');
-			scope._loadingPrograms.delete(program.programID);
+			scope._loadingPrograms.delete(program.name);
 		};
 
 		// Check if the program is already loading
-		if (!this._loadingPrograms.has(program.programID)) {
+		if (!this._loadingPrograms.has(program.name)) {
 			if (this._logLevel >= 2)
 				console.log("(Down)loading: " + program.programID + ": " + programName + '.');
-			this._loadingPrograms.set(program.programID, program);
+			this._loadingPrograms.set(program.name, program);
 
 			// Initiate loading
 			this._shaderLoader.loadProgramSources(programName, onLoad, undefined, onError);
