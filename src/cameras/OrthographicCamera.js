@@ -203,4 +203,24 @@ export class OrthographicCamera extends Camera {
 			this.updateProjectionMatrix();
 		}
 	}
+
+	narrowProjectionForPicking(w, h, p, q, x, y) {
+		// w, h - viewport; p, q - pick rectangle; x,y - pick position in viewport coords.
+		let dx = (this._right_store - this._left_store) / (2 * this._zoom);
+		let dy = (this._top_store - this._bottom_store) / (2 * this._zoom);
+		let cx = (this._right_store + this._left_store) / 2;
+		let cy = (this._top_store + this._bottom_store) / 2;
+
+		let left = cx - dx;
+		let right = cx + dx;
+		let top = cy + dy;
+		let bottom = cy - dy;
+
+		let qtop = (y + q/2)/h*(top - bottom) + bottom;
+		let qbottom = (y - q/2)/h*(top - bottom) + bottom;
+		let qleft = (x - p/2)/w*(right - left) + left;
+		let qright = (x + p/2)/w*(right - left) + left;
+		this.projectionMatrix.makeOrthographic(qleft, qright, qtop, qbottom, this._near, this._far);
+		if (this.frustumVisible) this.updateFrustum();
+	}
 };

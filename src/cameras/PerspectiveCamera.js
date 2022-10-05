@@ -292,4 +292,13 @@ export class PerspectiveCamera extends Camera {
 			this.updateProjectionMatrix();
 		}
 	}
+
+	narrowProjectionForPicking(w, h, p, q, x, y) {
+		// w, h - viewport; p, q - pick rectangle; x,y - pick position in viewport coords.
+		this._top = (y + q/2)/h*(this._top_store - this._bottom_store) + this._bottom_store;
+		this._bottom = (y - q/2)/h*(this._top_store - this._bottom_store) + this._bottom_store;
+		this._left = (x - p/2)/w*(this._right_store - this._left_store) + this._left_store;
+		this._right = (x + p/2)/w*(this._right_store - this._left_store) + this._left_store;
+		this.updateProjectionMatrix();
+	}
 };
