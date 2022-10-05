@@ -64,7 +64,7 @@ export class Renderer {
 		this._screenshotData = new Uint8ClampedArray();
 
 		//viewport
-		this._viewport = {x: 0, y: 0, width: this._canvas.width, height: this._canvas.height};
+		this._viewport = {xOffset: 0, yOffset: 0, width: this._canvas.width, height: this._canvas.height};
 
 		//logLevel: 0 - error, 1 - warning, 2 - info, 3 - debug
 		this._logLevel = 2;
@@ -345,7 +345,7 @@ export class Renderer {
 	}
 
 	updateViewport(width, height, xOffset = 0, yOffset = 0) {
-		this._viewport = {x: xOffset, y: yOffset, width: width, height: height};
+		this._viewport = {xOffset: xOffset, yOffset: yOffset, width: width, height: height};
 		this._gl.viewport(xOffset, yOffset, width, height);
 	}
 

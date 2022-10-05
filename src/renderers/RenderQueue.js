@@ -196,7 +196,7 @@ export class RenderQueue {
 			if (renderPass.target === RenderPass.SCREEN) {
 				// RENDER TO SCREEN
 				// Set requested viewport
-				this._renderer.updateViewport(viewportRP.width, viewportRP.height);
+				this._renderer.updateViewport(viewportRP.width, viewportRP.height, viewportRP.xOffset, viewportRP.yOffset);
 
 				// Render to screen
 				this._renderer.render(preprocOutput.scene, preprocOutput.camera);
@@ -247,7 +247,7 @@ export class RenderQueue {
 			if (renderPass.target === RenderPass.SCREEN) {
 				// RENDER TO SCREEN
 				// Set requested viewport
-				this._renderer.updateViewport(viewportRP.width, viewportRP.height);
+				this._renderer.updateViewport(viewportRP.width, viewportRP.height, viewportRP.xOffset, viewportRP.yOffset);
 
 				// Render to screen
 				this._renderer.render(this._textureMergeScene, this._textureMergeCamera);
@@ -290,7 +290,7 @@ export class RenderQueue {
 			if (renderPass.target === RenderPass.SCREEN) {
 				// RENDER TO SCREEN
 				// Set requested viewport
-				this._renderer.updateViewport(viewportRP.width, viewportRP.height);
+				this._renderer.updateViewport(viewportRP.width, viewportRP.height, viewportRP.xOffset, viewportRP.yOffset);
 
 				// Render to screen
 				this._renderer.render(this._textureMergeScene, this._textureMergeCamera);
@@ -319,7 +319,7 @@ export class RenderQueue {
 
 	render_end() {
 		// Restore viewport to original value
-		this._renderer.updateViewport(this._saved_vp.width, this._saved_vp.height);
+		this._renderer.updateViewport(this._saved_vp.width, this._saved_vp.height, this._saved_vp.xOffset, this._saved_vp.yOffset);
 		delete this._saved_vp;
 
 		return {textures: this._textureMap,
