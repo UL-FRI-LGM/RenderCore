@@ -6,6 +6,7 @@ import {BACK_SIDE, FRONT_AND_BACK_SIDE} from '../constants.js';
 import {Object3D} from '../core/Object3D.js';
 import {Geometry} from './Geometry.js';
 
+import {CustomShaderMaterial} from '../materials/CustomShaderMaterial.js';
 import {MeshBasicMaterial} from '../materials/MeshBasicMaterial.js';
 import {PickingShaderMaterial} from "../materials/PickingShaderMaterial.js";
 
@@ -26,7 +27,7 @@ export class Mesh extends Object3D {
 	 * @param geometry Geometry of the mesh.
 	 * @param material Material of the mesh.
 	 */
-	constructor(geometry, material, pickingMaterial, outlineMaterial) {
+	constructor(geometry, material, pickingMaterial, outlineMaterial, args = {}) {
 		super(Object3D);
 
 		this.type = "Mesh";
@@ -41,6 +42,8 @@ export class Mesh extends Object3D {
 		// Shared version used by RenderPass / MeshRenderer; set it here if vert shader transforms
 		// vertices or if frag shader does not write all the fragments. See ZSprite for example.
 		this._outlineMaterial = outlineMaterial;
+		this.GBufferMaterial = args.GBufferMaterial !== undefined ? args.GBufferMaterial : new CustomShaderMaterial("multi");
+		
 
 		this.raycast = _raycast;
 
@@ -124,6 +127,14 @@ export class Mesh extends Object3D {
 
 		this._staticStateDirty = true;
 		this._outlineMaterial.instanced = this._instanced;
+	}
+	get GBufferMaterial() {
+		return this._GBufferMaterial;
+	}
+	set GBufferMaterial(GBufferMaterial) {
+		this._GBufferMaterial = GBufferMaterial;
+
+		this._staticStateDirty = true;
 	}
 
 
@@ -241,6 +252,7 @@ export class Mesh extends Object3D {
 		let r = [ this._material.requiredProgram(renderer) ];
 		if (this._pickingMaterial && this.pickable) r.push( this._pickingMaterial.requiredProgram(renderer) );
 		if (this._outlineMaterial && this.drawOutline) r.push( this._outlineMaterial.requiredProgram(renderer) );
+		r.push(this.GBufferMaterial.requiredProgram(renderer));
 
 		this._staticStateDirty = false;
 

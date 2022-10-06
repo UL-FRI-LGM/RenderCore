@@ -22,6 +22,14 @@ import {Vector4} from '../math/Vector4.js';
 
 
 export class MeshRenderer extends Renderer {
+	static MODE = {
+		COLOR: 0,
+		SHADOW: 1,
+		P_SHADOW: 2,
+		GEOMETRY: 3,
+		PICK: 4
+	};
+
 
 	/**
 	 * Create new MeshRenderer object.
@@ -243,6 +251,21 @@ export class MeshRenderer extends Renderer {
 			this._gl.disable(this._gl.BLEND);
 		}
 	}
+
+	requestProgram(program){
+		if(program === null) return true;
+
+
+		const programID = program.programID;
+		
+		if(this._compiledPrograms.has(programID)) return true;
+
+		if(!this._loadingPrograms.has(programID) || !this._requiredPrograms.has(programID)) {
+			this._requiredPrograms.set(programID, program);
+			return false;
+		}
+	}
+
 	/**
 	 * Render objects.
 	 *
@@ -253,10 +276,55 @@ export class MeshRenderer extends Renderer {
 		for (let i = 0; i < objects.length; i++) {
 			const object = objects.get(i);
 
-			//SET PROGRAM
-			this._setupProgram(object, camera, object.material);
 
-			this._setup_material_settings(object.material);
+			// //required, load, compile program
+			const requiredPrograms = object.getRequiredPrograms(this);
+			let status = true;
+			for(let rp = 0; rp < requiredPrograms.length; rp++){
+				status = status && this.requestProgram(requiredPrograms[rp]);
+			}
+			if(!status) continue;
+
+
+			let selectedMaterial;
+			if(this._renderMode === MeshRenderer.MODE.COLOR){
+				selectedMaterial = object.material;
+			}else if(this._renderMode === MeshRenderer.MODE.SHADOW){
+				selectedMaterial = object._DSM;
+			}else if(this._renderMode === MeshRenderer.MODE.P_SHADOW){
+				selectedMaterial = object._PSM;
+			}else if(this._renderMode == MeshRenderer.MODE.GEOMETRY){
+				selectedMaterial = object.GBufferMaterial;
+			}else if(this._renderMode == MeshRenderer.MODE.PICK){
+				selectedMaterial = object._PM;
+			}else{
+				selectedMaterial = object.material
+			}
+
+			//MATERIAL SHARED PROPERTIES
+			//
+			selectedMaterial.side = object.material.side;
+			selectedMaterial.isStatic = object.material.isStatic;
+			selectedMaterial.instanced = object.material.instanced;
+			selectedMaterial.normalFlat = object.material.normalFlat;
+			//
+
+
+			//SET PROGRAM
+			//
+			const programID = selectedMaterial.requiredProgram(this).programID;
+			const program = this._compiledPrograms.get(programID);
+			if(program === undefined) {
+				console.warn("NO PROGRAM LOADED");
+				return;
+			}
+			//
+
+
+			//SET PROGRAM
+			this._setupProgram(object, camera, selectedMaterial);
+
+			this._setup_material_settings(selectedMaterial);
 
 			//COMPACT
 			this._drawObject(object);
