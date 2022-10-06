@@ -22,6 +22,7 @@ export class Camera extends Object3D {
 
 		this._matrixWorldInverse = new Matrix4(); 	//VMat
 		this._projectionMatrix = new Matrix4(); 	//PMat
+        this.projectionMatrixInverse = new Matrix4(); 	//PMatInv
 
 		// Camera up direction
 		this._up = new Vector3(0, 1, 0);
@@ -31,11 +32,22 @@ export class Camera extends Object3D {
         this._frustum.visible = false;
 	}
 
-	set projectionMatrix (projection) { this._projectionMatrix = projection; }
+
+    get matrixWorldInverse () { return this._matrixWorldInverse; }
 	set matrixWorldInverse (inverse) { this._matrixWorldInverse = inverse; }
 
-	get projectionMatrix () { return this._projectionMatrix; }
-	get matrixWorldInverse () { return this._matrixWorldInverse; }
+    get projectionMatrix () { return this._projectionMatrix; }
+	set projectionMatrix (projection) { this._projectionMatrix = projection; }
+
+    get projectionMatrixInverse() { 
+        this._projectionMatrixInverse.getInverse(this._projectionMatrix);
+
+        return this._projectionMatrixInverse; 
+    }
+	set projectionMatrixInverse(projectionMatrixInverse) { 
+        this._projectionMatrixInverse = projectionMatrixInverse; 
+    }
+
 	get up() { return this._up; }
 
     get frustumVisible() { return this._frustum.visible; }

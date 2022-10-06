@@ -536,6 +536,10 @@ export class MeshRenderer extends Renderer {
 			uniformSetter["PMat"].set(camera.projectionMatrix.elements);
 		}
 
+		if (uniformSetter["u_PMatInv"] !== undefined) {
+			uniformSetter["u_PMatInv"].set(camera.projectionMatrixInverse.elements);
+		}
+
 		if (uniformSetter["MVMat"] !== undefined) {
 			uniformSetter["MVMat"].set(object.modelViewMatrix.elements);
 		}
