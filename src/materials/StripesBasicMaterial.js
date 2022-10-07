@@ -21,10 +21,10 @@ export class StripesBasicMaterial extends StripeBasicMaterial {
         //this.setUniform("viewport", args.viewport ? args.viewport : [window.innerWidth, window.innerHeight]);
         //this.setUniform("halfLineWidth", args.lineWidth? args.lineWidth/2.0 : 1.0/2.0);
         this.lineWidth = (args.lineWidth !== undefined) ? args.lineWidth : 1.0;
-        this.setUniform("MODE", args.mode ? args.mode : STRIPE_SPACE_SCREEN);
-        this.setAttribute("prevVertex", args.baseGeometry ? StripesBasicMaterial._setupPrevVertices(args.baseGeometry) : null);
-        this.setAttribute("nextVertex", args.baseGeometry ? StripesBasicMaterial._setupNextVertices(args.baseGeometry) : null);
-        this.setAttribute("deltaOffset", args.baseGeometry ? StripesBasicMaterial._setupDeltaDirections(args.baseGeometry) : null);
+        this.mode = (args.mode !== undefined) ? args.mode : STRIPE_SPACE_SCREEN;
+        this.prevVertex = (args.baseGeometry !== undefined) ? StripesBasicMaterial._setupPrevVertices(args.baseGeometry) : null;
+        this.nextVertex = (args.baseGeometry !== undefined) ? StripesBasicMaterial._setupNextVertices(args.baseGeometry) : null;
+        this.deltaOffset = (args.baseGeometry !== undefined) ? StripesBasicMaterial._setupDeltaDirections(args.baseGeometry) : null;
     }
 
 
@@ -32,6 +32,26 @@ export class StripesBasicMaterial extends StripeBasicMaterial {
     set lineWidth(lineWidth) {
         this._lineWidth = lineWidth;
         this.setUniform("halfLineWidth", lineWidth/2.0);
+    }
+    get mode() { return this._mode; }
+    set mode(mode) {
+        this._mode = mode;
+        this.setUniform("MODE", mode);
+    }
+    get prevVertex() { return this._prevVertex; }
+    set prevVertex(prevVertex) {
+        this._prevVertex = prevVertex;
+        this.setAttribute("prevVertex", prevVertex);
+    }
+    get nextVertex() { return this._nextVertex; }
+    set nextVertex(nextVertex) {
+        this._nextVertex = nextVertex;
+        this.setAttribute("nextVertex", nextVertex);
+    }
+    get deltaOffset() { return this._deltaOffset; }
+    set deltaOffset(deltaOffset) {
+        this._deltaOffset = deltaOffset;
+        this.setAttribute("deltaOffset", deltaOffset);
     }
 
 

@@ -6,6 +6,7 @@ import {Mesh} from "./Mesh.js";
 import { Sprite } from "./Sprite.js";
 import { SpriteGeometry } from "./SpriteGeometry.js";
 import {SPRITE_SPACE_SCREEN} from '../constants.js';
+import { CustomShaderMaterial } from '../materials/CustomShaderMaterial.js';
 
 
 export class Stripes extends Mesh {
@@ -15,6 +16,8 @@ export class Stripes extends Mesh {
 
         
         this.type = "Stripes";
+        
+        this.GBufferMaterial = (args.GBufferMaterial !== undefined) ? args.GBufferMaterial : Stripes.assembleGBufferMaterial({baseMaterial: this.material});
 
 
         //ASSEMBLE GEOMETRY/MATERIAL
@@ -39,6 +42,38 @@ export class Stripes extends Mesh {
     }
 
 
+    get material() { return super.material; }
+    set material(material) {
+        super.material = material;
+
+
+        this.GBufferMaterial.setUniform("halfLineWidth", this.material.lineWidth/2.0);
+        this.GBufferMaterial.setUniform("MODE", this.material.mode);
+
+        this.GBufferMaterial.setAttribute("prevVertex", this.material.prevVertex);
+        this.GBufferMaterial.setAttribute("nextVertex", this.material.nextVertex);
+        this.GBufferMaterial.setAttribute("deltaOffset", this.material.deltaOffset);
+    }
+    get GBufferMaterial() { return super.GBufferMaterial; }
+    set GBufferMaterial(GBufferMaterial) {
+        super.GBufferMaterial = GBufferMaterial;
+    }
+
     set dashed(dashed) { this._dashed = dashed; } //todo dashed line
     get dashed() { return this._dashed; }
+
+
+    static assembleGBufferMaterial(args){
+        return new CustomShaderMaterial("GBuffer_stripes", 
+            {
+                "halfLineWidth": args.baseMaterial.lineWidth/2.0,
+                "MODE": args.baseMaterial.mode
+            }, 
+            {
+                "prevVertex": args.baseMaterial.prevVertex,
+                "nextVertex": args.baseMaterial.nextVertex,
+                "deltaOffset": args.baseMaterial.deltaOffset
+            }
+        );
+    }
 }

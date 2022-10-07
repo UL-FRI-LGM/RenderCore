@@ -234,6 +234,13 @@
             "fragment": "custom/GBuffer/GBufferMini_template.frag"
         }
     },
+    "custom_GBuffer_stripes": {
+        "description": "GBuffer with minimal output for custom_outline.",
+        "shaders": {
+            "vertex": "custom/GBuffer/GBuffer_stripes.vert",
+            "fragment": "custom/GBuffer/GBuffer_stripes.frag"
+        }
+    },
     "custom_outline": {
         "description": "Outline.",
         "shaders": {
