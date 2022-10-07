@@ -113,6 +113,10 @@ export class Object3D {
 		this._matrix = matrix;
 		this._matrixWorldNeedsUpdate = true;
 	}
+	setMatrixFromArray(arr) {
+		this._matrix.fromArray(arr);
+		this._matrixWorldNeedsUpdate = true;
+	}
 	/**
 	 * Get model view matrix of the mesh.
 	 *
@@ -380,23 +384,23 @@ export class Object3D {
 		this._UPDATE_BOUNDS = true;
 	}
 
-	updateMatrixWorld() {
+	updateMatrixWorld(parentWorldUpdated = false) {
 		if ( this._matrixAutoUpdate ) this.updateMatrix();
 
-		if (this._matrixWorldNeedsUpdate) {
+		if (this._matrixWorldNeedsUpdate || parentWorldUpdated) {
 			if (this.parent === null) {
 				this._matrixWorld.copy(this._matrix);
 			} else {
 				this._matrixWorld.multiplyMatrices(this.parent._matrixWorld, this._matrix);
 			}
 			this._matrixWorldNeedsUpdate = false;
-
+			parentWorldUpdated = true;
 
 			this._UPDATE_BOUNDS = true;
 		}
 
 		for (var i = 0; i < this._children.length; i++) {
-			this._children[i].updateMatrixWorld();
+			this._children[i].updateMatrixWorld(parentWorldUpdated);
 		}
 	}
 	//THREE version of matrix world update

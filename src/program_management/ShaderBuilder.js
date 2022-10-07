@@ -55,7 +55,8 @@ export class ShaderBuilder {
 
 		// Warn the user if the template tree is beeing overwritten
 		if (this.hasTemplate(templateName)) {
-			console.log(this._LOGTAG + "Warning. Overwriting the template tree!");
+			console.log(this._LOGTAG + "Warning. Overwriting the template tree!", templateName);
+			return;
 		}
 
 		// Remove multi line comments

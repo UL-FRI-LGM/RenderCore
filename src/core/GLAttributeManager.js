@@ -72,10 +72,14 @@ export class GLAttributeManager {
 		// If the WebGL buffer property is undefined, create a new buffer (attribute not found in properties)
 		if (attribute.dirty || attribute._update) {
 			this._gl.bindBuffer(bufferType, glBuffer);
+			if (attribute.dirty) {
+				const usage = this.DRAW_TYPE.get(attribute.drawType);
+				this._gl.bufferData(bufferType, attribute.size, usage); // recreate buffer
+				attribute.dirty = false; // Mark attribute not dirty
+			}
 			//this._gl.bufferSubData(bufferType, 0, attribute.array); // Write the data to buffer
 			this._gl.bufferSubData(bufferType, 0, attribute.array, 0, 0);
 
-			attribute.dirty = false; // Mark attribute not dirty
 			attribute._update = false;
 		}
 	}
@@ -90,14 +94,14 @@ export class GLAttributeManager {
 
 		if(this._cached_buffers.has(attribute)){
 			const glBuffer = this._cached_buffers.get(attribute);
-			if(attribute.dirty) this._updateAttribute(attribute);
+			if(attribute.dirty || attribute._update) this._updateAttribute(attribute);
 
 
 			return glBuffer; 
 		}else{
 			//console.error("Warning: GLBuffer not found: [" + attribute + "]!");
 			const glBuffer = this._createGLBuffer(attribute);
-			if(attribute.dirty) this._updateAttribute(attribute);
+			if(attribute.dirty || attribute._update) this._updateAttribute(attribute);
 			
 
 			return glBuffer;

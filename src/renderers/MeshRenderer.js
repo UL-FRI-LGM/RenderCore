@@ -138,6 +138,7 @@ export class MeshRenderer extends Renderer {
 				console.log(this._compiledPrograms);
 				console.log("--------------------------------------");
 			}
+			this.used = false;
 			return;
 		}
 		if(!this.used) {
@@ -1331,8 +1332,6 @@ export class MeshRenderer extends Renderer {
 		this._gl.readPixels(this._pickCoordinateX, this._pickCoordinateY, 1, 1,
 			                this._gl.RGBA_INTEGER, this._gl.UNSIGNED_INT, r);
 		this._pickedID = (r[0] != 0xFFFFFFFF) ? r[0] : null;
-
-		console.log("MeshRenderer pick_instance InstanceID:", this._pickedID);
 
 		return this._pickedID;
 	}

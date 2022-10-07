@@ -151,13 +151,20 @@ export class RenderQueue {
 		}
 	}
 
-	render_begin() {
+	render_begin(used_check = false) {
+		// If used_check is true each render_pass() will check renderer's used flag and set:
+		// - this.used_last - to the value of current pass;
+		// - this.used_fail_count - increase on each fail.
 		if (this._saved_vp) {
 			console.error("RenderQueue.render_begin called without an intervening end.");
 			return;
 		}
 		// Store current renderer viewport
 		this._saved_vp = this._renderer.getViewport();
+
+		this.used_check = used_check;
+		this.used_last = true;
+		this.used_fail_count = 0;
 	}
 
 	render_pass_idx(i) {
@@ -315,6 +322,15 @@ export class RenderQueue {
 
 		// Postprocessing step
 		renderPass.postprocess(this._textureMap, this._forwardedAdditionalData);
+
+		if (this.used_check) {
+			if (this._renderer.used) {
+				this.used_last = true;
+			 } else {
+				this.used_last = false;
+				++this.used_fail_count;
+			 }
+		}
 	}
 
 	render_end() {

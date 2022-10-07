@@ -104,6 +104,12 @@ void main() {
 
         // Edge decision
         float edge = max(edgeDepth, edgeNormal); //edge is either 0 or 1
+
+        #if (DISCARD_NON_EDGE)
+            if (edge == 0.0)
+                discard;
+        #fi
+
         // Edge color
         vec4 edgeColor = vec4(edgeColor.rgb, edgeColor.a * edge);
 

@@ -164,20 +164,12 @@ export class Camera extends Object3D {
 	}
 
     // Functions to render with a smaller viewport around the mouse pointer.
-    // Works for both Persp and Ortho cameras.
+    // See also narrowProjectionForPicking() in Persp and Ortho cameras.
 	prePickStoreTBLR() {
 		this._top_store = this._top;
 		this._bottom_store = this._bottom;
 		this._left_store = this._left;
 		this._right_store = this._right;
-	}
-	narrowProjectionForPicking(w, h, p, q, x, y) {
-		// w, h - viewport; p, q - pick rectangle; x,y - pick position in viewport coords.
-		this._top = (y + q/2)/h*(this._top_store - this._bottom_store) + this._bottom_store;
-		this._bottom = (y - q/2)/h*(this._top_store - this._bottom_store) + this._bottom_store;
-		this._left = (x - p/2)/w*(this._right_store - this._left_store) + this._left_store;
-		this._right = (x + p/2)/w*(this._right_store - this._left_store) + this._left_store;
-		this.updateProjectionMatrix();
 	}
 	postPickRestoreTBLR() {
 		this._top = this._top_store;
@@ -186,4 +178,4 @@ export class Camera extends Object3D {
 		this._right = this._right_store;
 		this.updateProjectionMatrix();
 	}
-}
+};

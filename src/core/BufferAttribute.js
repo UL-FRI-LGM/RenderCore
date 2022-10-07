@@ -56,8 +56,11 @@ export class BufferAttribute {
 	 * @param val Value to be set.
 	 */
 	set array(val) {
+		if (this._array.length == val.length)
+			this._update = true;
+		else
+			this._dirty = true;
 		this._array = val;
-		this._dirty = true;
 	}
 
 	/**
