@@ -113,6 +113,10 @@ export class Object3D {
 		this._matrix = matrix;
 		this._matrixWorldNeedsUpdate = true;
 	}
+	setMatrixFromArray(arr) {
+		this._matrix.fromArray(arr);
+		this._matrixWorldNeedsUpdate = true;
+	}
 	/**
 	 * Get model view matrix of the mesh.
 	 *
