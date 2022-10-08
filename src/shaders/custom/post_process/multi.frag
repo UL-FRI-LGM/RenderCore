@@ -8,7 +8,9 @@ precision mediump float;
 // uniform float u_Far;
 
 in vec3 v_position_viewspace;
+#if (!NORMAL_FLAT)
 in vec3 v_normal_viewspace;
+#fi
 in vec3 v_ViewDirection_viewspace;
 in float v_distanceToCamera_viewspace;
 
@@ -76,6 +78,11 @@ void main() {
     //vp_viewspace = vec4(v_position_viewspace * 0.5 + 0.5, 1.0);
     vp_viewspace = vec4(v_position_viewspace, 1.0);
 
+    #if (NORMAL_FLAT)
+        vec3 fdx = dFdx(v_position_viewspace);
+        vec3 fdy = dFdy(v_position_viewspace);
+        vec3 v_normal_viewspace = normalize(cross(fdx, fdy));
+    #fi
     //vn_viewspace = vec4(normalize(v_normal_viewspace) * 0.5 + 0.5, 0.0);
     vn_viewspace = vec4(v_normal_viewspace, 0.0);
 
