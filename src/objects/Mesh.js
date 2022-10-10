@@ -14,8 +14,7 @@ import {Matrix4} from '../math/Matrix4.js';
 import {Vector3} from '../math/Vector3.js';
 import {Ray} from '../math/Ray.js';
 import {Sphere} from '../math/Sphere.js';
-import {Color} from "../RenderCore.js";
-
+import {Color} from "../math/Color.js";
 
 export class Mesh extends Object3D {
 
@@ -42,8 +41,8 @@ export class Mesh extends Object3D {
 		// Shared version used by RenderPass / MeshRenderer; set it here if vert shader transforms
 		// vertices or if frag shader does not write all the fragments. See ZSprite for example.
 		this._outlineMaterial = outlineMaterial;
-		this.GBufferMaterial = args.GBufferMaterial !== undefined ? args.GBufferMaterial : new CustomShaderMaterial("multi");
-		
+		// If not set, the default CustomShaderMaterial("multi") is instantiated in get method.
+		this.GBufferMaterial = args.GBufferMaterial;
 
 		this.raycast = _raycast;
 
@@ -129,6 +128,8 @@ export class Mesh extends Object3D {
 		this._outlineMaterial.instanced = this._instanced;
 	}
 	get GBufferMaterial() {
+		if (this._GBufferMaterial === undefined)
+			this.GBufferMaterial = new CustomShaderMaterial("multi");
 		return this._GBufferMaterial;
 	}
 	set GBufferMaterial(GBufferMaterial) {
@@ -252,7 +253,8 @@ export class Mesh extends Object3D {
 		let r = [ this._material.requiredProgram(renderer) ];
 		if (this._pickingMaterial && this.pickable) r.push( this._pickingMaterial.requiredProgram(renderer) );
 		if (this._outlineMaterial && this.drawOutline) r.push( this._outlineMaterial.requiredProgram(renderer) );
-		r.push(this.GBufferMaterial.requiredProgram(renderer));
+		if (renderer._renderMode == 3) // 3 = MeshRenderer.MODE.GEOMETRY; to be improved
+			r.push(this.GBufferMaterial.requiredProgram(renderer));
 
 		this._staticStateDirty = false;
 
