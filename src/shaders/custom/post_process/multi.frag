@@ -84,7 +84,12 @@ void main() {
         vec3 v_normal_viewspace = normalize(cross(fdx, fdy));
     #fi
     //vn_viewspace = vec4(normalize(v_normal_viewspace) * 0.5 + 0.5, 0.0);
-    vn_viewspace = vec4(v_normal_viewspace, 0.0);
+    //vn_viewspace = vec4(v_normal_viewspace, 0.0);
+    if(gl_FrontFacing) {
+        vn_viewspace = vec4(+v_normal_viewspace, 0.0);
+    }else{
+        vn_viewspace = vec4(-v_normal_viewspace, 0.0);
+    }
 
     //vd_viewspace = vec4(normalize(v_ViewDirection_viewspace) * 0.5 + 0.5, 0.0);
     vd_viewspace = vec4(v_ViewDirection_viewspace, 0.0);
