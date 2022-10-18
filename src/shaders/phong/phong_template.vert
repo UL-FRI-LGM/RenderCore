@@ -26,7 +26,7 @@ struct PLight {
     vec3 position_worldspace;
     vec3 color;
     float distance;
-    float decay;
+    //float decay;
 
     mat4 VPMat;
     samplerCube shadowmap;
@@ -47,7 +47,7 @@ struct SLight {
     vec3 position;
     vec3 color;
     float distance;
-    float decay;
+    // float decay;
     float cutoff;
     float outerCutoff;
     vec3 direction;

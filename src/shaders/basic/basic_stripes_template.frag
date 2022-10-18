@@ -7,7 +7,7 @@ precision mediump float;
 #if (DLIGHTS)
 struct DLight {
     //bool directional;
-    vec3 position;
+    //vec3 position;
     vec3 color;
 };
 #fi
@@ -17,7 +17,7 @@ struct PLight {
     vec3 position;
     vec3 color;
     float distance;
-    float decay;
+    //float decay;
 
     float constant;
     float linear;

@@ -17,7 +17,7 @@ struct PLight {
     vec3 position;
     vec3 color;
     float distance;
-    float decay;
+    //float decay;
 
     float constant;
     float linear;
@@ -30,7 +30,7 @@ struct SLight {
     vec3 position;
     vec3 color;
     float distance;
-    float decay;
+    //float decay;
     float cutoff;
     float outerCutoff;
     vec3 direction;
