@@ -28,7 +28,6 @@ export class CustomShaderMaterial  extends Material {
 
 		// PAY ATTENTION TO THIS - Custom programs have prefix custom in order to avoid collisions with other programs
 		this.programName = "custom_" + programName;
-		//this._requiredProgramTemplate = null; //do we need this here? Material has one allready
 	}
 
 	addSBFlag(flag) {
@@ -111,13 +110,13 @@ export class CustomShaderMaterial  extends Material {
 
 
 		// If the template is already generate use it
-		if (this._requiredProgramTemplate !== null) {
-			return this._requiredProgramTemplate;
+		if (this.requiredProgramTemplate !== null) {
+			return this.requiredProgramTemplate;
 		}
 
 		this.resetProgramFlagsAndValues();
 
-		this._requiredProgramTemplate = new MaterialProgramTemplate(this.programName2, this.flags, this.values, renderer);
-		return this._requiredProgramTemplate;
+		this.requiredProgramTemplate = new MaterialProgramTemplate(this.programName2, this.flags, this.values, renderer);
+		return this.requiredProgramTemplate;
 	}
 }

@@ -13,6 +13,8 @@ export class PickingShaderMaterial extends CustomShaderMaterial {
         UINT: 1
     };
     static DEFAULT_PICK_MODE = PickingShaderMaterial.PICK_MODE.RGB;
+
+    
     constructor(programName = "TRIANGLES", uniforms = {}, attributes = {}, args = {}) {
         super("picker" + '_' + programName, uniforms, attributes, args);
 
@@ -32,7 +34,7 @@ export class PickingShaderMaterial extends CustomShaderMaterial {
     set pickMode(pickMode) {
 		if (pickMode !== this._pickMode) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._pickMode = pickMode;
 
@@ -65,15 +67,15 @@ export class PickingShaderMaterial extends CustomShaderMaterial {
 
     requiredProgram(renderer = undefined) {
         // If the template is already generate use it
-        if (this._requiredProgramTemplate !== null) {
-            return this._requiredProgramTemplate;
+        if (this.requiredProgramTemplate !== null) {
+            return this.requiredProgramTemplate;
         }
 
         this.resetProgramFlagsAndValues();
 
 
 
-        this._requiredProgramTemplate = new MaterialProgramTemplate(this.programName, this.flags, this.values, renderer);
-        return this._requiredProgramTemplate;
+        this.requiredProgramTemplate = new MaterialProgramTemplate(this.programName, this.flags, this.values, renderer);
+        return this.requiredProgramTemplate;
     }
 }

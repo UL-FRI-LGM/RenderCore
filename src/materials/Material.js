@@ -38,7 +38,7 @@ export class Material {
 		this._useVertexColors = false;
 
 		// Shader program template
-		this._requiredProgramTemplate = null;
+		this.requiredProgramTemplate = null;
 
 		// Using points
 		this._usePoints = false;
@@ -75,6 +75,10 @@ export class Material {
 
 		this._receiveShadows = true;
 	}
+
+
+	get requiredProgramTemplate() { return this._requiredProgramTemplate; }
+	set requiredProgramTemplate(requiredProgramTemplate) { this._requiredProgramTemplate = requiredProgramTemplate; }
 
 	set onChangeListener(listener) { this._onChangeListener = listener; }
 	set name(val) {
@@ -164,7 +168,7 @@ export class Material {
 	set useVertexColors(val) {
 		if (val !== this._useVertexColors) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._useVertexColors = val;
 
@@ -179,7 +183,7 @@ export class Material {
 	set usePoints(val){
 		if (val !== this._usePoints) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._usePoints = val;
 
@@ -194,7 +198,7 @@ export class Material {
     set pointSize(val){
         if (val !== this._pointSize) {
             // Invalidate required program template
-            this._requiredProgramTemplate = null;
+            this.requiredProgramTemplate = null;
 
             this._pointSize = val;
 
@@ -209,7 +213,7 @@ export class Material {
 	set pointsScale(val){
 		if (val !== this._pointsScale) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._pointsScale = val;
 
@@ -224,7 +228,7 @@ export class Material {
 	set drawCircles(val){
 		if (val !== this._drawCircles) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._drawCircles = val;
 
@@ -239,7 +243,7 @@ export class Material {
 	set useClippingPlanes(val){
 		if (val !== this._useClippingPlanes) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._useClippingPlanes = val;
 
@@ -254,7 +258,7 @@ export class Material {
 	set clippingPlanes(val){
 		if (val !== this._clippingPlanes) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._clippingPlanes = val;
 
@@ -269,7 +273,7 @@ export class Material {
 	set shadingType(val){
 		if (val !== this._shadingType) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._shadingType = val;
 
@@ -284,7 +288,7 @@ export class Material {
 	set instanced(val){
 		if (val !== this._instanced) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._instanced = val;
 
@@ -299,7 +303,7 @@ export class Material {
 	set instancedTranslation(val){
 		if (val !== this._instancedTranslation) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._instancedTranslation = val;
 
@@ -314,7 +318,7 @@ export class Material {
 	set heightScale(val){
 		if (val !== this._heightScale) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._heightScale = val;
 
@@ -329,7 +333,7 @@ export class Material {
 	set blinn(val){
 		if (val !== this._blinn) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._blinn = val;
 
@@ -344,7 +348,7 @@ export class Material {
 	set receiveShadows(val){
 		if (val !== this._receiveShadows) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._receiveShadows = val;
 
@@ -364,7 +368,7 @@ export class Material {
 	set lights(val) {
 		if (this._lights !== val) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._lights = val;
 
@@ -421,7 +425,7 @@ export class Material {
 	get normalFlat() { return this._normalFlat; }
 	set normalFlat(normalFlat){
 		// Invalidate required program template
-		this._requiredProgramTemplate = null;
+		this.requiredProgramTemplate = null;
 
 		this._normalFlat = normalFlat;
 	}
@@ -457,43 +461,43 @@ export class Material {
 	 */
 	addMap(map) {
 		// Invalidate required program template
-		this._requiredProgramTemplate = null;
+		this.requiredProgramTemplate = null;
 
 		this._maps.push(map)
 	}
 	addCubemap(cubemap) {
 		// Invalidate required program template
-		this._requiredProgramTemplate = null;
+		this.requiredProgramTemplate = null;
 
 		this._cubemaps.push(cubemap)
 	}
 	set diffuseMap(diffuseMap){
 		// Invalidate required program template
-		this._requiredProgramTemplate = null;
+		this.requiredProgramTemplate = null;
 
 		this._diffuseMap = diffuseMap;
 	}
 	set specularMap(specularMap){
 		// Invalidate required program template
-		this._requiredProgramTemplate = null;
+		this.requiredProgramTemplate = null;
 
 		this._specularMap = specularMap;
 	}
 	set normalMap(normalMap){
 		// Invalidate required program template
-		this._requiredProgramTemplate = null;
+		this.requiredProgramTemplate = null;
 
 		this._normalMap = normalMap;
 	}
 	set heightMap(heightMap){
 		// Invalidate required program template
-		this._requiredProgramTemplate = null;
+		this.requiredProgramTemplate = null;
 
 		this._heightMap = heightMap;
 	}
 	addInstanceData(instanceDatum){
 		// Invalidate required program template
-		this._requiredProgramTemplate = null;
+		this.requiredProgramTemplate = null;
 
 		this._instanceData.push(instanceDatum);
 	}
@@ -508,7 +512,7 @@ export class Material {
 
 		if (index > -1) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._maps.splice(index, 1);
 		}
@@ -518,7 +522,7 @@ export class Material {
 
 		if (index > -1) {
 			// Invalidate required program template
-			this._requiredProgramTemplate = null;
+			this.requiredProgramTemplate = null;
 
 			this._cubemaps.splice(index, 1);
 		}
@@ -529,13 +533,13 @@ export class Material {
 	 */
 	clearMaps() {
 		// Invalidate required program template
-		this._requiredProgramTemplate = null;
+		this.requiredProgramTemplate = null;
 
 		this._maps = [];
 	}
 	clearCubemaps() {
 		// Invalidate required program template
-		this._requiredProgramTemplate = null;
+		this.requiredProgramTemplate = null;
 
 		this._cubemaps = [];
 	}

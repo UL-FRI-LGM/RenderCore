@@ -47,14 +47,14 @@ export class VolumeBasicMaterial extends Material {
 		}
 
 		// If the template is already generate use it
-		if (this._requiredProgramTemplate !== null) {
-			return this._requiredProgramTemplate;
+		if (this.requiredProgramTemplate !== null) {
+			return this.requiredProgramTemplate;
 		}
 
 		this.resetProgramFlagsAndValues();
 
-		this._requiredProgramTemplate = new MaterialProgramTemplate(this.programName2, this.flags, this.values, renderer);
-		return this._requiredProgramTemplate;
+		this.requiredProgramTemplate = new MaterialProgramTemplate(this.programName2, this.flags, this.values, renderer);
+		return this.requiredProgramTemplate;
 	}
 
 	toJson() {
