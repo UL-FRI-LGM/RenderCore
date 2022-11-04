@@ -26,11 +26,6 @@ export class Renderer {
 		// Retrieve context from gl manager
 		this._gl = this._glManager.context;
 
-		// Throw error if the gl context could not be retrieved
-		// TODO: Put this in GLManager
-		if (!this._gl) {
-			throw 'Something went wrong while initializing WebGL context.'
-		}
 
 		// Program management
 		this._glProgramManager = new GLProgramManager(this._gl);
