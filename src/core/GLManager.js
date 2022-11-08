@@ -1,7 +1,7 @@
 /**
  * Created by Primoz on 24.4.2016.
  */
-import {WEBGL1, WEBGL2, _ProgramCaching} from '../constants.js';
+import {WEBGL1, WEBGL2} from '../constants.js';
 import {GLFrameBufferManager} from './GLFrameBufferManager.js';
 import {GLTextureManager} from './GLTextureManager.js';
 import {GLAttributeManager} from './GLAttributeManager.js';
@@ -16,6 +16,7 @@ import {Vector4} from '../math/Vector4.js';
 export class GLManager {
 
 	static sCheckFrameBuffer = true;
+	static sProgramCaching = null;
 
 	/**
 	 * Creates new WebGL context manager. The context is retrieved from the given canvas.
@@ -538,9 +539,9 @@ export class GLManager {
 
 	get glVersion () { return this._glVersion; }
 
-	get cache_programs () { return _ProgramCaching; }
+	get cache_programs () { return GLManager.sProgramCaching; }
 
-	set cache_programs (enable) { _ProgramCaching = enable; }
+	set cache_programs (enable) { GLManager.sProgramCaching = enable; }
 
 	get gl(){ return this._gl; }
 
