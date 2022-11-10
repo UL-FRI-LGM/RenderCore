@@ -16,7 +16,7 @@ export class StripesBasicMaterial extends StripeBasicMaterial {
 
         //ASSEMBLE MATERIAL
         this.color = args.color ? args.color : new Color(Math.random() * 0xffffff);
-        this._emissive = args.emissive ? args.emissive : new Color(Math.random() * 0xffffff);
+        this.emissive = args.emissive ? args.emissive : new Color(Math.random() * 0xffffff);
 
         //this.setUniform("aspect", args.aspect ? args.aspect : window.innerWidth/window.innerHeight);
         //this.setUniform("viewport", args.viewport ? args.viewport : [window.innerWidth, window.innerHeight]);
