@@ -10,7 +10,7 @@ precision mediump float;
 #if (INSTANCED)
 struct Material {
     vec3 emissive;
-    vec3 diffuse;
+    // vec3 diffuse;
     sampler2D instanceData0;
     // The following could (should, really) be an int attribute with divisor 1
     // #if (OUTLINE)

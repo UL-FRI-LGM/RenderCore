@@ -9,7 +9,7 @@ precision mediump float;
 
 struct Material {
     vec3 emissive;
-    vec3 diffuse;
+    // vec3 diffuse;
     #if (INSTANCED)
         sampler2D instanceData0;
     #fi
