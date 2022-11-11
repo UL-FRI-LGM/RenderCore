@@ -2,7 +2,7 @@
  * Created by Primoz on 28.4.2016.
  */
 
-import {FRONT_AND_BACK_SIDE, FRONT_SIDE, BACK_SIDE, FUNC_LEQUAL, FUNC_LESS, FUNC_GEQUAL, FUNC_GREATER, FUNC_EQUAL, FUNC_NOTEQUAL, FUNC_NEVER, FUNC_ALWAYS, POINTS, LINES, LINE_LOOP, LINE_STRIP, TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN} from '../constants.js';
+import {FRONT_AND_BACK_SIDE, FRONT_SIDE, BACK_SIDE, FUNC_LEQUAL, FUNC_LESS, FUNC_GEQUAL, FUNC_GREATER, FUNC_EQUAL, FUNC_NOTEQUAL, FUNC_NEVER, FUNC_ALWAYS} from '../constants.js';
 
 import {Renderer} from './Renderer.js';
 
@@ -16,7 +16,6 @@ import {AmbientLight} from '../lights/AmbientLight.js';
 import {DirectionalLight} from '../lights/DirectionalLight.js';
 import {PointLight} from '../lights/PointLight.js';
 import {SpotLight} from '../lights/SpotLight.js';
-import {CustomShaderMaterial} from '../materials/CustomShaderMaterial.js';
 import {RenderArrayManager} from './RenderArrayManager.js';
 import {Vector4} from '../math/Vector4.js';
 
@@ -396,15 +395,10 @@ export class MeshRenderer extends Renderer {
 	 */
 	//GLOBAL ATTRIBUTES
 	_setup_attributes(program, object, material) {
-		let attributeSetter = program.attributeSetter;
-		let attributes = Object.getOwnPropertyNames(attributeSetter);
+		const attributeSetter = program.attributeSetter;
+		const attributes = Object.getOwnPropertyNames(attributeSetter);
+		const customAttributes = material._attributes;
 
-		let customAttributes;
-
-		// If material is a type of CustomShaderMaterial it may contain its own definition of attributes
-		if (material instanceof CustomShaderMaterial) {
-			customAttributes = material._attributes;
-		}
 
 		let glBuffer;
 
@@ -626,25 +620,25 @@ export class MeshRenderer extends Renderer {
 	//"LOCAL" UNIFORMS (for specific mat)
 	// TODO: Better naming of the uniforms is needed in order to avoid string usage.
 	_setup_material_uniforms(material, uniformSetter, object) {//TODO: Move to object specific - same as draw (Sebastien)
-		// Setup custom user uniforms (in case of CustomShaderMaterial)
-		if (material instanceof CustomShaderMaterial) {
-			let customUniforms = material._uniforms;
 
-			// Set all of the custom uniforms if they are defined within the shader
-			for (let name in customUniforms) {
-				if (customUniforms.hasOwnProperty(name)) {
-					if (uniformSetter[name] !== undefined) {
-						const uniform = customUniforms[name];
+		const customUniforms = material._uniforms;
 
-						if((uniform instanceof Function)){
-							uniformSetter[name].set(uniform());
-						}else{
-							uniformSetter[name].set(uniform);
-						}
+		// Set all of the custom uniforms if they are defined within the shader
+		for (let name in customUniforms) {
+			if (customUniforms.hasOwnProperty(name)) {
+				if (uniformSetter[name] !== undefined) {
+					const uniform = customUniforms[name];
+
+					if((uniform instanceof Function)){
+						uniformSetter[name].set(uniform());
+					}else{
+						uniformSetter[name].set(uniform);
 					}
 				}
 			}
 		}
+
+
 		if (uniformSetter["material.emissive"] !== undefined) {
 			uniformSetter["material.emissive"].set(material.emissive.toArray());
 		}
