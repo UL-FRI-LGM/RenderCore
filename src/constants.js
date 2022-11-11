@@ -67,9 +67,6 @@ export const TRIANGLES = 4;
 export const TRIANGLE_STRIP = 5;
 export const TRIANGLE_FAN = 6;
 
-// GL Manager constants
-// ./core/GLManager
-export const _ProgramCaching = null;
 
 // GL Program Manager constants
 // ./program_management/GLProgramManager

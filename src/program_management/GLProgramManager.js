@@ -241,6 +241,7 @@ export class GLProgramManager {
 			// Fetch uniform info and location
 			const info = self._gl.getActiveUniform(program, i);
 			const location = self._gl.getUniformLocation(program, info.name);
+			if (!location) continue; // Uniform optimized away? Do not try to set it later on.
 
 			uniformSetter[info.name] = {};
 

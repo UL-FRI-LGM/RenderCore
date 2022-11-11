@@ -7,7 +7,7 @@ precision mediump float;
 #if (DLIGHTS)
 struct DLight {
     //bool directional;
-    vec3 position;
+    //vec3 position;
     vec3 color;
 };
 #fi
@@ -17,7 +17,7 @@ struct PLight {
     vec3 position;
     vec3 color;
     float distance;
-    float decay;
+    //float decay;
 
     float constant;
     float linear;
@@ -27,6 +27,7 @@ struct PLight {
 
 struct Material {
     vec3 diffuse;
+    vec3 emissive;
     #if (TEXTURE)
         #for I_TEX in 0 to NUM_TEX
             sampler2D texture##I_TEX;
@@ -124,7 +125,7 @@ void main() {
 
 
     // Calculate combined light contribution
-    vec3 combined = ambient;
+    vec3 combined = ambient + material.emissive;
 
     #if (LIGHTS && DLIGHTS)
         #for lightIdx in 0 to NUM_DLIGHTS

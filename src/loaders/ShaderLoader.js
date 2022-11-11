@@ -7,6 +7,8 @@ import {XHRLoader} from './XHRLoader.js';
 
 export class ShaderLoader {
 
+	static sAllPrograms = new Set();
+
 	/**
 	 * Creates new ShaderLoader object with the given LoadingManager. If the LoadingManager is not defined..
 	 * Default manager is used.
@@ -195,6 +197,7 @@ export class ShaderLoader {
 
 				var onLoadShader = function (source) {
 					numLoaded ++;
+					ShaderLoader.sAllPrograms.add(program);
 
 					// Check if the onProgress callback was given
 					if (onProgress !== undefined) {
@@ -319,8 +322,21 @@ export class ShaderLoader {
 	/**
 	 * Returns names of available programs
 	 */
-	get programList() { Object.keys(this._programs); }
+	get programList() { return Object.keys(this._programs); }
 
+	/**
+	 * Resolve an iterable list of program names and return a list of copies
+	 * of program entries. This can be used for extraction of a subset of shaders
+	 * for packaging, most likely called with ShaderLoader.sAllPrograms as argument.
+	 * One might want to delete urls property of each element.
+	*/
+	resolvePrograms (name_list) {
+		let prog_list = [];
+		for (let name of name_list) {
+			prog_list.push(structuredClone(this._programs[name]));
+		}
+		return prog_list;
+	}
 
 	// In-order executor
 	executor (executable, ...args) {
