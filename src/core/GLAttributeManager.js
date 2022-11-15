@@ -113,10 +113,9 @@ export class GLAttributeManager {
 	 * @param {BufferAttribute} attribute An attribute whose local version will be deleted
 	 */
 	deleteBuffer(buffer, glBuffer) {
+		buffer.dirty = true; //so it will be updated when created again
 		this._cached_buffers.delete(buffer);
 		this._gl.deleteBuffer(glBuffer);
-
-		buffer.dirty = true; //so it will be updated when created again
 	}
 
 	/**
