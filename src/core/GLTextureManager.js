@@ -278,10 +278,9 @@ export class GLTextureManager {
 	}
 
 	deleteTexture(texture, glTexture) {
+		texture._dirty = true;
 		this._cached_textures.delete(texture);
 		this._gl.deleteTexture(glTexture);
-
-		texture.dirty = true;
 	}
 	deleteTextures(checkIdleTime = false, idleTimeDelta = 1000) {
 		// Delete all cached textures
