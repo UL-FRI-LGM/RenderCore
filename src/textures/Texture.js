@@ -60,6 +60,7 @@ export class Texture {
 
 	// region GETTERS
 	get dirty() { return this._dirty; }
+	set dirty(dirty) { this._dirty = dirty; }
 	get image() { return this._image; }
 
 	get wrapS() {

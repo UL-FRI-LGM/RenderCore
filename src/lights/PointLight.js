@@ -4,6 +4,7 @@
 
 import { PerspectiveCamera } from '../cameras/PerspectiveCamera.js';
 import { Vector3 } from '../math/Vector3.js';
+import { CubeTexture } from '../RenderCore.js';
 import {Light} from './Light.js';
 
 export class PointLight extends Light {
@@ -40,6 +41,9 @@ export class PointLight extends Light {
 		this.cameraGroup.add(cameraYn);
 		this.cameraGroup.add(cameraZp);
 		this.cameraGroup.add(cameraZn);
+
+		
+		this.shadowmap = new CubeTexture();
 	}
 
 	set distance(dist) {

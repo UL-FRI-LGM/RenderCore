@@ -22,6 +22,7 @@ export class CubeTexture extends Texture{
 		this._wrapR = args.wrapR ? args.wrapR : this.ClampToEdgeWrapping;
 
 		this.images = (args.images !== undefined) ? args.images : CubeTexture.DEFAULT_IMAGES;
+		this.flipy = false;
 	}
 
 

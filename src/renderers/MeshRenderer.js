@@ -342,7 +342,6 @@ export class MeshRenderer extends Renderer {
 			}
 
 			const mat = object.pickingMaterial;
-			this._glManager.updateObjectData(object, mat);
 
 			this._setupProgram(object, camera, mat);
 
@@ -359,8 +358,6 @@ export class MeshRenderer extends Renderer {
 
 			const mat = object.outlineMaterial ? object.outlineMaterial :
 						  (object.material.normalFlat ? this._defaultOutlineMatFlat : this._defaultOutlineMat);
-
-			this._glManager.updateObjectData(object, mat);
 
 			this._setupProgram(object, camera, mat);
 
@@ -672,7 +669,7 @@ export class MeshRenderer extends Renderer {
 		if(diffuseMap) {
 			const texture = "material.diffuseMap";
 			if (uniformSetter[texture] !== undefined) {
-				uniformSetter[texture].set(this._glManager.getTexture(diffuseMap), 0);
+				uniformSetter[texture].set(this._glManager.getGLTexture(diffuseMap), 0);
 			}else{
 				// console.warn("---------------------------------------------------");
 				// console.warn(object);
@@ -685,7 +682,7 @@ export class MeshRenderer extends Renderer {
 		if(specularMap) {
 			const texture = "material.specularMap";
 			if (uniformSetter[texture] !== undefined) {
-				uniformSetter[texture].set(this._glManager.getTexture(specularMap), 1);
+				uniformSetter[texture].set(this._glManager.getGLTexture(specularMap), 1);
 			}else{
 				// console.warn("---------------------------------------------------");
 				// console.warn(object);
@@ -698,7 +695,7 @@ export class MeshRenderer extends Renderer {
 		if(normalMap) {
 			const texture = "material.normalMap";
 			if (uniformSetter[texture] !== undefined) {
-				uniformSetter[texture].set(this._glManager.getTexture(normalMap), 2);
+				uniformSetter[texture].set(this._glManager.getGLTexture(normalMap), 2);
 			}else{
 				// console.warn("---------------------------------------------------");
 				// console.warn(object);
@@ -711,7 +708,7 @@ export class MeshRenderer extends Renderer {
 		if(heightMap) {
 			const texture = "material.heightMap";
 			if (uniformSetter[texture] !== undefined) {
-				uniformSetter[texture].set(this._glManager.getTexture(heightMap), 3);
+				uniformSetter[texture].set(this._glManager.getGLTexture(heightMap), 3);
 			}else{
 				// console.warn("---------------------------------------------------");
 				// console.warn(object);
@@ -724,7 +721,7 @@ export class MeshRenderer extends Renderer {
 		for (let i = 0; i < instanceData.length; i++) {
 			const texture = "material.instanceData" + i;
 			if (uniformSetter[texture] !== undefined) {
-				uniformSetter[texture].set(this._glManager.getTexture(instanceData[i]), 10+i);
+				uniformSetter[texture].set(this._glManager.getGLTexture(instanceData[i]), 10+i);
 			}else{
 				// console.warn("---------------------------------------------------");
 				// console.warn(object);
@@ -734,12 +731,11 @@ export class MeshRenderer extends Renderer {
 		}
 
 		// Setup texture uniforms (Are common for both predefined materials and custom shader material)
-		let textures = material.maps;
-
+		const textures = material.maps;
 		for (let i = 0; i < textures.length; i++) {
 			const texture = "material.texture" + i;
 			if (uniformSetter[texture] !== undefined) {
-				uniformSetter[texture].set(this._glManager.getTexture(textures[i]), 15+i);
+				uniformSetter[texture].set(this._glManager.getGLTexture(textures[i]), 15+i);
 			}else{
 				// console.warn("---------------------------------------------------");
 				// console.warn(object);
@@ -749,11 +745,10 @@ export class MeshRenderer extends Renderer {
 		}
 
 		const cubeTextures = material.cubemaps;
-
 		for (let i = 0; i < cubeTextures.length; i++) {
 			const cubeTexture = "material.cubeTexture" + i;
 			if (uniformSetter[cubeTexture] !== undefined) {
-				uniformSetter[cubeTexture].set(this._glManager.getCubeTexture(cubeTextures[i]), 20+i);
+				uniformSetter[cubeTexture].set(this._glManager.getGLCubeTexture(cubeTextures[i]), 20+i);
 			}else{
 				// console.warn("---------------------------------------------------");
 				// console.warn(object);
@@ -892,8 +887,17 @@ export class MeshRenderer extends Renderer {
 			if (uniformSetter[prefix + ".VPMat"] !== undefined) {
 				uniformSetter[prefix + ".VPMat"].set(light.VPMat.elements);
 			}
-			if (uniformSetter[prefix + ".shadowmap"] !== undefined) {
-				uniformSetter[prefix + ".shadowmap"].set(this._glManager.getTexture(light.shadowmap), 8+i);
+			const shadowmap = light.shadowmap;
+			if(shadowmap) {
+				const texture = prefix + ".shadowmap";
+				if (uniformSetter[texture] !== undefined) {
+					uniformSetter[texture].set(this._glManager.getGLTexture(shadowmap), 8+i);
+				}else{
+					// console.warn("---------------------------------------------------");
+					// console.warn(object);
+					// console.warn("Texture unifrom: " + texture + " not used in shader");
+					// console.warn("---------------------------------------------------");
+				}
 			}
 			if (uniformSetter[prefix + ".castShadows"]) {
 				uniformSetter[prefix + ".castShadows"].set(light.castShadows);
@@ -935,8 +939,17 @@ export class MeshRenderer extends Renderer {
 			if (uniformSetter[prefix + ".VPMat"] !== undefined) {
 				uniformSetter[prefix + ".VPMat"].set(light.VPMat.elements);
 			}
-			if (uniformSetter[prefix + ".shadowmap"] !== undefined) {
-				uniformSetter[prefix + ".shadowmap"].set(this._glManager.getCubeTexture(light.shadowmap), 10+i);
+			const shadowmap = light.shadowmap;
+			if(shadowmap) {
+				const texture = prefix + ".shadowmap";
+				if (uniformSetter[texture] !== undefined) {
+					uniformSetter[texture].set(this._glManager.getGLCubeTexture(shadowmap), 10+i);
+				}else{
+					// console.warn("---------------------------------------------------");
+					// console.warn(object);
+					// console.warn("Texture unifrom: " + texture + " not used in shader");
+					// console.warn("---------------------------------------------------");
+				}
 			}
 			if (uniformSetter[prefix + ".castShadows"]) {
 				uniformSetter[prefix + ".castShadows"].set(light.castShadows);
@@ -1000,8 +1013,17 @@ export class MeshRenderer extends Renderer {
 			if (uniformSetter[prefix + ".VPMat"] !== undefined) {
 				uniformSetter[prefix + ".VPMat"].set(light.VPMat.elements);
 			}
-			if (uniformSetter[prefix + ".shadowmap"] !== undefined) {
-				uniformSetter[prefix + ".shadowmap"].set(this._glManager.getTexture(light.shadowmap), 12+i);
+			const shadowmap = light.shadowmap;
+			if(shadowmap) {
+				const texture = prefix + ".shadowmap";
+				if (uniformSetter[texture] !== undefined) {
+					uniformSetter[texture].set(this._glManager.getGLTexture(shadowmap), 12+i);
+				}else{
+					// console.warn("---------------------------------------------------");
+					// console.warn(object);
+					// console.warn("Texture unifrom: " + texture + " not used in shader");
+					// console.warn("---------------------------------------------------");
+				}
 			}
 			if (uniformSetter[prefix + ".castShadows"]) {
 				uniformSetter[prefix + ".castShadows"].set(light.castShadows);

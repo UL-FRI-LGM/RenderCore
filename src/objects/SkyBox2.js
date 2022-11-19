@@ -24,9 +24,6 @@ export class SkyBox2 extends Cube {
 		renderArrayManager.skyboxes.addlast(this);
 	}
 	update(glManager, camera){
-		// Updates or derives attributes from the WebGL geometry
-		glManager.updateObjectData(this, this.material);
-
 		// Derive mv and normal matrices
 		this._modifiedViewMatrix.copy(camera.matrixWorldInverse);
 		this._modifiedViewMatrix.setPosition(0, 0, 0);

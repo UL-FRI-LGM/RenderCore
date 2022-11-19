@@ -36,11 +36,13 @@ export class GLAttributeManager {
 
 
 	_createGLBuffer(attribute){
-		const glBuffer = this._gl.createBuffer();
 		const bufferType = (attribute.target) ? this.TARGET.get(attribute.target) : this._gl.ARRAY_BUFFER;
+		const size = attribute.size;
 		const usage = this.DRAW_TYPE.get(attribute.drawType);
+
+		const glBuffer = this._gl.createBuffer();
 		this._gl.bindBuffer(bufferType, glBuffer);
-		this._gl.bufferData(bufferType, attribute.size, usage); //allocation
+		this._gl.bufferData(bufferType, size, usage); //allocation
 	
 		this._cached_buffers.set(attribute, glBuffer);
 
@@ -57,17 +59,6 @@ export class GLAttributeManager {
 	_updateAttribute (attribute) {
 		const glBuffer = this._cached_buffers.get(attribute);
 		const bufferType = (attribute.target) ? this.TARGET.get(attribute.target) : this._gl.ARRAY_BUFFER;
-
-		// let newBuffer = false;
-		// let glBuffer = this._cached_buffers.get(attribute);
-
-		// if(glBuffer === undefined){
-		// 	glBuffer = this._gl.createBuffer();
-		// 	this._cached_buffers.set(attribute, glBuffer);
-		// 	newBuffer = true;
-
-		// 	attribute.dirty = true;
-		// }
 
 		// If the WebGL buffer property is undefined, create a new buffer (attribute not found in properties)
 		if (attribute.dirty || attribute._update) {

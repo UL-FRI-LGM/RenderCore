@@ -88,99 +88,6 @@ export class GLManager {
 	// 		this._attributeManager.updateAttribute(material._attributes[name], this._gl.ARRAY_BUFFER);
 	// }
 
-	/**
-	 * Updates object geometry attributes (creates GL buffers or updates them if they already exist)
-	 * @param object
-	 */
-	updateObjectData(object, material) {
-		// BufferedGeometry
-		let geometry = object.geometry;
-
-		// // region GEOMETRY ATTRIBUTES
-		// if (geometry.indices !== null) {
-		// 	this._attributeManager.updateAttribute(geometry.indices, this._gl.ELEMENT_ARRAY_BUFFER);
-		// }
-
-		// if (geometry.vertices != null) {
-		// 	this._attributeManager.updateAttribute(geometry.vertices, this._gl.ARRAY_BUFFER);
-		// }
-
-		// if (geometry.drawWireframe && !(object instanceof Point) && !(object instanceof Line)) {
-		// 	if (geometry.wireframeIndices === null) {
-		// 		geometry.buildWireframeBuffer();
-		// 	}
-
-		// 	this._attributeManager.updateAttribute(geometry.wireframeIndices, this._gl.ELEMENT_ARRAY_BUFFER);
-		// }
-
-		// if (geometry.normals != null) {
-		// 	this._attributeManager.updateAttribute(geometry.normals, this._gl.ARRAY_BUFFER);
-		// }
-
-		// if (geometry.tangents != null) {
-		// 	this._attributeManager.updateAttribute(geometry.tangents, this._gl.ARRAY_BUFFER);
-		// }
-
-		// if (geometry.bitangents != null) {
-		// 	this._attributeManager.updateAttribute(geometry.bitangents, this._gl.ARRAY_BUFFER);
-		// }
-
-		// if (geometry._vertColor != null) {
-		// 	this._attributeManager.updateAttribute(geometry._vertColor, this._gl.ARRAY_BUFFER);
-		// }
-
-		// if (geometry._uv != null) {
-		// 	this._attributeManager.updateAttribute(geometry._uv, this._gl.ARRAY_BUFFER);
-		// }
-
-		// if (geometry.MMat != null) {
-		// 	this._attributeManager.updateAttribute(geometry.MMat, this._gl.ARRAY_BUFFER);
-		// }
-
-		// if (geometry.translation != null) {
-		// 	this._attributeManager.updateAttribute(geometry.translation, this._gl.ARRAY_BUFFER);
-		// }
-		// // endregion
-
-
-		// Update textures
-		let textures = material.maps;
-		for (let i = 0; i < textures.length; i++) {
-			this._textureManager.updateTexture(textures[i], false);
-		}
-
-
-		const cubeTextures = material.cubemaps;
-		for (let i = 0; i < cubeTextures.length; i++) {
-			this._textureManager.updateCubeTexture(cubeTextures[i]);
-		}
-
-
-		const diffuseMap = material.diffuseMap;
-		if (diffuseMap) this._textureManager.updateTexture(diffuseMap, false);
-
-		const specularMap = material.specularMap;
-		if (specularMap) this._textureManager.updateTexture(specularMap, false);
-
-		const normalMap = material.normalMap;
-		if (normalMap) this._textureManager.updateTexture(normalMap, false);
-
-		const heightMap = material.heightMap;
-		if (heightMap) this._textureManager.updateTexture(heightMap, false);
-
-		const instanceData = material.instanceData;
-		for (let i = 0; i < instanceData.length; i++) {
-			this._textureManager.updateTexture(instanceData[i], false);
-		}
-
-		
-		// // CustomShaderMaterial may specify extra attributes
-		// if (material instanceof CustomShaderMaterial) {
-		// 	this.updateCustomShaderAttributes(material);
-		// }
-		// //endregion
-	}
-
 	initRenderTarget(renderTarget) {
 		let glTexture;
 		let drawBuffersLength;
@@ -192,7 +99,7 @@ export class GLManager {
 		// region DEPTH
 		if (renderTarget.depthTexture !== null) {
 			// Fetch and update the texture
-			glTexture = this._textureManager.updateTexture(renderTarget.depthTexture, true);
+			glTexture = this._textureManager.getGLTexture(renderTarget.depthTexture, true);
 
 			// Attach as framebuffer depth attachment
 			this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.TEXTURE_2D, glTexture, 0);
@@ -211,7 +118,7 @@ export class GLManager {
 
 		// TODO: Is it reasonable to check if there are more than 15 draw buffers?
 		for (let i = 0; i < drawBuffersLength; i++) {
-			glTexture = this._textureManager.updateTexture(renderTarget._drawBuffers[i], true);
+			glTexture = this._textureManager.getGLTexture(renderTarget._drawBuffers[i], true);
 
 			// Attach draw buffer as color attachment (in specified order)
 			this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._FIRST_COLOR_ATTACHMENT + i, this._gl.TEXTURE_2D, glTexture, 0);
@@ -275,7 +182,7 @@ export class GLManager {
 		// region DEPTH
 		if (renderTarget.depthTexture !== null) {
 			// Fetch and update the texture
-			glTexture = this._textureManager.updateCubeTexture(renderTarget.depthTexture, true);
+			glTexture = this._textureManager.getGLCubeTexture(renderTarget.depthTexture, true);
 			// console.error(renderTarget);
 			//console.error(renderTarget.depthTexture);
 			// console.error(renderTarget.drawBuffers);
@@ -297,7 +204,7 @@ export class GLManager {
 
 		// TODO: Is it reasonable to check if there are more than 15 draw buffers?
 		for (let i = 0; i < drawBuffersLength; i++) {
-			glTexture = this._textureManager.updateCubeTexture(renderTarget._drawBuffers[i], true);
+			glTexture = this._textureManager.getGLCubeTexture(renderTarget._drawBuffers[i], true);
 
 			// Attach draw buffer as color attachment (in specified order)
 			this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._FIRST_COLOR_ATTACHMENT + i, this._gl.TEXTURE_CUBE_MAP_POSITIVE_X + side, glTexture, 0);
@@ -324,7 +231,6 @@ export class GLManager {
 		// Validation
 		if (GLManager.sCheckFrameBuffer && this._gl.checkFramebufferStatus(this._gl.FRAMEBUFFER) !== this._gl.FRAMEBUFFER_COMPLETE) {
 			console.error("Render target: framebuffer not complete!");
-			console.error(glTexture);
 
 			switch (this._gl.checkFramebufferStatus(this._gl.FRAMEBUFFER)) {
 				case this._gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
@@ -388,39 +294,39 @@ export class GLManager {
 		this._fboManager.unbindFramebuffer();
 	}
 
-	getTexture(reference) {
-		return this._textureManager.getTexture(reference);
+	getGLTexture(texture) {
+		return this._textureManager.getGLTexture(texture);
 	}
 
-	getCubeTexture(reference) {
-		return this._textureManager.getCubeTexture(reference);
+	getGLCubeTexture(texture) {
+		return this._textureManager.getGLCubeTexture(texture);
 	}
 
-	downloadTexture(reference, name) {
-		const texture = this._textureManager.getTexture(reference);
+	downloadTexture(texture, name) {
+		const glTexture = this._textureManager.getGLTexture(texture);
 		const fb = this._gl.createFramebuffer();
 		this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, fb);
 		this._gl.framebufferTexture2D(
 		this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0,
-		this._gl.TEXTURE_2D, texture, 0);
+		this._gl.TEXTURE_2D, glTexture, 0);
 
 		var canvas = document.createElement("canvas");
-		canvas.width = reference._width;
-		canvas.height = reference._height;
+		canvas.width = texture._width;
+		canvas.height = texture._height;
 		var ctx = canvas.getContext('2d');
 
-		if(reference._type == 22) // FLOAT
+		if(texture._type == 22) // FLOAT
 		{
-			var floatData = new Float32Array(reference._width * reference._height * 4);
-			this._gl.readPixels(0, 0, reference._width, reference._height, this._gl.RGBA, this._gl.FLOAT, floatData);
+			var floatData = new Float32Array(texture._width * texture._height * 4);
+			this._gl.readPixels(0, 0, texture._width, texture._height, this._gl.RGBA, this._gl.FLOAT, floatData);
 
-			const headerText = "PF\n" + reference._width + " " + reference._height + "\n1.0\n";
-			const pfmFile = new ArrayBuffer(headerText.length + (reference._width * reference._height * 3 * 4));
+			const headerText = "PF\n" + texture._width + " " + texture._height + "\n1.0\n";
+			const pfmFile = new ArrayBuffer(headerText.length + (texture._width * texture._height * 3 * 4));
 			const view = new DataView(pfmFile);
 			for (let i = 0; i < headerText.length; i++) {
 				view.setUint8(i, headerText.charCodeAt(i));
 			}
-			for(var i = 0; i < reference._width * reference._height; i++){
+			for(var i = 0; i < texture._width * texture._height; i++){
 				view.setFloat32(headerText.length + (((i * 3) + 0) * 4), floatData[(i * 4) + 0]);
 				view.setFloat32(headerText.length + (((i * 3) + 1) * 4), floatData[(i * 4) + 1]);
 				view.setFloat32(headerText.length + (((i * 3) + 2) * 4), floatData[(i * 4) + 2]);
@@ -435,8 +341,8 @@ export class GLManager {
 			link.click();
 		}
 		else {
-			var data = new Uint8Array(reference._width * reference._height * 4);
-			this._gl.readPixels(0, 0, reference._width, reference._height, this._gl.RGBA, this._gl.UNSIGNED_BYTE, data);
+			var data = new Uint8Array(texture._width * texture._height * 4);
+			this._gl.readPixels(0, 0, texture._width, texture._height, this._gl.RGBA, this._gl.UNSIGNED_BYTE, data);
 
 			this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
 			const imageData = new ImageData(new Uint8ClampedArray(data.buffer), canvas.width, canvas.height);

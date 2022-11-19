@@ -3,6 +3,7 @@
  */
 import { OrthographicCamera } from '../cameras/OrthographicCamera.js';
 import { Vector3 } from '../math/Vector3.js';
+import { Texture } from '../RenderCore.js';
 import { Light } from './Light.js';
 
 export class DirectionalLight extends Light {
@@ -24,6 +25,9 @@ export class DirectionalLight extends Light {
 
 		const cameraZn = new OrthographicCamera(-64, 64, 64, -64, 0, 128);
 		this.cameraGroup.add(cameraZn);
+
+		
+		this.shadowmap = new Texture();
 	}
 
 

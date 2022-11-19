@@ -261,9 +261,6 @@ export class Mesh extends Object3D {
 		return r;
 	}
 	update(glManager, camera){
-		// Updates or derives attributes from the WebGL geometry
-		glManager.updateObjectData(this, this.material);
-
 		// Derive mv and normal matrices
 		this.modelViewMatrix.multiplyMatrices(camera.matrixWorldInverse, this._matrixWorld);
 		this.normalMatrix.getNormalMatrix(this._modelViewMatrix);

@@ -1,5 +1,6 @@
 import { PerspectiveCamera } from '../cameras/PerspectiveCamera.js';
 import { Vector3 } from '../math/Vector3.js';
+import { Texture } from '../RenderCore.js';
 import {Light} from './Light.js';
 
 export class SpotLight extends Light {
@@ -24,6 +25,9 @@ export class SpotLight extends Light {
 
 		const cameraZn = new PerspectiveCamera(90, 1, 8, 128);
 		this.cameraGroup.add(cameraZn);
+
+		
+		this.shadowmap = new Texture();
     }
 
     get distance() { return this._distance; }

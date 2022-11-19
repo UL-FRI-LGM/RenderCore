@@ -111,25 +111,25 @@ export class Renderer {
 		}
 	}
 
-	_takeFullScreenshot(reference = undefined){
-		const width = (reference)? reference.width : this.getViewport().width;
-		const height = (reference)? reference.height : this.getViewport().height;
+	_takeFullScreenshot(texture = undefined){
+		const width = (texture)? texture.width : this.getViewport().width;
+		const height = (texture)? texture.height : this.getViewport().height;
 
 		if(this._screenshotData.length !== width * height * 4) this._screenshotData = new Uint8ClampedArray(width * height * 4);
 
 		//PREP
-		if(reference){
+		if(texture){
 			const fb = this._gl.createFramebuffer();
 			this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, fb);
-			const texture = this._glManager._textureManager.getTexture(reference);
-			this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, texture, 0);
+			const glTexture = this._glManager._textureManager.getGLTexture(texture);
+			this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, glTexture, 0);
 		}
 
 		//READ
 		this._gl.readPixels(0, 0, width, height, this._gl.RGBA, this._gl.UNSIGNED_BYTE, this._screenshotData);
 
 		//CLEAN
-		if(reference){
+		if(texture){
 			this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
 		}
 
@@ -139,9 +139,9 @@ export class Renderer {
 
 		return imageData;
 	}
-	_takeSegmentedScreenshot(scene, camera, renderTarget, renderQueue = undefined, reference = undefined){
-		const width = (reference)? reference.width : this.getViewport().width;
-		const height = (reference)? reference.height : this.getViewport().height;
+	_takeSegmentedScreenshot(scene, camera, renderTarget, renderQueue = undefined, texture = undefined){
+		const width = (texture)? texture.width : this.getViewport().width;
+		const height = (texture)? texture.height : this.getViewport().height;
 
 		const originalLeft = camera.left;
 		const originalRight = camera.right;
@@ -168,7 +168,7 @@ export class Renderer {
 				//update projection matrix + render
 				(renderQueue)? renderQueue.render() : this.render(scene, camera, renderTarget);
 				console.log("Taking screenshot block...");
-				const imageDataBlock = this._takeFullScreenshot(reference);
+				const imageDataBlock = this._takeFullScreenshot(texture);
 
 				//combine final image by blocks, inline
 				for(let h = 0; h < height; h++){
@@ -224,8 +224,8 @@ export class Renderer {
 		}
 	}
 
-	downloadTexture(reference, name) {
-		return this._glManager.downloadTexture(reference, name);
+	downloadTexture(texture, name) {
+		return this._glManager.downloadTexture(texture, name);
 	}
 
 	_loadRequiredPrograms() {
@@ -374,58 +374,58 @@ export class Renderer {
 		}
 	}
 
-	takeScreenshot(reference = undefined, sizeMultiplier = 1, segmented = false, renderQueue = undefined){
+	takeScreenshot(texture = undefined, sizeMultiplier = 1, segmented = false, renderQueue = undefined){
 		this._takeScreenshot = true;
 
 		this._segmentedScreenshot = segmented;
 		this._screenshotSizeMultiplier = sizeMultiplier;
 
 		this._renderQueue = renderQueue;
-		this._screenshotTextureReference = reference;
+		this._screenshotTextureReference = texture;
 	}
-	pickRGB(reference = undefined, pickX, pickY, renderQueue = undefined){
-		const width = (reference)? reference.width : this.getViewport().width;
-		const height = (reference)? reference.height : this.getViewport().height;
+	pickRGB(texture = undefined, pickX, pickY, renderQueue = undefined){
+		const width = (texture)? texture.width : this.getViewport().width;
+		const height = (texture)? texture.height : this.getViewport().height;
 
 		const pickedRGBA = new Uint8Array(4);
 
 		//PREP
-		if(reference){
+		if(texture){
 			const fb = this._gl.createFramebuffer();
 			this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, fb);
-			const texture = this._glManager._textureManager.getTexture(reference);
-			this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, texture, 0);
+			const glTexture = this._glManager._textureManager.getGLTexture(texture);
+			this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, glTexture, 0);
 		}
 
 		//READ
 		this._gl.readPixels(pickX, height-pickY, 1, 1, this._gl.RGBA, this._gl.UNSIGNED_BYTE, pickedRGBA);
 
 		//CLEAN
-		if(reference){
+		if(texture){
 			this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
 		}
 
 		return pickedRGBA;
 	}
-	pickUINT(reference = undefined, pickX, pickY, renderQueue = undefined){
-		const width = (reference)? reference.width : this.getViewport().width;
-		const height = (reference)? reference.height : this.getViewport().height;
+	pickUINT(texture = undefined, pickX, pickY, renderQueue = undefined){
+		const width = (texture)? texture.width : this.getViewport().width;
+		const height = (texture)? texture.height : this.getViewport().height;
 
 		const pickedUINT = new Uint32Array(4);
 
 		//PREP
-		if(reference){
+		if(texture){
 			const fb = this._gl.createFramebuffer();
 			this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, fb);
-			const texture = this._glManager._textureManager.getTexture(reference);
-			this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, texture, 0);
+			const glTexture = this._glManager._textureManager.getGLTexture(texture);
+			this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, glTexture, 0);
 		}
 
 		//READ
 		this._gl.readPixels(pickX, height-pickY, 1, 1, this._gl.RGBA_INTEGER, this._gl.UNSIGNED_INT, pickedUINT);
 
 		//CLEAN
-		if(reference){
+		if(texture){
 			this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
 		}
 

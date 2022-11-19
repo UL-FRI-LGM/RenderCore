@@ -23,6 +23,7 @@ export class Light extends Object3D {
 		this._hardShadows = args.hardShadows !== undefined ? args.hardShadows : true;
 		this._minBias = args.minBias ? args.minBias : 0.005;
 		this._maxBias = args.maxBias ? args.maxBias : 0.05;
+		this._shadowmap = null;
 
 		this._cameraGroup = new Group();
 		this.add(this._cameraGroup);
@@ -92,6 +93,8 @@ export class Light extends Object3D {
 			this._onChangeListener.objectUpdate(update)
 		}
     }
+	get shadowmap() { return this._shadowmap; }
+	set shadowmap(shadowmap) { this._shadowmap = shadowmap; }
 
 
 	get cameraGroup(){ return this._cameraGroup; }

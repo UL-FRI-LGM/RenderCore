@@ -15,158 +15,180 @@ export class GLTextureManager {
 		this._cached_textures = new Map();
 
 		this._colorClearFramebuffer = this._gl.createFramebuffer();
-
-
-		this._defaultTexture = new Texture(
-			null,
-			Texture.ClampToEdgeWrapping,
-			Texture.ClampToEdgeWrapping,
-			Texture.NearestFilter,
-			Texture.NearestFilter,
-			Texture.DEPTH_COMPONENT32F,
-			Texture.DEPTH_COMPONENT,
-			Texture.FLOAT,
-			1,
-			1
-		);
-		this.updateTexture(this._defaultTexture, false);
-		
-		this._defaultCubeTexture = new CubeTexture({
-			textures: null,
-			wrapS: Texture.ClampToEdgeWrapping,
-			wrapT: Texture.ClampToEdgeWrapping,
-			wrapR: Texture.ClampToEdgeWrapping,
-			minFilter: Texture.NearestFilter,
-			magFilter: Texture.NearestFilter,
-			internalFormat: Texture.DEPTH_COMPONENT32F,
-			format: Texture.DEPTH_COMPONENT,
-			type: Texture.FLOAT,
-			size: 1
-		});
-		this.updateCubeTexture(this._defaultCubeTexture, false);
 	}
 
-	updateTexture(texture, isRTT) {
-		texture.idleTime = 0;
+
+	_createGLTexture(texture){
+		const internalFormat = this._formatToGL(texture._internalFormat);
+		const format = this._formatToGL(texture._format);
+		const magFilter = this._magFilterToGL(texture._magFilter);
+		const minFilter = this._minFilterToGL(texture._minFilter);
+		const wrapS = this._wrapToGL(texture._wrapS);
+		const wrapT = this._wrapToGL(texture._wrapT);
+		const type = this._typeToGL(texture._type);
+		const width = texture._width;
+		const height = texture._height;
+
+		const glTexture = this._gl.createTexture();
+		this._gl.bindTexture(this._gl.TEXTURE_2D, glTexture);
+		this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null); //allocation
+
+		this._cached_textures.set(texture, glTexture);
 
 
-		let newTexture = false;
+		return glTexture;
+	}
 
-		// Check if the texture is already created and cached
-		let glTexture = this._cached_textures.get(texture);
+	_updateTexture(texture){
+		if(!texture.image) console.error(texture);
+		const glTexture = this._cached_textures.get(texture);
 
-		// If texture was not found, create a new one and add it to the cached textures
-		if (glTexture === undefined) {
-			glTexture = this._gl.createTexture();
-			this._cached_textures.set(texture, glTexture);
-			newTexture = true;
-		}
-
-		// Check if the texture needs to be updated
-		if (!texture.dirty && !newTexture) {
-				return glTexture;
-		}
+		const internalFormat = this._formatToGL(texture._internalFormat);
+		const format = this._formatToGL(texture._format);
+		const magFilter = this._magFilterToGL(texture._magFilter);
+		const minFilter = this._minFilterToGL(texture._minFilter);
+		const wrapS = this._wrapToGL(texture._wrapS);
+		const wrapT = this._wrapToGL(texture._wrapT);
+		const type = this._typeToGL(texture._type);
+		const width = texture._width;
+		const height = texture._height;
 
 		this._gl.bindTexture(this._gl.TEXTURE_2D, glTexture);
-
-		if (texture.flipy) {
-			this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, true);
-		}
-
-		// Parse texture data
-		let internalFormat = this._formatToGL(texture._internalFormat);
-		let format = this._formatToGL(texture._format);
-		let magFilter = this._magFilterToGL(texture._magFilter);
-		let minFilter = this._minFilterToGL(texture._minFilter);
-		let wrapS = this._wrapToGL(texture._wrapS);
-		let wrapT = this._wrapToGL(texture._wrapT);
-		let type = this._typeToGL(texture._type);
-		let width = texture._width;
-		let height = texture._height;
-
 		// Filters
 		this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, magFilter);
 		this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, minFilter);
-
 		// Wrapping
 		this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, wrapS);
 		this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, wrapT);
 
-		// If this texture is not a part of the RTT, load it from the image and unbind the texture.
-		if (!isRTT) {
-			// Normal texture
-			if (texture.image === null) {
-				this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
-				//this.clearBoundTexture();
-			}
-			else if(this._gl.getParameter(this._gl.VERSION).includes("WebGL 2.0")) {
-				this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, texture.width, texture.height, 0, format, type, texture.image);
-			}
-			else{
-				this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, format, type, texture.image);
-			}
-		}
-		// Otherwise create empty texture (width * height) and leave the texture unbinding to function caller
-		else {
-			// RTT texture
-			this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
-		}
+		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, texture.flipy);
+		// this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, texture.image);
+		this._gl.texSubImage2D(this._gl.TEXTURE_2D, 0, 0, 0, width, height, format, type, texture.image);
+		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
 
 		// Generate mipmaps
 		if (texture._generateMipmaps) {
 				this._gl.generateMipmap(this._gl.TEXTURE_2D);
 		}
 
-		if (texture.flipy) {
-			this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
-		}
 
-		this._gl.bindTexture(this._gl.TEXTURE_2D, null);
+		texture.dirty = false;
+	}
+	// updateTexture(texture, isRTT) {
+	// 	texture.idleTime = 0;
 
-		texture._dirty = false;
 
-		// Return created WebGL Texture
+	// 	let newTexture = false;
+
+	// 	// Check if the texture is already created and cached
+	// 	let glTexture = this._cached_textures.get(texture);
+
+	// 	// If texture was not found, create a new one and add it to the cached textures
+	// 	if (glTexture === undefined) {
+	// 		glTexture = this._gl.createTexture();
+	// 		this._cached_textures.set(texture, glTexture);
+	// 		newTexture = true;
+	// 	}
+
+	// 	// Check if the texture needs to be updated
+	// 	if (!texture.dirty && !newTexture) {
+	// 			return glTexture;
+	// 	}
+
+	// 	this._gl.bindTexture(this._gl.TEXTURE_2D, glTexture);
+
+	// 	if (texture.flipy) {
+	// 		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, true);
+	// 	}
+
+	// 	// Parse texture data
+	// 	const internalFormat = this._formatToGL(texture._internalFormat);
+	// 	const format = this._formatToGL(texture._format);
+	// 	const magFilter = this._magFilterToGL(texture._magFilter);
+	// 	const minFilter = this._minFilterToGL(texture._minFilter);
+	// 	const wrapS = this._wrapToGL(texture._wrapS);
+	// 	const wrapT = this._wrapToGL(texture._wrapT);
+	// 	const type = this._typeToGL(texture._type);
+	// 	const width = texture._width;
+	// 	const height = texture._height;
+
+	// 	// Filters
+	// 	this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, magFilter);
+	// 	this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, minFilter);
+
+	// 	// Wrapping
+	// 	this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, wrapS);
+	// 	this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, wrapT);
+
+	// 	if (!isRTT && texture.image !== null) {
+	// 		// Normal texture // If this texture is not a part of the RTT, load it from the image and unbind the texture.
+	// 		this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, texture.image);
+	// 	} else {
+	// 		// RTT texture // Otherwise create empty texture (width * height) and leave the texture unbinding to function caller
+	// 		this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
+	// 	}
+
+	// 	// Generate mipmaps
+	// 	if (texture._generateMipmaps) {
+	// 			this._gl.generateMipmap(this._gl.TEXTURE_2D);
+	// 	}
+
+	// 	if (texture.flipy) {
+	// 		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
+	// 	}
+
+	// 	this._gl.bindTexture(this._gl.TEXTURE_2D, null);
+
+	// 	texture.dirty = false;
+
+	// 	// Return created WebGL Texture
+	// 	return glTexture;
+	// }
+
+	_createGLCubeTexture(texture){
+		const internalFormat = this._formatToGL(texture._internalFormat);
+		const format = this._formatToGL(texture._format);
+		const magFilter = this._magFilterToGL(texture._magFilter);
+		const minFilter = this._minFilterToGL(texture._minFilter);
+		const wrapS = this._wrapToGL(texture._wrapS);
+		const wrapT = this._wrapToGL(texture._wrapT);
+		const wrapR = this._wrapToGL(texture._wrapR);
+		const type = this._typeToGL(texture._type);
+		const width = texture._width;
+		const height = texture._height;
+		const size = Math.min(width, height);
+
+		const glTexture = this._gl.createTexture();
+		this._gl.bindTexture(this._gl.TEXTURE_CUBE_MAP, glTexture);
+		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, null); //allocation
+		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, null);
+		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
+		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
+		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
+		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
+
+		this._cached_textures.set(texture, glTexture);
+
+
 		return glTexture;
 	}
+	_updateCubeTexture(texture){
+		if(!texture.image) console.error(texture);
+		const glTexture = this._cached_textures.get(texture);
 
-	updateCubeTexture(texture, isRTT = false) {
-		texture.idleTime = 0;
-
-
-		let newTexture = false;
-
-		// Check if the texture is already created and cached
-		let glTexture = this._cached_textures.get(texture);
-
-		// If texture was not found, create a new one and add it to the cached textures
-		if (glTexture === undefined) {
-				glTexture = this._gl.createTexture();
-				this._cached_textures.set(texture, glTexture);
-				newTexture = true;
-		}
-
-		// Check if the texture needs to be updated
-		if (!texture.dirty && !newTexture) {
-				return glTexture;
-		}
+		const internalFormat = this._formatToGL(texture._internalFormat);
+		const format = this._formatToGL(texture._format);
+		const magFilter = this._magFilterToGL(texture._magFilter);
+		const minFilter = this._minFilterToGL(texture._minFilter);
+		const wrapS = this._wrapToGL(texture._wrapS);
+		const wrapT = this._wrapToGL(texture._wrapT);
+		const wrapR = this._wrapToGL(texture._wrapR);
+		const type = this._typeToGL(texture._type);
+		const width = texture._width;
+		const height = texture._height;
+		const size = Math.min(width, height);
 
 		this._gl.bindTexture(this._gl.TEXTURE_CUBE_MAP, glTexture);
-
-		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
-
-		// Parse texture data
-		let internalFormat = this._formatToGL(texture._internalFormat);
-		let format = this._formatToGL(texture._format);
-		let magFilter = this._magFilterToGL(texture._magFilter);
-		let minFilter = this._minFilterToGL(texture._minFilter);
-		let wrapS = this._wrapToGL(texture._wrapS);
-		let wrapT = this._wrapToGL(texture._wrapT);
-		let wrapR = this._wrapToGL(texture._wrapR);
-
-		let type = this._typeToGL(texture._type);
-		let width = texture._width;
-		let height = texture._height;
-
 		// Filters
 		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_MAG_FILTER, magFilter);
 		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_MIN_FILTER, minFilter);
@@ -176,51 +198,20 @@ export class GLTextureManager {
 		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_WRAP_T, wrapT);
 		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_WRAP_R, wrapR);
 
-		// If this texture is not a part of the RTT, load it from the image and unbind the texture.
-		if (!isRTT) {
-			// Normal texture
-			if (texture.images === null) {
-				const size = Math.min(width, height);
-
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, null);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, null);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
-			}
-			else if(this._gl.getParameter(this._gl.VERSION).includes("WebGL 2.0")) {
-				const size = Math.min(texture.width, texture.height);
-
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, texture.images.right);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, texture.images.left);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, size, size, 0, format, type, texture.images.top);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, texture.images.bottom);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, texture.images.front);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, texture.images.back);
-			}
-			else{
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, format, type, texture.images.right);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, format, type, texture.images.left);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, format, type, texture.images.top);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, format, type, texture.images.bottom);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, format, type, texture.images.front);
-				this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, format, type, texture.images.back);
-			}
-		}
-		// Otherwise create empty texture (width * height) and leave the texture unbinding to function caller
-		else {
-			// RTT texture
-			const size = Math.min(width, height);
-
-			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, null);
-			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, null);
-			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
-			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
-			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
-			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
-		}
-
+		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, texture.flipy);
+		// this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, texture.images.right);
+		// this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, texture.images.left);
+		// this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, size, size, 0, format, type, texture.images.top);
+		// this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, texture.images.bottom);
+		// this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, texture.images.front);
+		// this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, texture.images.back);
+		this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, 0, 0, size, size, format, type, texture.images.right);
+		this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, 0, 0, size, size, format, type, texture.images.left);
+		this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, 0, 0, size, size, format, type, texture.images.top);
+		this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, 0, 0, size, size, format, type, texture.images.bottom);
+		this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, 0, 0, size, size, format, type, texture.images.front);
+		this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, 0, 0, size, size, format, type, texture.images.back);
+		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
 
 		// Generate mipmaps
 		if (texture._generateMipmaps) {
@@ -228,35 +219,123 @@ export class GLTextureManager {
 		}
 
 
-		this._gl.bindTexture(this._gl.TEXTURE_CUBE_MAP, null);
-
-
-		texture._dirty = false;
-
-		// Return created WebGL Texture
-		return glTexture;
+		texture.dirty = false;
 	}
+	// updateCubeTexture(texture, isRTT = false) {
+	// 	texture.idleTime = 0;
 
-	getTexture(reference) {
-		if(reference) reference.idleTime = 0;
 
-		if(this._cached_textures.has(reference)){
-			return this._cached_textures.get(reference);
+	// 	let newTexture = false;
+
+	// 	// Check if the texture is already created and cached
+	// 	let glTexture = this._cached_textures.get(texture);
+
+	// 	// If texture was not found, create a new one and add it to the cached textures
+	// 	if (glTexture === undefined) {
+	// 			glTexture = this._gl.createTexture();
+	// 			this._cached_textures.set(texture, glTexture);
+	// 			newTexture = true;
+	// 	}
+
+	// 	// Check if the texture needs to be updated
+	// 	if (!texture.dirty && !newTexture) {
+	// 			return glTexture;
+	// 	}
+
+	// 	this._gl.bindTexture(this._gl.TEXTURE_CUBE_MAP, glTexture);
+
+	// 	this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
+
+	// 	// Parse texture data
+	// 	const internalFormat = this._formatToGL(texture._internalFormat);
+	// 	const format = this._formatToGL(texture._format);
+	// 	const magFilter = this._magFilterToGL(texture._magFilter);
+	// 	const minFilter = this._minFilterToGL(texture._minFilter);
+	// 	const wrapS = this._wrapToGL(texture._wrapS);
+	// 	const wrapT = this._wrapToGL(texture._wrapT);
+	// 	const wrapR = this._wrapToGL(texture._wrapR);
+	// 	const type = this._typeToGL(texture._type);
+	// 	const width = texture._width;
+	// 	const height = texture._height;
+	// 	const size = Math.min(width, height);
+
+	// 	// Filters
+	// 	this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_MAG_FILTER, magFilter);
+	// 	this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_MIN_FILTER, minFilter);
+
+	// 	// Wrapping
+	// 	this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_WRAP_S, wrapS);
+	// 	this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_WRAP_T, wrapT);
+	// 	this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_WRAP_R, wrapR);
+
+	// 	if (!isRTT && texture.images !== null) {
+	// 		// Normal texture // If this texture is not a part of the RTT, load it from the image and unbind the texture.
+	// 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, texture.images.right);
+	// 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, texture.images.left);
+	// 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, size, size, 0, format, type, texture.images.top);
+	// 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, texture.images.bottom);
+	// 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, texture.images.front);
+	// 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, texture.images.back);
+	// 	} else {
+	// 		// RTT texture // Otherwise create empty texture (width * height) and leave the texture unbinding to function caller
+	// 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, null);
+	// 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, null);
+	// 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
+	// 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
+	// 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
+	// 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
+	// 	}
+
+
+	// 	// Generate mipmaps
+	// 	if (texture._generateMipmaps) {
+	// 		this._gl.generateMipmap(this._gl.TEXTURE_CUBE_MAP);
+	// 	}
+
+
+	// 	this._gl.bindTexture(this._gl.TEXTURE_CUBE_MAP, null);
+
+
+	// 	texture.dirty = false;
+
+	// 	// Return created WebGL Texture
+	// 	return glTexture;
+	// }
+
+	getGLTexture(texture) {
+		texture.idleTime = 0;
+
+		if(this._cached_textures.has(texture)){
+			const glTexture = this._cached_textures.get(texture);
+			if(texture.dirty) this._updateTexture(texture);
+
+
+			return glTexture; 
 		}else{
-			//console.warn("Warning: Texture reference not found: [" + reference + "]!");
+			//console.warn("Warning: Texture texture not found: [" + texture + "]!");
+			const glTexture = this._createGLTexture(texture);
+			if(texture.dirty) this._updateTexture(texture);
 
-			return this._cached_textures.get(this._defaultTexture);
+
+			return glTexture;
 		}
 	}
-	getCubeTexture(reference) {
-		if(reference) reference.idleTime = 0;
+	getGLCubeTexture(texture) {
+		texture.idleTime = 0;
 
-		if(this._cached_textures.has(reference)){
-			return this._cached_textures.get(reference);
+		if(this._cached_textures.has(texture)){
+			const glCubeTexture = this._cached_textures.get(texture);
+			if(texture.dirty) this._updateCubeTexture(texture);
+
+
+			return glCubeTexture; 
 		}else{
-			//console.warn("Warning: Cube texture reference not found: [" + reference + "]!");
+			//console.warn("Warning: Cube texture texture not found: [" + texture + "]!");
+			const glCubeTexture = this._createGLCubeTexture(texture);
+			if(texture.dirty) this._updateCubeTexture(texture);
 
-			return this._cached_textures.get(this._defaultCubeTexture);
+
+			return glCubeTexture;
 		}
 	}
 
@@ -278,7 +357,7 @@ export class GLTextureManager {
 	}
 
 	deleteTexture(texture, glTexture) {
-		texture._dirty = true;
+		texture.dirty = true;
 		this._cached_textures.delete(texture);
 		this._gl.deleteTexture(glTexture);
 	}
