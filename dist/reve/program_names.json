@@ -1,0 +1,15 @@
+[
+  "custom_copyDepthToRed",
+  "custom_GBufferMini",
+  "custom_outline",
+  "custom_gaussBlur",
+  "custom_blendingAdditive",
+  "custom_ToneMapping",
+  "phong",
+  "basic",
+  "basic_zsprite",
+  "basic_stripes",
+  "custom_GBufferMini_stripes",
+  "custom_picker_TRIANGLES",
+  "custom_picker_POINTS"
+]
