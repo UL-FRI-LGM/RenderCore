@@ -84,9 +84,16 @@ class App {
 		this.textureLoader = new RC.ImageLoader(this.manager);
 
 		this.textureLoader.load("../../common/textures/sunset.jpg", (image) => {
-			this.texture = new RC.Texture(image, RC.Texture.ClampToEdgeWrapping, RC.Texture.ClampToEdgeWrapping,
-				RC.Texture.LinearFilter, RC.Texture.LinearFilter,
-				RC.Texture.RGBA, RC.Texture.RGBA, RC.Texture.UNSIGNED_BYTE);
+			this.texture = new RC.Texture(
+				image, 
+				RC.Texture.WRAPPING.ClampToEdgeWrapping, 
+				RC.Texture.WRAPPING.ClampToEdgeWrapping,
+				RC.Texture.FILTER.LinearFilter, 
+				RC.Texture.FILTER.LinearFilter,
+				RC.Texture.FORMAT.RGBA, 
+				RC.Texture.FORMAT.RGBA, 
+				RC.Texture.TYPE.UNSIGNED_BYTE
+			);
 			let material = new RC.MeshPhongMaterial();
 			material.addMap(this.texture);
 			this.icoSphereTexture.material = material;

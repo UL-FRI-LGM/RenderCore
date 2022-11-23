@@ -40,11 +40,20 @@ class App {
 			var stringPath = "../../common/textures/SkyCube2/" + this.tex_str_arr2[i];
 
 			this.textureLoader.load(stringPath, (image) => {
-				this.textureArray.push(new RC.Texture(image, RC.Texture.ClampToEdgeWrapping, RC.Texture.ClampToEdgeWrapping,
-					RC.Texture.LinearFilter, RC.Texture.LinearFilter,
-					RC.Texture.RGBA, RC.Texture.RGBA, RC.Texture.UNSIGNED_BYTE));
+				this.textureArray.push(
+					new RC.Texture(
+						image, 
+						RC.Texture.WRAPPING.ClampToEdgeWrapping, 
+						RC.Texture.WRAPPING.ClampToEdgeWrapping,
+						RC.Texture.FILTER.LinearFilter, 
+						RC.Texture.FILTER.LinearFilter,
+						RC.Texture.FORMAT.RGBA, 
+						RC.Texture.FORMAT.RGBA, 
+						RC.Texture.TYPE.UNSIGNED_BYTE
+					)
+				);
 				
-					this.staticCount();
+				this.staticCount();
 			});
 		}
 	}

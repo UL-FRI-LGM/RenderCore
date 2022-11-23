@@ -383,61 +383,61 @@ export class GLTextureManager {
 	// region CONSTANT CONVERSION
 	_formatToGL(format) {
 		switch (format) {
-			case Texture.R8:
+			case Texture.FORMAT.R8:
 				return this._gl.R8;
 				break;
-			case Texture.RED:
+			case Texture.FORMAT.RED:
 				return this._gl.RED;
 				break;
-			case Texture.RED_INTEGER:
+			case Texture.FORMAT.RED_INTEGER:
 				return this._gl.RED_INTEGER;
 				break;
-			case Texture.RGBA:
+			case Texture.FORMAT.RGBA:
 				return this._gl.RGBA;
 				break;
-			case Texture.RGB:
+			case Texture.FORMAT.RGB:
 				return this._gl.RGB;
 				break;
-			case Texture.ALPHA:
+			case Texture.FORMAT.ALPHA:
 				return this._gl.ALPHA;
 				break;
-			case Texture.LUMINANCE:
+			case Texture.FORMAT.LUMINANCE:
 				return this._gl.LUMINANCE;
 				break;
-			case Texture.LUMINANCE_ALPHA:
+			case Texture.FORMAT.LUMINANCE_ALPHA:
 				return this._gl.LUMINANCE_ALPHA;
 				break;
-			case Texture.DEPTH_COMPONENT:
+			case Texture.FORMAT.DEPTH_COMPONENT:
 				return this._gl.DEPTH_COMPONENT;
 				break;
-			case Texture.DEPTH_COMPONENT24:
+			case Texture.FORMAT.DEPTH_COMPONENT24:
 				return this._gl.DEPTH_COMPONENT24;
 				break;
-			case Texture.DEPTH_COMPONENT32F:
+			case Texture.FORMAT.DEPTH_COMPONENT32F:
 				return this._gl.DEPTH_COMPONENT32F;
 				break;
-			case Texture.RGB16F:
+			case Texture.FORMAT.RGB16F:
 				return this._gl.RGB16F;
 				break;
-			case Texture.RGB32F:
+			case Texture.FORMAT.RGB32F:
 				return this._gl.RGB32F;
 				break;
-			case Texture.RGBA16F:
+			case Texture.FORMAT.RGBA16F:
 				return this._gl.RGBA16F;
 				break;
-			case Texture.RGBA32F:
+			case Texture.FORMAT.RGBA32F:
 				return this._gl.RGBA32F;
 				break;
-			case Texture.R16F:
+			case Texture.FORMAT.R16F:
 				return this._gl.R16F;
 				break;
-			case Texture.R32F:
+			case Texture.FORMAT.R32F:
 				return this._gl.R32F;
 				break;
-			case Texture.R32I:
+			case Texture.FORMAT.R32I:
 				return this._gl.R32I;
 				break;
-			case Texture.R32UI:
+			case Texture.FORMAT.R32UI:
 				return this._gl.R32UI;
 				break;
 			default:
@@ -450,10 +450,10 @@ export class GLTextureManager {
 
 	_magFilterToGL(filter) {
 		switch (filter) {
-			case Texture.NearestFilter:
+			case Texture.FILTER.NearestFilter:
 				return this._gl.NEAREST;
 				break;
-			case Texture.LinearFilter:
+			case Texture.FILTER.LinearFilter:
 				return this._gl.LINEAR;
 				break;
 			default:
@@ -465,22 +465,22 @@ export class GLTextureManager {
 
 	_minFilterToGL(filter) {
 		switch (filter) {
-			case Texture.NearestFilter:
+			case Texture.FILTER.NearestFilter:
 				return this._gl.NEAREST;
 				break;
-			case Texture.LinearFilter:
+			case Texture.FILTER.LinearFilter:
 				return this._gl.LINEAR;
 				break;
-			case Texture.NearestMipMapNearestFilter:
+			case Texture.FILTER.NearestMipMapNearestFilter:
 				return this._gl.NEAREST_MIPMAP_NEAREST;
 				break;
-			case Texture.NearestMipMapLinearFilter:
+			case Texture.FILTER.NearestMipMapLinearFilter:
 				return this._gl.NEAREST_MIPMAP_LINEAR;
 				break;
-			case Texture.LinearMipMapNearestFilter:
+			case Texture.FILTER.LinearMipMapNearestFilter:
 				return this._gl.LINEAR_MIPMAP_NEAREST;
 				break;
-			case Texture.LinearMipMapLinearFilter:
+			case Texture.FILTER.LinearMipMapLinearFilter:
 				return this._gl.LINEAR_MIPMAP_LINEAR;
 				break;
 			default:
@@ -492,13 +492,13 @@ export class GLTextureManager {
 
 	_wrapToGL(wrap) {
 		switch (wrap) {
-			case Texture.RepeatWrapping:
+			case Texture.WRAPPING.RepeatWrapping:
 				return this._gl.REPEAT;
 				break;
-			case Texture.ClampToEdgeWrapping:
+			case Texture.WRAPPING.ClampToEdgeWrapping:
 				return this._gl.CLAMP_TO_EDGE;
 				break;
-			case Texture.MirroredRepeatWrapping:
+			case Texture.WRAPPING.MirroredRepeatWrapping:
 				return this._gl.MIRRORED_REPEAT;
 				break;
 			default:
@@ -510,25 +510,25 @@ export class GLTextureManager {
 
 	_typeToGL(type) {
 		switch (type) {
-			case Texture.UNSIGNED_BYTE:
+			case Texture.TYPE.UNSIGNED_BYTE:
 				return this._gl.UNSIGNED_BYTE;
 				break;
-			case Texture.UNSIGNED_INT_24_8:
+			case Texture.TYPE.UNSIGNED_INT_24_8:
 				return this._gl.UNSIGNED_INT_24_8;
 				break;
-			case Texture.UNSIGNED_SHORT:
+			case Texture.TYPE.UNSIGNED_SHORT:
 				return this._gl.UNSIGNED_SHORT;
 				break;
-			case Texture.UNSIGNED_INT:
+			case Texture.TYPE.UNSIGNED_INT:
 				return this._gl.UNSIGNED_INT;
 				break;
-			case Texture.INT:
+			case Texture.TYPE.INT:
 				return this._gl.INT;
 				break;
-			case Texture.FLOAT:
+			case Texture.TYPE.FLOAT:
 				return this._gl.FLOAT;
 				break;
-			case Texture.HALF_FLOAT:
+			case Texture.TYPE.HALF_FLOAT:
 				return this._gl.HALF_FLOAT;
 				break;
 			default:

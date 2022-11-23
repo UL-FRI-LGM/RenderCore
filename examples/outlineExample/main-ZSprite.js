@@ -73,10 +73,18 @@ const CoreControl = {
         });
 
         let new_la_tex_foo = function(img) {
-            return new RC.Texture(img, RC.Texture.ClampToEdgeWrapping, RC.Texture.ClampToEdgeWrapping,
-                                  RC.Texture.LinearFilter, RC.Texture.LinearFilter,
-                                  RC.Texture.LUMINANCE_ALPHA, RC.Texture.LUMINANCE_ALPHA, RC.Texture.UNSIGNED_BYTE,
-                                  img.width, img.height);
+            return new RC.Texture(
+                img, 
+                RC.Texture.WRAPPING.ClampToEdgeWrapping,
+                RC.Texture.WRAPPING.ClampToEdgeWrapping,
+                RC.Texture.FILTER.LinearFilter,
+                RC.Texture.FILTER.LinearFilter,
+                RC.Texture.FORMAT.LUMINANCE_ALPHA,
+                RC.Texture.FORMAT.LUMINANCE_ALPHA,
+                RC.Texture.TYPE.UNSIGNED_BYTE,
+                img.width,
+                img.height
+            );
         };
         let load_tex_foo = function(fname, mname) {
             new RC.ImageLoader(pthis.mgrLoader).load("../common/textures/" + fname, function(img) {
@@ -101,29 +109,56 @@ const CoreControl = {
             arr[4*i + 3] = 0;
         }
         this.tex_insta_num = N;
-        this.tex_insta_pos = new RC.Texture(arr, RC.Texture.ClampToEdgeWrapping, RC.Texture.ClampToEdgeWrapping,
-            RC.Texture.NearestFilter, RC.Texture.NearestFilter,
-            // RC.Texture.R32F, RC.Texture.R32F, RC.Texture.FLOAT,
-            RC.Texture.RGBA32F, RC.Texture.RGBA, RC.Texture.FLOAT,
-            Nx, Ny);
+        this.tex_insta_pos = new RC.Texture(
+            arr, 
+            RC.Texture.WRAPPING.ClampToEdgeWrapping,
+            RC.Texture.WRAPPING.ClampToEdgeWrapping,
+            RC.Texture.FILTER.NearestFilter,
+            RC.Texture.FILTER.NearestFilter,
+            // RC.Texture.FORMAT.R32F,
+            // RC.Texture.FORMAT.R32F,
+            // RC.Texture:TYPE.FLOAT,
+            RC.Texture.FORMAT.RGBA32F,
+            RC.Texture.FORMAT.RGBA,
+            RC.Texture.TYPE.FLOAT,
+            Nx,
+            Ny
+        );
         this.tex_insta_pos.flipy = false;
 
         // Testing creation of texture from JS array, simple checker pattern.
         let at = new Uint8Array(2 * 2 * 2);
         at[0] = at[6] = 255; // luminance
         at[1] = at[7] = 255; // alpha
-        this.tex_checker_2x2 = new RC.Texture(at, RC.Texture.ClampToEdgeWrapping, RC.Texture.ClampToEdgeWrapping,
-            RC.Texture.NearestFilter, RC.Texture.NearestFilter,
-            // RC.Texture.LinearFilter, RC.Texture.LinearFilter,
-            RC.Texture.LUMINANCE_ALPHA, RC.Texture.LUMINANCE_ALPHA, RC.Texture.UNSIGNED_BYTE,
-            2, 2);
+        this.tex_checker_2x2 = new RC.Texture(
+            at, 
+            RC.Texture.WRAPPING.ClampToEdgeWrapping,
+            RC.Texture.WRAPPING.ClampToEdgeWrapping,
+            RC.Texture.FILTER.NearestFilter,
+            RC.Texture.FILTER.NearestFilter,
+            // RC.Texture.FILTER.LinearFilter,
+            // RC.Texture.FILTER.LinearFilter,
+            RC.Texture.FORMAT.LUMINANCE_ALPHA,
+            RC.Texture.FORMAT.LUMINANCE_ALPHA,
+            RC.Texture.TYPE.UNSIGNED_BYTE,
+            2,
+            2
+        );
 
         // Testing index array for ZLine prototype (using points from insta points)
         let la = new Int32Array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
-        this.tex_line_test = new RC.Texture(la, RC.Texture.ClampToEdgeWrapping, RC.Texture.ClampToEdgeWrapping,
-            RC.Texture.NearestFilter, RC.Texture.NearestFilter,
-            RC.Texture.R32I, RC.Texture.RED_INTEGER, RC.Texture.INT,
-            8, 2);
+        this.tex_line_test = new RC.Texture(
+            la, 
+            RC.Texture.WRAPPING.ClampToEdgeWrapping,
+            RC.Texture.WRAPPING.ClampToEdgeWrapping,
+            RC.Texture.FILTER.NearestFilter,
+            RC.Texture.FILTER.NearestFilter,
+            RC.Texture.FORMAT.R32I,
+            RC.Texture.FORMAT.RED_INTEGER,
+            RC.Texture.TYPE.INT,
+            8,
+            2
+        );
         this.tex_line_test.flipy = false;
         this.tex_line_num = 16;
     },

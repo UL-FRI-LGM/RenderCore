@@ -62,8 +62,9 @@ function populateScene(){
 
         cube.RGB_ID = cube.material.color;
         cube.UINT_ID = i + 1;
-        cube.pickable = true;
 
+        cube.pickable = true;
+    
         scene.add(cube);
     }
 
@@ -71,19 +72,27 @@ function populateScene(){
     fontImgLoader.load("../common/textures/fonts/font2.png", function (image) {
         const fontTexture = new RC.Texture(
             image, 
-            RC.Texture.ClampToEdgeWrapping, 
-            RC.Texture.ClampToEdgeWrapping,
-            RC.Texture.NearestFilter, 
-            RC.Texture.NearestFilter,
-            RC.Texture.RGBA, 
-            RC.Texture.RGBA, 
-            RC.Texture.UNSIGNED_BYTE,
+            RC.Texture.WRAPPING.ClampToEdgeWrapping, 
+            RC.Texture.WRAPPING.ClampToEdgeWrapping,
+            RC.Texture.FILTER.NearestFilter, 
+            RC.Texture.FILTER.NearestFilter,
+            RC.Texture.FORMAT.RGBA, 
+            RC.Texture.FORMAT.RGBA, 
+            RC.Texture.TYPE.UNSIGNED_BYTE,
             128,
             256
         );
         fontTexture._generateMipmaps = false;
 
-        text2D = new RC.Text2D({text: "Click on objects.", fontTexture: fontTexture, xPos: 10, yPos: 10, fontSize: 32});
+        text2D = new RC.Text2D(
+            {
+                text: "Click on objects.", 
+                fontTexture: fontTexture, 
+                xPos: 10, 
+                yPos: 10, 
+                fontSize: 32
+            }
+        );
         text2D.material.transparent = true;
         scene.add(text2D);
     });

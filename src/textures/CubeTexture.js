@@ -19,7 +19,7 @@ export class CubeTexture extends Texture{
 		
 		this._uuid = _Math.generateUUID();
 
-		this._wrapR = args.wrapR ? args.wrapR : this.ClampToEdgeWrapping;
+		this._wrapR = (args.wrapR !== undefined) ? args.wrapR : Texture.WRAPPING.ClampToEdgeWrapping;
 
 		this.images = (args.images !== undefined) ? args.images : CubeTexture.DEFAULT_IMAGES;
 		this.flipy = false;
@@ -38,6 +38,13 @@ export class CubeTexture extends Texture{
 			this._wrapR = value;
 			this._dirty = true;
 		}
+	}
+
+
+	applyConfig(texConfig) {
+		super.applyConfig(texConfig);
+
+		this.wrapR = texConfig.wrapR;
 	}
 };
 

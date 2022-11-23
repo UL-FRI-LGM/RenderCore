@@ -8,60 +8,71 @@ init();
 loadResources();
 
 function init() {
-  const canvas = new RC.Canvas();
-  canvas.canvasDOM = document.getElementById("canvas");
+    const canvas = new RC.Canvas();
+    canvas.canvasDOM = document.getElementById("canvas");
 
-  // Initialize renderer
-  renderer = new RC.MeshRenderer(canvas, RC.WEBGL2);
-  renderer.clearColor = "#000000FF";
-  renderer.addShaderLoaderUrls("../../src/shaders");
+    // Initialize renderer
+    renderer = new RC.MeshRenderer(canvas, RC.WEBGL2);
+    renderer.clearColor = "#000000FF";
+    renderer.addShaderLoaderUrls("../../src/shaders");
 
-  // Camera initialization
-  camera = new RC.PerspectiveCamera(1.483, 16/9, 10, 10000);
-  camera.position = new RC.Vector3(0, 0, 80);
+    // Camera initialization
+    camera = new RC.PerspectiveCamera(1.483, 16/9, 10, 10000);
+    camera.position = new RC.Vector3(0, 0, 80);
 
-  scene = new RC.Scene();
+    scene = new RC.Scene();
 
-  // Initialize lights and add them to the scene
-  let aLight = new RC.AmbientLight(new RC.Color("#FFFFFF"), 1.0);
-  scene.add(aLight);
+    // Initialize lights and add them to the scene
+    let aLight = new RC.AmbientLight(new RC.Color("#FFFFFF"), 1.0);
+    scene.add(aLight);
 
-  // Initialize object loader, texture(image) loader and load the objects
-  manager = new RC.LoadingManager();
-  loaderObj = new RC.ObjLoader(manager);
-  loaderTexture = new RC.ImageLoader(manager);
+    // Initialize object loader, texture(image) loader and load the objects
+    manager = new RC.LoadingManager();
+    loaderObj = new RC.ObjLoader(manager);
+    loaderTexture = new RC.ImageLoader(manager);
 }
 
 function loadResources() {
-  let texture;
+let texture;
 
-  loaderTexture.load("../common/textures/crate.gif", function ( image ) {
-    texture = new RC.Texture(image, RC.Texture.ClampToEdgeWrapping, RC.Texture.ClampToEdgeWrapping,
-                                RC.Texture.LinearFilter, RC.Texture.LinearFilter,
-                                RC.Texture.RGBA, RC.Texture.RGBA, RC.Texture.UNSIGNED_BYTE, 256, 256);
-    loadObjects();
-  });
+loaderTexture.load("../common/textures/crate.gif", function ( image ) {
+        texture = new RC.Texture(
+            image, 
+            RC.Texture.WRAPPING.ClampToEdgeWrapping, 
+            RC.Texture.WRAPPING.ClampToEdgeWrapping,
+                                        
+            RC.Texture.FILTER.LinearFilter, 
+            RC.Texture.FILTER.LinearFilter,
+                                        
+            RC.Texture.FORMAT.RGBA, 
+            RC.Texture.FORMAT.RGBA, 
+            RC.Texture.TYPE.UNSIGNED_BYTE, 
+            256, 
+            256
+        );
+        loadObjects();
+});
 
 
 
-  function loadObjects() {
+function loadObjects() {
     loaderObj.load("../common/models/cube.obj", function ( obj ) {
-      objects = obj;
-      for (let i = 0; i < obj.length; i++) {
-          obj[i].position.z = 0;
+    objects = obj;
+    for (let i = 0; i < obj.length; i++) {
+        obj[i].position.z = 0;
 
-          // Create material and apply texture
-          let material = new RC.MeshPhongMaterial();
-          material.addMap(texture);
-          obj[i].material = material;
+        // Create material and apply texture
+        let material = new RC.MeshPhongMaterial();
+        material.addMap(texture);
+        obj[i].material = material;
 
-          scene.add(obj[i]);
+        scene.add(obj[i]);
         }
 
-      // Start rendering
-      animate();
+    // Start rendering
+    animate();
     });
-  }
+}
 }
 
 let prevTime = -1, currTime, dt;

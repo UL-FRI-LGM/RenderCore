@@ -119,13 +119,15 @@ class App {
 		const imageHeight = 512;
 		var numberOfJumps = Math.ceil(Math.log2(Math.max(imageHeight, imageWidth)));
 
-		const textureSettings = {wrapS: Texture.ClampToEdgeWrapping,
-			wrapT: Texture.MirroredRepeatWrapping,
-			minFilter: Texture.NearestFilter,
-			magFilter: Texture.NearestFilter,
-			internalFormat: Texture.RGBA32F,
-			format: Texture.RGBA,
-			type: Texture.FLOAT};
+		const textureSettings = {
+			wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+			wrapT: Texture.WRAPPING.MirroredRepeatWrapping,
+			minFilter: Texture.FILTER.NearestFilter,
+			magFilter: Texture.FILTER.NearestFilter,
+			internalFormat: Texture.FORMAT.RGBA32F,
+			format: Texture.FORMAT.RGBA,
+			type: Texture.TYPE.FLOAT
+		};
 		
         var renderPass = new RC.RenderPass(
             // Rendering pass type

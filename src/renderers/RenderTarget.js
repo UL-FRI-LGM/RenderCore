@@ -54,26 +54,26 @@ export class RenderTarget {
 		if(isCube){
 			this._depthTexture = new CubeTexture({
 				textures: undefined,
-				wrapS: Texture.ClampToEdgeWrapping,
-				wrapT: Texture.ClampToEdgeWrapping,
-				wrapR: Texture.ClampToEdgeWrapping,
-				minFilter: Texture.NearestFilter,
-				magFilter: Texture.NearestFilter,
-				internalFormat: Texture.DEPTH_COMPONENT32F,
-				format: Texture.DEPTH_COMPONENT,
-				type: Texture.FLOAT,
+				wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+				wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+				wrapR: Texture.WRAPPING.ClampToEdgeWrapping,
+				minFilter: Texture.FILTER.NearestFilter,
+				magFilter: Texture.FILTER.NearestFilter,
+				internalFormat: Texture.FORMAT.DEPTH_COMPONENT32F,
+				format: Texture.FORMAT.DEPTH_COMPONENT,
+				type: Texture.TYPE.FLOAT,
 				size: Math.min(this._width, this._height)
 			});
 		}else{
 			this._depthTexture = new Texture(
 				undefined,
-				Texture.ClampToEdgeWrapping,
-				Texture.ClampToEdgeWrapping,
-				Texture.NearestFilter,
-				Texture.NearestFilter,
-				Texture.DEPTH_COMPONENT32F,
-				Texture.DEPTH_COMPONENT,
-				Texture.FLOAT,
+				Texture.WRAPPING.ClampToEdgeWrapping,
+				Texture.WRAPPING.ClampToEdgeWrapping,
+				Texture.FILTER.NearestFilter,
+				Texture.FILTER.NearestFilter,
+				Texture.FORMAT.DEPTH_COMPONENT32F,
+				Texture.FORMAT.DEPTH_COMPONENT,
+				Texture.TYPE.FLOAT,
 				this._width,
 				this._height
 			);

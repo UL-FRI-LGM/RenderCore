@@ -148,174 +148,184 @@ RenderPass.SCREEN = 4;
 
 
 RenderPass.DEFAULT_R8_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.LinearFilter,
-	magFilter: Texture.LinearFilter,
-	internalFormat: Texture.R8,
-	format: Texture.RED,
-	type: Texture.UNSIGNED_BYTE,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.LinearFilter,
+	magFilter: Texture.FILTER.LinearFilter,
+	internalFormat: Texture.FORMAT.R8,
+	format: Texture.FORMAT.RED,
+	type: Texture.TYPE.UNSIGNED_BYTE,
 	clearFunction: 3
 };
 RenderPass.DEFAULT_R32I_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.LinearFilter,
-	magFilter: Texture.LinearFilter,
-	internalFormat: Texture.R32I,
-	format: Texture.RED_INTEGER,
-	type: Texture.INT,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.LinearFilter,
+	magFilter: Texture.FILTER.LinearFilter,
+	internalFormat: Texture.FORMAT.R32I,
+	format: Texture.FORMAT.RED_INTEGER,
+	type: Texture.TYPE.INT,
 	clearFunction: 2
 };
 RenderPass.DEFAULT_R32UI_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.LinearFilter,
-	magFilter: Texture.LinearFilter,
-	internalFormat: Texture.R32UI,
-	format: Texture.RED_INTEGER,
-	type: Texture.UNSIGNED_INT,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.LinearFilter,
+	magFilter: Texture.FILTER.LinearFilter,
+	internalFormat: Texture.FORMAT.R32UI,
+	format: Texture.FORMAT.RED_INTEGER,
+	type: Texture.TYPE.UNSIGNED_INT,
 	clearFunction: 1
 };
 RenderPass.DEFAULT_RGB_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.LinearFilter,
-	magFilter: Texture.LinearFilter,
-	internalFormat: Texture.RGB,
-	format: Texture.RGB,
-	type: Texture.UNSIGNED_BYTE,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.LinearFilter,
+	magFilter: Texture.FILTER.LinearFilter,
+	internalFormat: Texture.FORMAT.RGB,
+	format: Texture.FORMAT.RGB,
+	type: Texture.TYPE.UNSIGNED_BYTE,
 	clearFunction: 3
 };
 
 RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.LinearFilter,
-	magFilter: Texture.LinearFilter,
-	internalFormat: Texture.RGBA,
-	format: Texture.RGBA,
-	type: Texture.UNSIGNED_BYTE,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.LinearFilter,
+	magFilter: Texture.FILTER.LinearFilter,
+	internalFormat: Texture.FORMAT.RGBA,
+	format: Texture.FORMAT.RGBA,
+	type: Texture.TYPE.UNSIGNED_BYTE,
 	clearFunction: 3
 };
 
 RenderPass.DEFAULT_RGBA_NEAREST_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.NearestFilter,
-	magFilter: Texture.NearestFilter,
-	internalFormat: Texture.RGBA,
-	format: Texture.RGBA,
-	type: Texture.UNSIGNED_BYTE,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.NearestFilter,
+	magFilter: Texture.FILTER.NearestFilter,
+	internalFormat: Texture.FORMAT.RGBA,
+	format: Texture.FORMAT.RGBA,
+	type: Texture.TYPE.UNSIGNED_BYTE,
 	clearFunction: 3
 };
 
 
 //16F (HALF FLOAT)
 RenderPass.DEFAULT_R16F_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.LinearFilter,
-	magFilter: Texture.LinearFilter,
-	internalFormat: Texture.R16F,
-	format: Texture.RED,
-	type: Texture.HALF_FLOAT,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.LinearFilter,
+	magFilter: Texture.FILTER.LinearFilter,
+	internalFormat: Texture.FORMAT.R16F,
+	format: Texture.FORMAT.RED,
+	type: Texture.TYPE.HALF_FLOAT,
+	clearFunction: 3
+};
+RenderPass.NEAREST_R16F_TEXTURE_CONFIG = {
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.NearestFilter,
+	magFilter: Texture.FILTER.NearestFilter,
+	internalFormat: Texture.FORMAT.R16F,
+	format: Texture.FORMAT.RED,
+	type: Texture.TYPE.HALF_FLOAT,
 	clearFunction: 3
 };
 RenderPass.DEFAULT_R16F_TEXTURE_CUBE_MAP_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	wrapR: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.LinearFilter,
-	magFilter: Texture.LinearFilter,
-	internalFormat: Texture.R16F,
-	format: Texture.RED,
-	type: Texture.HALF_FLOAT,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapR: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.LinearFilter,
+	magFilter: Texture.FILTER.LinearFilter,
+	internalFormat: Texture.FORMAT.R16F,
+	format: Texture.FORMAT.RED,
+	type: Texture.TYPE.HALF_FLOAT,
 	clearFunction: 3
 };
 RenderPass.NEAREST_R16F_TEXTURE_CUBE_MAP_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	wrapR: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.NearestFilter,
-	magFilter: Texture.NearestFilter,
-	internalFormat: Texture.R16F,
-	format: Texture.RED,
-	type: Texture.HALF_FLOAT,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapR: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.NearestFilter,
+	magFilter: Texture.FILTER.NearestFilter,
+	internalFormat: Texture.FORMAT.R16F,
+	format: Texture.FORMAT.RED,
+	type: Texture.TYPE.HALF_FLOAT,
 	clearFunction: 3
 };
 RenderPass.DEFAULT_RGB16F_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.LinearFilter,
-	magFilter: Texture.LinearFilter,
-	internalFormat: Texture.RGB16F,
-	format: Texture.RGBA,
-	type: Texture.HALF_FLOAT,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.LinearFilter,
+	magFilter: Texture.FILTER.LinearFilter,
+	internalFormat: Texture.FORMAT.RGB16F,
+	format: Texture.FORMAT.RGBA,
+	type: Texture.TYPE.HALF_FLOAT,
 	clearFunction: 3
 };
 RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.LinearFilter,
-	magFilter: Texture.LinearFilter,
-	internalFormat: Texture.RGBA16F,
-	format: Texture.RGBA,
-	type: Texture.HALF_FLOAT,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.LinearFilter,
+	magFilter: Texture.FILTER.LinearFilter,
+	internalFormat: Texture.FORMAT.RGBA16F,
+	format: Texture.FORMAT.RGBA,
+	type: Texture.TYPE.HALF_FLOAT,
 	clearFunction: 3
 };
 RenderPass.NEAREST_RGBA16F_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.NearestFilter,
-	magFilter: Texture.NearestFilter,
-	internalFormat: Texture.RGBA16F,
-	format: Texture.RGBA,
-	type: Texture.HALF_FLOAT,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.NearestFilter,
+	magFilter: Texture.FILTER.NearestFilter,
+	internalFormat: Texture.FORMAT.RGBA16F,
+	format: Texture.FORMAT.RGBA,
+	type: Texture.TYPE.HALF_FLOAT,
 	clearFunction: 3
 };
 
 RenderPass.FLOAT_RGB_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.LinearFilter,
-	magFilter: Texture.LinearFilter,
-	internalFormat: Texture.RGBA16F,
-	format: Texture.RGBA,
-	type: Texture.HALF_FLOAT,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.LinearFilter,
+	magFilter: Texture.FILTER.LinearFilter,
+	internalFormat: Texture.FORMAT.RGBA16F,
+	format: Texture.FORMAT.RGBA,
+	type: Texture.TYPE.HALF_FLOAT,
 	clearFunction: 3
 };
 
 RenderPass.FULL_FLOAT_RGB_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.LinearFilter,
-	magFilter: Texture.LinearFilter,
-	internalFormat: Texture.RGBA16F,
-	format: Texture.RGBA,
-	type: Texture.FLOAT,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.LinearFilter,
+	magFilter: Texture.FILTER.LinearFilter,
+	internalFormat: Texture.FORMAT.RGBA16F,
+	format: Texture.FORMAT.RGBA,
+	type: Texture.TYPE.FLOAT,
 	clearFunction: 3
 };
 
 RenderPass.FULL_FLOAT_RGB_NEAREST_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.NearestFilter,
-	magFilter: Texture.NearestFilter,
-	internalFormat: Texture.RGBA16F,
-	format: Texture.RGBA,
-	type: Texture.FLOAT,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.NearestFilter,
+	magFilter: Texture.FILTER.NearestFilter,
+	internalFormat: Texture.FORMAT.RGBA16F,
+	format: Texture.FORMAT.RGBA,
+	type: Texture.TYPE.FLOAT,
 	clearFunction: 3
 };
 
 //32F
 RenderPass.FULL_FLOAT_R32F_TEXTURE_CONFIG = {
-	wrapS: Texture.ClampToEdgeWrapping,
-	wrapT: Texture.ClampToEdgeWrapping,
-	minFilter: Texture.LinearFilter,
-	magFilter: Texture.LinearFilter,
-	internalFormat: Texture.R32F,
-	format: Texture.RED,
-	type: Texture.FLOAT,
+	wrapS: Texture.WRAPPING.ClampToEdgeWrapping,
+	wrapT: Texture.WRAPPING.ClampToEdgeWrapping,
+	minFilter: Texture.FILTER.LinearFilter,
+	magFilter: Texture.FILTER.LinearFilter,
+	internalFormat: Texture.FORMAT.R32F,
+	format: Texture.FORMAT.RED,
+	type: Texture.TYPE.FLOAT,
 	clearFunction: 3
 };

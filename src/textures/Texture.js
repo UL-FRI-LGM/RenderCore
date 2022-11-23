@@ -5,6 +5,52 @@ import {_Math} from '../math/Math.js';
 
 export class Texture {
 	static DEFAULT_IMAGE = null;
+	static FILTER = {
+		NearestFilter : 0,
+		NearestMipMapNearestFilter : 1,
+		NearestMipMapLinearFilter : 2,
+		LinearFilter : 3,
+		LinearMipMapNearestFilter : 4,
+		LinearMipMapLinearFilter : 5,
+	};
+	/** NOTE
+	 * Only following formats can be added as color attachments
+	 * gl.R16F, gl.RG16F, gl.RGBA16F, gl.R32F, gl.RG32F, gl.RGBA32F, gl.R11F_G11F_B10F.
+	 */
+	static FORMAT = {
+		ALPHA : 6,
+		RGB : 7,
+		RGBA : 8,
+		LUMINANCE : 9,
+		LUMINANCE_ALPHA : 10,
+		DEPTH_COMPONENT : 11,
+		DEPTH_COMPONENT24 : 12,
+		DEPTH_COMPONENT32F : 12.5,
+		RGB16F : 13,
+		RGB32F : 14,
+		RGBA16F : 15,
+		RGBA32F : 16,
+		R16F : 17,
+		R8: 17.1,
+		RED: 17.2,
+		RED_INTEGER: 17.25,
+		R32F : 17.3,
+		R32I : 17.4,
+		R32UI : 17.5,
+	};
+	static WRAPPING = {
+		RepeatWrapping : 18,
+		ClampToEdgeWrapping : 19,
+		MirroredRepeatWrapping : 20,
+	};
+	static TYPE = {
+		UNSIGNED_BYTE : 21,			// Color (default)
+		UNSIGNED_SHORT : 22,		// Depth (default)
+		UNSIGNED_INT : 23,
+		HALF_FLOAT : 24,
+		FLOAT : 25,
+		INT : 26
+	};
 
 
 	constructor(image, wrapS, wrapT, minFilter, magFilter, internalFormat, format, type, width = 1024, height = 1024) {
@@ -14,19 +60,19 @@ export class Texture {
 		this._image = (image) ? image : Texture.DEFAULT_IMAGE;
 
 		// Filters
-		this._magFilter = magFilter !== undefined ? magFilter : 	this.LinearFilter;
-		this._minFilter = minFilter !== undefined ? minFilter : 	this.LinearFilter;
+		this._magFilter = (magFilter !== undefined) ? magFilter : Texture.FILTER.LinearFilter;
+		this._minFilter = (minFilter !== undefined) ? minFilter : Texture.FILTER.LinearFilter;
 
 		// Wrapping
-		this._wrapS = wrapS !== undefined ? wrapS : 	this.ClampToEdgeWrapping;
-		this._wrapT = wrapT !== undefined ? wrapT : 	this.ClampToEdgeWrapping;
+		this._wrapS = (wrapS !== undefined) ? wrapS : Texture.WRAPPING.ClampToEdgeWrapping;
+		this._wrapT = (wrapT !== undefined) ? wrapT : Texture.WRAPPING.ClampToEdgeWrapping;
 
 		// Format
-		this._internalFormat = (internalFormat) ? internalFormat : 	this.RGBA;
-		this._format = (format) ? format : 	this.RGBA;
+		this._internalFormat = (internalFormat !== undefined) ? internalFormat : Texture.FORMAT.RGBA;
+		this._format = (format !== undefined) ? format : Texture.FORMAT.RGBA;
 
 		// Type
-		this._type = (type) ? type : 	this.UNSIGNED_BYTE;
+		this._type = (type !== undefined) ? type : Texture.TYPE.UNSIGNED_BYTE;
 
 		// Clear function
 		this.clearFunction = 0;
@@ -171,57 +217,3 @@ export class Texture {
 	}
 	// endregion
 };
-
-// region CLASS RELATED CONSTANTS
-Object.assign(Texture, {
-// STATIC VARIABLES
-	DefaultImage : null,
-
-// FILTERS
-	NearestFilter : 0,
-	NearestMipMapNearestFilter : 1,
-	NearestMipMapLinearFilter : 2,
-	LinearFilter : 3,
-	LinearMipMapNearestFilter : 4,
-	LinearMipMapLinearFilter : 5,
-
-// FORMAT
-	ALPHA : 6,
-	RGB : 7,
-	RGBA : 8,
-	LUMINANCE : 9,
-	LUMINANCE_ALPHA : 10,
-	DEPTH_COMPONENT : 11,
-	DEPTH_COMPONENT24 : 12,
-	DEPTH_COMPONENT32F : 12.5,
-	RGB16F : 13,
-	RGB32F : 14,
-	RGBA16F : 15,
-	RGBA32F : 16,
-	R16F : 17,
-	R8: 17.1,
-	RED: 17.2,
-	RED_INTEGER: 17.25,
-	R32F : 17.3,
-	R32I : 17.4,
-	R32UI : 17.5,
-
-// WRAPPING
-	RepeatWrapping : 18,
-	ClampToEdgeWrapping : 19,
-	MirroredRepeatWrapping : 20,
-
-// TYPE
-	UNSIGNED_BYTE : 21,			// Color (default)
-	UNSIGNED_SHORT : 22,		// Depth (default)
-	UNSIGNED_INT : 23,
-	HALF_FLOAT : 24,
-	FLOAT : 25,
-	INT : 26
-
-/** NOTE
- * Only following formats can be added as color attachments
- * gl.R16F, gl.RG16F, gl.RGBA16F, gl.R32F, gl.RG32F, gl.RGBA32F, gl.R11F_G11F_B10F.
- */
-// endregion
-});
