@@ -4,7 +4,6 @@ import { HIGHPASS_MODE_BRIGHTNESS } from "../../src/RenderCore.js";
 import MeshCore from "./MeshCore.js";
 
 
-let asss = false;
 /** CONTROL PARAMETERS */
 const CoreControl = {
     //plain
@@ -44,6 +43,7 @@ const CoreControl = {
     sceneManager: undefined,
     cameraManager: undefined,
     rendererManager: undefined,
+    renderQueueManager: undefined,
 
     //input object
     input: {
@@ -65,6 +65,7 @@ const CoreControl = {
         this.renderer = this.initializeRenderer(this.canvas);
         this.renderQueue = this.initializeRenderQueue(this.renderer);
         this.rendererManager = this.initializeRendererManager(this.renderer);
+        this.renderQueueManager = this.initializeRenderQueueManager(this.renderQueue);
 
         this.scene = this.createDefaultScene();
         this.sceneManager = this.createSceneManager(this.scene);
@@ -107,6 +108,13 @@ const CoreControl = {
         rendererManager.activeRenderer = renderer;
 
         return rendererManager;
+    },
+    initializeRenderQueueManager: function(renderQueue){
+        const renderQueueManager = new RC.RenderQueueManager();
+        renderQueueManager.addRenderQueue(renderQueue);
+        renderQueueManager.activeRenderQueue = renderQueue;
+
+        return renderQueueManager;
     },
 
     createDefaultScene: function(){
@@ -195,12 +203,7 @@ const CoreControl = {
 /** INIT MAIN */
 window.onload = function(){
     window.addEventListener("resize", resizeFunction, false);
-    window.addEventListener("mouseup", function(event){
-        //CoreControl.rendererManager.activeRenderer.pick(RC.MouseInput.instance.cursor.position.x, RC.MouseInput.instance.cursor.position.y);
-        CoreControl.rendererManager.activeRenderer.pick(event.clientX, event.clientY, function(pickedColor){
-            console.log(pickedColor);
-        });
-    }, false);
+
 
     //INPUT
     CoreControl.keyboard.keyboardInput = RC.KeyboardInput.instance;
@@ -222,6 +225,7 @@ window.onload = function(){
 
 
     //RENDER
+    resizeFunction();
     window.requestAnimationFrame(function(){CoreControl.render()});
 };
 
@@ -235,6 +239,12 @@ const resizeFunction = function () {
     // Update camera aspect ratio and renderer viewport
     CoreControl.cameraManager.activeCamera.aspect = activeCanvas.width / activeCanvas.height;
     CoreControl.rendererManager.activeRenderer.updateViewport(activeCanvas.width, activeCanvas.height);
+
+
+    const RQs = CoreControl.renderQueueManager.activeRenderQueue._renderQueue;
+    for(let RQ = 0; RQ < RQs.length; RQ++){
+        RQs[RQ].viewport = { width: activeCanvas.width, height: activeCanvas.height };
+    }
 };
 
 
@@ -260,7 +270,7 @@ const MainRenderPass = new RC.RenderPass(
     RC.RenderPass.TEXTURE,
 
     // Viewport
-    { width: window.innerWidth, height: window.innerHeight },
+    { width: undefined, height: undefined },
 
     // Bind depth texture to this ID
     "dt",
@@ -297,7 +307,7 @@ const PostprocessingPass_HighPass = new RC.RenderPass(
     RC.RenderPass.TEXTURE,
 
     // Viewport
-    { width: window.innerWidth, height: window.innerHeight },
+    { width: undefined, height: undefined },
 
     // Bind depth texture to this ID
     "dt",
@@ -332,7 +342,7 @@ const PostprocessingPass_Gauss1 = new RC.RenderPass(
     RC.RenderPass.TEXTURE,
 
     // Viewport
-    { width: window.innerWidth, height: window.innerHeight },
+    { width: undefined, height: undefined },
 
     // Bind depth texture to this ID
     "dt",
@@ -367,7 +377,7 @@ const PostprocessingPass_Gauss2 = new RC.RenderPass(
     RC.RenderPass.TEXTURE,
 
     // Viewport
-    { width: window.innerWidth, height: window.innerHeight },
+    { width: undefined, height: undefined },
 
     // Bind depth texture to this ID
     "dt",
@@ -402,5 +412,5 @@ const PostprocessingPass_Bloom = new RC.RenderPass(
     RC.RenderPass.SCREEN,
 
     // Viewport
-    { width: window.innerWidth, height: window.innerHeight }
+    { width: undefined, height: undefined }
 );

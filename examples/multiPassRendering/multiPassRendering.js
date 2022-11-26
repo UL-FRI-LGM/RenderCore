@@ -122,8 +122,8 @@ class App {
 
 	resize() {
 		// Make the canvas the same size
-		this.canvas.width  = window.innerWidth;
-		this.canvas.height = window.innerHeight;
+		this.canvas.width  = window.innerWidth * window.devicePixelRatio;
+		this.canvas.height = window.innerHeight * window.devicePixelRatio;
 
 		this.secondPass.viewport = {width: this.canvas.width, height: this.canvas.height};
 

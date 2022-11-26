@@ -2,8 +2,6 @@
 import * as RC from "../../src/RenderCore.js";
 
 
-const predef_width = document.body.clientWidth;
-const predef_height = document.body.clientHeight;
 const nearPlane = 0.1;
 const farPlane = 1000000;
 
@@ -294,6 +292,7 @@ window.onload = function(){
 
     
     //RENDER
+    resizeFunction();
     window.requestAnimationFrame(function(){CoreControl.render()});
 };
 
@@ -335,7 +334,7 @@ const RenderPass_MainShader = new RC.RenderPass(
     RC.RenderPass.SCREEN,
 
     // Viewport
-    { width: predef_width, height: predef_height },
+    { width: undefined, height: undefined },
 
     // Bind depth texture to this ID
     "depthDefaultDefaultMaterials",

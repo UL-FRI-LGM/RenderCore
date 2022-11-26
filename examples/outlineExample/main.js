@@ -2,8 +2,6 @@
 import * as RC from "../../src/RenderCore.js";
 
 
-const predef_width = document.body.clientWidth;
-const predef_height = document.body.clientHeight;
 const nearPlane = 0.1;
 const farPlane = 1000000;
 
@@ -274,15 +272,7 @@ const CoreControl = {
 /** INIT MAIN */
 window.onload = function(){
     window.addEventListener("resize", resizeFunction, false);
-    // MT: Picking through MeshRenderer only works for Uint32 picking, requires a different render pass
-    //     with appropriate output format. It can be fixed back. But this demo does not assign pick IDs.
-    /*
-    window.addEventListener("mouseup", function(event){
-        CoreControl.rendererManager.activeRenderer.pick(event.clientX, event.clientY, function(pickedColor){
-            console.log(pickedColor);
-        });
-    }, false);
-    */
+
 
     //INPUT
     CoreControl.keyboard.keyboardInput = RC.KeyboardInput.instance;
@@ -295,6 +285,7 @@ window.onload = function(){
 
     
     //RENDER
+    resizeFunction();
     window.requestAnimationFrame(function(){CoreControl.render()});
 };
 
@@ -373,7 +364,7 @@ const RenderPass_MainShader = new RC.RenderPass(
     RC.RenderPass.TEXTURE,
 
     // Viewport
-    { width: predef_width, height: predef_height },
+    { width: undefined, height: undefined },
 
     // Bind depth texture to this ID
     "depthDefaultDefaultMaterials",
@@ -426,7 +417,7 @@ const RenderPass_MainMulti = new RC.RenderPass(
     RC.RenderPass.TEXTURE,
 
     // Viewport
-    { width: predef_width, height: predef_height },
+    { width: undefined, height: undefined },
 
     // Bind depth texture to this ID
     "depthDefaultMultiMaterials",
@@ -463,7 +454,7 @@ const RenderPass_Outline = new RC.RenderPass(
     RC.RenderPass.TEXTURE,
 
     // Viewport
-    { width: predef_width, height: predef_height },
+    { width: undefined, height: undefined },
 
     // Bind depth texture to this ID
     null,
@@ -499,7 +490,7 @@ const RenderPass_Blend = new RC.RenderPass(
     RC.RenderPass.SCREEN,
 
     // Viewport
-    { width: predef_width, height: predef_height },
+    { width: undefined, height: undefined },
 
     // Bind depth texture to this ID
     null,

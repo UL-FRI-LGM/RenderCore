@@ -53,6 +53,11 @@ export class Texture {
 	};
 
 
+	_update = {
+		size: true,
+	};
+
+
 	constructor(image, wrapS, wrapT, minFilter, magFilter, internalFormat, format, type, width = 1024, height = 1024) {
 		this._uuid = _Math.generateUUID();
 		this.type = "Texture";
@@ -89,6 +94,9 @@ export class Texture {
 		this._flipy = true;
 
 		this._dirty = true;
+		this.update = {
+			size: true,
+		};
 		this.idleTime = 0;
 	}
 
@@ -107,6 +115,8 @@ export class Texture {
 	// region GETTERS
 	get dirty() { return this._dirty; }
 	set dirty(dirty) { this._dirty = dirty; }
+	get update() { return this._update; }
+	set update(update) { this._update = update; }
 	get image() { return this._image; }
 
 	get wrapS() {
@@ -192,6 +202,7 @@ export class Texture {
 		if (value !== this._width) {
 			this._width = value;
 			this._dirty = true;
+			this.update.size = true;
 		}
 	}
 
@@ -199,6 +210,7 @@ export class Texture {
 		if (value !== this._height) {
 			this._height = value;
 			this._dirty = true;
+			this.update.size = true;
 		}
 	}
 

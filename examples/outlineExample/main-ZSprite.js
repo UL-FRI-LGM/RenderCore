@@ -1,8 +1,7 @@
 /** IMPORTS */
 import * as RC from "../../src/RenderCore.js";
 
-const predef_width = document.body.clientWidth;
-const predef_height = document.body.clientHeight;
+
 const nearPlane = 0.1;
 const farPlane = 1000000;
 
@@ -69,6 +68,7 @@ const CoreControl = {
         this.mgrLoader = new RC.LoadingManager(function() {
             console.log("LOADER MGR DONE");
             pthis.initializeCore();
+            resizeFunction();
             window.requestAnimationFrame(function() { CoreControl.render() });
         });
 
@@ -559,7 +559,7 @@ const RenderPass_MainShader = new RC.RenderPass(
     RC.RenderPass.TEXTURE,
 
     // Viewport
-    { width: predef_width, height: predef_height },
+    { width: undefined, height: undefined },
 
     // Bind depth texture to this ID
     "depthDefaultDefaultMaterials",
@@ -621,7 +621,7 @@ const RenderPass_MainMulti = new RC.RenderPass(
     RC.RenderPass.TEXTURE,
 
     // Viewport
-    { width: predef_width, height: predef_height },
+    { width: undefined, height: undefined },
 
     // Bind depth texture to this ID
     "depthDefaultMultiMaterials",
@@ -662,7 +662,7 @@ const RenderPass_Outline = new RC.RenderPass(
     RC.RenderPass.TEXTURE,
 
     // Viewport
-    { width: predef_width, height: predef_height },
+    { width: undefined, height: undefined },
 
     // Bind depth texture to this ID
     null,
@@ -683,7 +683,7 @@ const RP_GaussH = new RC.RenderPass(
     },
     (textureMap, additionalData) => {},
     RC.RenderPass.TEXTURE,
-    { width: predef_width, height: predef_height },
+    { width: undefined, height: undefined },
     null,
     [
         {id: "gauss_h", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
@@ -701,7 +701,7 @@ const RP_GaussV = new RC.RenderPass(
     },
     (textureMap, additionalData) => {},
     RC.RenderPass.TEXTURE,
-    { width: predef_width, height: predef_height },
+    { width: undefined, height: undefined },
     null,
     [
         {id: "gauss_hv", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
@@ -722,7 +722,7 @@ const RP_Blend = new RC.RenderPass(
     (textureMap, additionalData) => {},
     // Target
     RC.RenderPass.SCREEN,
-    { width: predef_width, height: predef_height },
+    { width: undefined, height: undefined },
     null,
     [
         {id: "color_final", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
@@ -743,5 +743,5 @@ const RP_ToneMapToScreen = new RC.RenderPass(
     },
     function (textureMap, additionalData) {},
     RC.RenderPass.SCREEN,
-    { width: predef_width, height: predef_height }
+    { width: undefined, height: undefined }
 );

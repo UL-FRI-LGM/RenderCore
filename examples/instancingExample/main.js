@@ -145,6 +145,7 @@ function wave(pos, time, amp = 3.0, omega = 1.0, c = 1.0){
 
 function resizeFunction() {
     canvas.updateSize();
+    camera.aspect = canvas.width/canvas.height;
     renderer.updateViewport(canvas.width, canvas.height);
 };
 

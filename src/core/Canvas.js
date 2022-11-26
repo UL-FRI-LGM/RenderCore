@@ -6,6 +6,11 @@ import {_Math} from '../math/Math.js';
 
 
 export class Canvas {
+
+
+	_pixelRatio = 1;
+
+
 	//CONST
 	constructor(parentDOM) {
 		this._canvasDOM = this.generateCanvasDOM();
@@ -13,10 +18,16 @@ export class Canvas {
 
 		this._uuid = _Math.generateUUID();
 
+		this._pixelRatio = window.devicePixelRatio || 1;
+
+
 		this.updateSize();
 	}
 
+
 	//SET GET
+	get pixelRatio() { return this._pixelRatio; }
+	set pixelRatio(pixelRatio) { this._pixelRatio = pixelRatio; }
 	set canvasDOM(canvasDOM){
 		this._canvasDOM = canvasDOM;
 	}
@@ -51,14 +62,16 @@ export class Canvas {
 		return this._canvasDOM.height;
 	}
 
+
 	//FUNC
 	generateCanvasDOM(id = "rc-canvas"){
 		const canvasDOM = document.createElement("canvas");
 		canvasDOM.id = id;
 
 		//make it visually fill the positioned parent
-		canvasDOM.style.width ="100%";
-		canvasDOM.style.height="100%";
+		//set the display size of the canvas
+		canvasDOM.style.width = "100%";
+		canvasDOM.style.height = "100%";
 		canvasDOM.style.padding = '0';
 		canvasDOM.style.margin = '0';
 		//canvasDOM.style.border = "1px solid";
@@ -67,7 +80,8 @@ export class Canvas {
 	}
 	updateSize(){
 		//set the internal size to match
-		this._canvasDOM.width = this._canvasDOM.clientWidth;
-		this._canvasDOM.height = this._canvasDOM.clientHeight;
+		//set the size of the drawing buffer
+		this._canvasDOM.width = this._canvasDOM.clientWidth * this.pixelRatio;
+		this._canvasDOM.height = this._canvasDOM.clientHeight * this.pixelRatio;
 	}
 }

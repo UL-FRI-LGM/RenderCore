@@ -80,5 +80,6 @@ function renderFunction() {
 
 window.onload = function() {
     window.addEventListener("resize", resizeFunction, false);
+    resizeFunction();
     window.requestAnimationFrame(renderFunction);
 };

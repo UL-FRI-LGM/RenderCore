@@ -114,19 +114,29 @@ function setPickMode(){
 
 function resizeFunction() {
     canvas.updateSize();
+    camera.aspect = canvas.width/canvas.height;
     renderer.updateViewport(canvas.width, canvas.height);
+    const RQs = renderQueue._renderQueue;
+    for(let RQ = 0; RQ < RQs.length; RQ++){
+        RQs[RQ].viewport = { width: canvas.width, height: canvas.height };
+    }
 };
 function mousedownFunction(event) {
     console.log(event);
 
     if (event.which === 1) {
+        const pixelRatio = window.devicePixelRatio || 1;
+        const x = event.clientX * pixelRatio;
+        const y = event.clientY * pixelRatio;
+
+
         const pickMode = params["Pick mode"];
         if(pickMode === "RGB"){
-            const pickedColor = renderQueue.pickRGB("color_picker", event.clientX, event.clientY);
+            const pickedColor = renderQueue.pickRGB("color_picker", x, y);
             console.log(pickedColor);
             text2D.text = "R:" + ("00" + pickedColor[0]).slice(-3) + " G:" + ("00" + pickedColor[1]).slice(-3) + " B:" + ("00" + pickedColor[2]).slice(-3);
         }else if(pickMode === "UINT"){
-            const pickedColor = renderQueue.pickUINT("color_picker", event.clientX, event.clientY);
+            const pickedColor = renderQueue.pickUINT("color_picker", x, y);
             console.log(pickedColor);
             text2D.text = "UINT:" + pickedColor[0];
         }
@@ -141,5 +151,6 @@ function renderFunction() {
 window.onload = function() {
     window.addEventListener("resize", resizeFunction, false);
     window.addEventListener("mousedown", mousedownFunction, false);
+    resizeFunction();
     window.requestAnimationFrame(renderFunction);
 };

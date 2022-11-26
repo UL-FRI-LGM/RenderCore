@@ -199,8 +199,8 @@ class App {
 
 	resize() {
 		// Make the canvas the same size
-		this.canvas.width  = window.innerWidth;
-		this.canvas.height = window.innerHeight;
+		this.canvas.width  = window.innerWidth * window.devicePixelRatio;
+		this.canvas.height = window.innerHeight * window.devicePixelRatio;
 
 		// Update camera aspect ratio and renderer viewport
 		this.camera.aspect = this.canvas.width / this.canvas.height;

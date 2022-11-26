@@ -40,7 +40,7 @@ export class GLTextureManager {
 	}
 
 	_updateTexture(texture){
-		if(!texture.image) console.error(texture);
+		// if(!texture.image) console.error(texture);
 		const glTexture = this._cached_textures.get(texture);
 
 		const internalFormat = this._formatToGL(texture._internalFormat);
@@ -62,7 +62,10 @@ export class GLTextureManager {
 		this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, wrapT);
 
 		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, texture.flipy);
-		// this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, texture.image);
+		if(texture.update.size){
+			this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null); //allocation
+			texture.update.size = false;
+		}
 		this._gl.texSubImage2D(this._gl.TEXTURE_2D, 0, 0, 0, width, height, format, type, texture.image);
 		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
 
@@ -173,7 +176,7 @@ export class GLTextureManager {
 		return glTexture;
 	}
 	_updateCubeTexture(texture){
-		if(!texture.image) console.error(texture);
+		// if(!texture.image) console.error(texture);
 		const glTexture = this._cached_textures.get(texture);
 
 		const internalFormat = this._formatToGL(texture._internalFormat);
@@ -199,6 +202,15 @@ export class GLTextureManager {
 		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_WRAP_R, wrapR);
 
 		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, texture.flipy);
+		if(texture.update.size){
+			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, null); //allocation
+			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, null);
+			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
+			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
+			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
+			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
+			texture.update.size = false;
+		}
 		// this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, texture.images.right);
 		// this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, texture.images.left);
 		// this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, internalFormat, size, size, 0, format, type, texture.images.top);
