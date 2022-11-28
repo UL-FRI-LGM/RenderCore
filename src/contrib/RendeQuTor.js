@@ -49,7 +49,8 @@ export class RendeQuTor
 
         this.make_RP_GaussHVandBlend();
 
-        // this.make_RP_ToScreen();
+        // Only one of the next two gets called from the driver.
+        this.make_RP_ToScreen();
         this.make_RP_ToneMapToScreen();
 
         this.RP_GBuffer.obj_list = [];
@@ -59,6 +60,7 @@ export class RendeQuTor
             this.RP_Outline_mat.requiredProgram(this.renderer),
             this.RP_GaussH_mat.requiredProgram(this.renderer),
             this.RP_Blend_mat.requiredProgram(this.renderer),
+            this.RP_ToScreen_mat.requiredProgram(this.renderer),
             this.RP_ToneMapToScreen_mat.requiredProgram(this.renderer)
           ]);
     }
@@ -186,6 +188,19 @@ export class RendeQuTor
         this.RP_ToneMapToScreen.input_texture = this.tex_final;
 
         this.queue.render_pass(this.RP_ToneMapToScreen, "Tone Map To Screen");
+
+        if (this.tex_final_push) {
+            this.push_std_texture(this.tex_final);
+            this.tex_final = null;
+            this.tex_final_push = null;
+        }
+    }
+
+    render_final_to_screen()
+    {
+        this.RP_ToScreen.input_texture = this.tex_final;
+
+        this.queue.render_pass(this.RP_ToScreen, "Copy Final To Screen");
 
         if (this.tex_final_push) {
             this.push_std_texture(this.tex_final);
