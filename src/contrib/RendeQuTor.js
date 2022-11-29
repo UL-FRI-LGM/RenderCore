@@ -24,7 +24,7 @@ export class RendeQuTor
           [ this.PRP_depth2r_mat.requiredProgram(this.renderer)
           ]);
 
-          this.SSAA_value = 1;
+        this.SSAA_value = 1;
 
         this.clear_zero_f32arr = new Float32Array([0,0,0,0]);
 
@@ -393,7 +393,9 @@ export class RendeQuTor
             // Outputs
             [ { id: "color_main", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG } ]
         );
-        this.RP_SSAA_Super.view_setup = function (vport) { this.viewport = { width: vport.width*pthis.SSAA_value, height: vport.height*pthis.SSAA_value }; };
+        this.RP_SSAA_Super.view_setup = function (vport) {
+             this.viewport = { width: vport.width*pthis.SSAA_value, height: vport.height*pthis.SSAA_value };
+            };
 
         this.queue.pushRenderPass(this.RP_SSAA_Super);
     }

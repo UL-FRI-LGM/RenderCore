@@ -7,10 +7,6 @@ import {_Math} from '../math/Math.js';
 
 export class Canvas {
 
-
-	_pixelRatio = 1;
-
-
 	//CONST
 	constructor(parentDOM) {
 		this._canvasDOM = this.generateCanvasDOM();
@@ -81,7 +77,7 @@ export class Canvas {
 	updateSize(){
 		//set the internal size to match
 		//set the size of the drawing buffer
-		this._canvasDOM.width = this._canvasDOM.clientWidth * this.pixelRatio;
-		this._canvasDOM.height = this._canvasDOM.clientHeight * this.pixelRatio;
+		this._canvasDOM.width = Math.floor(this._canvasDOM.clientWidth * this.pixelRatio);
+		this._canvasDOM.height = Math.floor(this._canvasDOM.clientHeight * this.pixelRatio);
 	}
 }
