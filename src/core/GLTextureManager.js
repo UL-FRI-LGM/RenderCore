@@ -2,10 +2,13 @@
  * Created by Primoz on 25. 07. 2016.
  */
 import {Texture} from '../textures/Texture.js'
-import { CubeTexture } from '../RenderCore.js';
 
 
 export class GLTextureManager {
+
+
+	_activeTexture;
+
 
 	/**
 	 * @param {WebGLRenderingContext} gl WebGL rendering context used for buffer allocation.
@@ -15,6 +18,17 @@ export class GLTextureManager {
 		this._cached_textures = new Map();
 
 		this._colorClearFramebuffer = this._gl.createFramebuffer();
+
+
+		this.activeTexture = 0;
+	}
+
+
+	get activeTexture() { return this._activeTexture; }
+	set activeTexture(activeTexture) { 
+		this._activeTexture = activeTexture; 
+		
+		this._gl.activeTexture(this._gl.TEXTURE0 + activeTexture);
 	}
 
 
@@ -30,8 +44,20 @@ export class GLTextureManager {
 		const height = texture._height;
 
 		const glTexture = this._gl.createTexture();
+		this._gl.activeTexture(this._gl.TEXTURE0 + this._gl.getParameter(this._gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS) - 1);
 		this._gl.bindTexture(this._gl.TEXTURE_2D, glTexture);
 		this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null); //allocation
+		// // Filters
+		// this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, magFilter);
+		// this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, minFilter);
+		// // Wrapping
+		// this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, wrapS);
+		// this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, wrapT);
+		// // Generate mipmaps
+		// if (texture._generateMipmaps) {
+		// 		this._gl.generateMipmap(this._gl.TEXTURE_2D);
+		// }
+		this._gl.bindTexture(this._gl.TEXTURE_2D, null);
 
 		this._cached_textures.set(texture, glTexture);
 
@@ -53,26 +79,28 @@ export class GLTextureManager {
 		const width = texture._width;
 		const height = texture._height;
 
+		this._gl.activeTexture(this._gl.TEXTURE0 + this._gl.getParameter(this._gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS) - 1);
 		this._gl.bindTexture(this._gl.TEXTURE_2D, glTexture);
+		if(texture.update.size){
+			this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null); //allocation
+			texture.update.size = false;
+		}
+		if(texture.image) {
+			this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, texture.flipy);
+			this._gl.texSubImage2D(this._gl.TEXTURE_2D, 0, 0, 0, width, height, format, type, texture.image);
+			this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
+		}
 		// Filters
 		this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, magFilter);
 		this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, minFilter);
 		// Wrapping
 		this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, wrapS);
 		this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, wrapT);
-
-		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, texture.flipy);
-		if(texture.update.size){
-			this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null); //allocation
-			texture.update.size = false;
-		}
-		this._gl.texSubImage2D(this._gl.TEXTURE_2D, 0, 0, 0, width, height, format, type, texture.image);
-		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
-
 		// Generate mipmaps
 		if (texture._generateMipmaps) {
 				this._gl.generateMipmap(this._gl.TEXTURE_2D);
 		}
+		this._gl.bindTexture(this._gl.TEXTURE_2D, null);
 
 
 		texture.dirty = false;
@@ -162,6 +190,7 @@ export class GLTextureManager {
 		const size = Math.min(width, height);
 
 		const glTexture = this._gl.createTexture();
+		this._gl.activeTexture(this._gl.TEXTURE0 + this._gl.getParameter(this._gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS) - 1);
 		this._gl.bindTexture(this._gl.TEXTURE_CUBE_MAP, glTexture);
 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, null); //allocation
 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, null);
@@ -169,6 +198,7 @@ export class GLTextureManager {
 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, null);
 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
+		this._gl.bindTexture(this._gl.TEXTURE_CUBE_MAP, null);
 
 		this._cached_textures.set(texture, glTexture);
 
@@ -191,17 +221,8 @@ export class GLTextureManager {
 		const height = texture._height;
 		const size = Math.min(width, height);
 
+		this._gl.activeTexture(this._gl.TEXTURE0 + this._gl.getParameter(this._gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS) - 1);
 		this._gl.bindTexture(this._gl.TEXTURE_CUBE_MAP, glTexture);
-		// Filters
-		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_MAG_FILTER, magFilter);
-		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_MIN_FILTER, minFilter);
-
-		// Wrapping
-		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_WRAP_S, wrapS);
-		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_WRAP_T, wrapT);
-		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_WRAP_R, wrapR);
-
-		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, texture.flipy);
 		if(texture.update.size){
 			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, size, size, 0, format, type, null); //allocation
 			this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, size, size, 0, format, type, null);
@@ -217,18 +238,26 @@ export class GLTextureManager {
 		// this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, internalFormat, size, size, 0, format, type, texture.images.bottom);
 		// this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, internalFormat, size, size, 0, format, type, texture.images.front);
 		// this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, texture.images.back);
-		this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, 0, 0, size, size, format, type, texture.images.right);
-		this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, 0, 0, size, size, format, type, texture.images.left);
-		this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, 0, 0, size, size, format, type, texture.images.top);
-		this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, 0, 0, size, size, format, type, texture.images.bottom);
-		this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, 0, 0, size, size, format, type, texture.images.front);
-		this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, 0, 0, size, size, format, type, texture.images.back);
+		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, texture.flipy);
+		if(texture.images.right) this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, 0, 0, size, size, format, type, texture.images.right);
+		if(texture.images.left) this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, 0, 0, size, size, format, type, texture.images.left);
+		if(texture.images.top) this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, 0, 0, size, size, format, type, texture.images.top);
+		if(texture.images.bottom) this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, 0, 0, size, size, format, type, texture.images.bottom);
+		if(texture.images.front) this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, 0, 0, size, size, format, type, texture.images.front);
+		if(texture.images.back) this._gl.texSubImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, 0, 0, size, size, format, type, texture.images.back);
 		this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
-
+		// Filters
+		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_MAG_FILTER, magFilter);
+		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_MIN_FILTER, minFilter);
+		// Wrapping
+		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_WRAP_S, wrapS);
+		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_WRAP_T, wrapT);
+		this._gl.texParameteri(this._gl.TEXTURE_CUBE_MAP, this._gl.TEXTURE_WRAP_R, wrapR);
 		// Generate mipmaps
 		if (texture._generateMipmaps) {
 			this._gl.generateMipmap(this._gl.TEXTURE_CUBE_MAP);
 		}
+		this._gl.bindTexture(this._gl.TEXTURE_CUBE_MAP, null);
 
 
 		texture.dirty = false;
