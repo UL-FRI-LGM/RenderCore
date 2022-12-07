@@ -28,7 +28,7 @@ export class Renderer {
 
 
 		// Program management
-		this._glProgramManager = new GLProgramManager(this._gl);
+		this._glProgramManager = new GLProgramManager(this._glManager);
 		this._shaderLoader = new ShaderLoader();
 
 		this._requiredPrograms = new Map();

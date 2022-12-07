@@ -396,9 +396,6 @@ export class MeshRenderer extends Renderer {
 		const attributes = Object.getOwnPropertyNames(attributeSetter);
 		const customAttributes = material._attributes;
 
-
-		let glBuffer;
-
 		// Set all of the properties
 		for (let i = 0; i < attributes.length; i++) {
 
@@ -409,8 +406,7 @@ export class MeshRenderer extends Renderer {
 						console.error("[" + object.type + "]: vertices not found in geometry!");
 						break;
 					}
-					glBuffer = this._glManager.getGLBuffer(vertices);
-					attributeSetter["VPos"].set(glBuffer, vertices.itemSize, object.instanced, vertices.divisor);
+					attributeSetter["VPos"].set(vertices, vertices.itemSize, object.instanced, vertices.divisor);
 					break;
 				case "VNorm":
 					const normals = object.geometry.normals;
@@ -418,8 +414,7 @@ export class MeshRenderer extends Renderer {
 						console.error("[" + object.type + "]: normals not found in geometry!");
 						break;
 					}
-					glBuffer = this._glManager.getGLBuffer(normals);
-					attributeSetter["VNorm"].set(glBuffer, 3, object.instanced, normals.divisor);
+					attributeSetter["VNorm"].set(normals, 3, object.instanced, normals.divisor);
 					break;
 				case "a_Tangent":
 					const tangents = object.geometry.tangents;
@@ -427,8 +422,7 @@ export class MeshRenderer extends Renderer {
 						console.error("[" + object.type + "]: tangents not found in geometry!");
 						break;
 					}
-					glBuffer = this._glManager.getGLBuffer(tangents);
-					attributeSetter["a_Tangent"].set(glBuffer, 3, object.instanced, tangents.divisor);
+					attributeSetter["a_Tangent"].set(tangents, 3, object.instanced, tangents.divisor);
 					break;
 				case "a_Bitangent":
 					const bitangents = object.geometry.bitangents;
@@ -436,8 +430,7 @@ export class MeshRenderer extends Renderer {
 						console.error("[" + object.type + "]: bitangents not found in geometry!");
 						break;
 					}
-					glBuffer = this._glManager.getGLBuffer(bitangents);
-					attributeSetter["a_Bitangent"].set(glBuffer, 3, object.instanced, bitangents.divisor);
+					attributeSetter["a_Bitangent"].set(bitangents, 3, object.instanced, bitangents.divisor);
 					break;
 				case "VColor":
 					const vertColor = object.geometry.vertColor;
@@ -445,8 +438,7 @@ export class MeshRenderer extends Renderer {
 						console.error("[" + object.type + "]: vertColor not found in geometry!");
 						break;
 					}
-					glBuffer = this._glManager.getGLBuffer(vertColor);
-					attributeSetter["VColor"].set(glBuffer, 4, object.instanced, vertColor.divisor);
+					attributeSetter["VColor"].set(vertColor, 4, object.instanced, vertColor.divisor);
 					break;
 				case "uv":
 					const uv = object.geometry.uv;
@@ -454,8 +446,7 @@ export class MeshRenderer extends Renderer {
 						console.error("[" + object.type + "]: uv not found in geometry!");
 						break;
 					}
-					glBuffer = this._glManager.getGLBuffer(uv);
-					attributeSetter["uv"].set(glBuffer, 2, object.instanced, uv.divisor);
+					attributeSetter["uv"].set(uv, 2, object.instanced, uv.divisor);
 					break;
 				case "MMat":
 					const MMat = object.geometry.MMat;
@@ -463,8 +454,7 @@ export class MeshRenderer extends Renderer {
 						console.error("[" + object.type + "]: MMat not found in geometry!");
 						break;
 					}
-					glBuffer = this._glManager.getGLBuffer(MMat);
-					attributeSetter["MMat"].set(glBuffer, 16, object.instanced, MMat.divisor);
+					attributeSetter["MMat"].set(MMat, 16, object.instanced, MMat.divisor);
 					break;
 				case "a_Translation":
 					const a_Translation = object.geometry.translation;
@@ -472,8 +462,7 @@ export class MeshRenderer extends Renderer {
 						console.error("[" + object.type + "]: Translation not found in geometry!");
 						break;
 					}
-					glBuffer = this._glManager.getGLBuffer(a_Translation);
-					attributeSetter["a_Translation"].set(glBuffer, 4, object.instanced, a_Translation.divisor);
+					attributeSetter["a_Translation"].set(a_Translation, 4, object.instanced, a_Translation.divisor);
 					break;
 				case "gl_InstanceID":
 				case "gl_VertexID":
@@ -489,8 +478,7 @@ export class MeshRenderer extends Renderer {
 						// If attribute is defined in the custom attribute object, fetch buffer and bind it to program
 						if (attr !== undefined) {
 							found = true;
-							glBuffer = this._glManager.getGLBuffer(attr);
-							attributeSetter[attributes[i]].set(glBuffer, attr.itemSize, object.instanced, attr.divisor);
+							attributeSetter[attributes[i]].set(attr, attr.itemSize, object.instanced, attr.divisor);
 						}
 					}
 

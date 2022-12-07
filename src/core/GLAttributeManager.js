@@ -43,6 +43,7 @@ export class GLAttributeManager {
 		const glBuffer = this._gl.createBuffer();
 		this._gl.bindBuffer(bufferType, glBuffer);
 		this._gl.bufferData(bufferType, size, usage); //allocation
+		this._gl.bindBuffer(bufferType, null);
 	
 		this._cached_buffers.set(attribute, glBuffer);
 
@@ -70,7 +71,9 @@ export class GLAttributeManager {
 			}
 			//this._gl.bufferSubData(bufferType, 0, attribute.array); // Write the data to buffer
 			this._gl.bufferSubData(bufferType, 0, attribute.array, 0, 0);
+			this._gl.bindBuffer(bufferType, null);
 
+			
 			attribute._update = false;
 		}
 	}
@@ -107,6 +110,12 @@ export class GLAttributeManager {
 		buffer.dirty = true; //so it will be updated when created again
 		this._cached_buffers.delete(buffer);
 		this._gl.deleteBuffer(glBuffer);
+
+		for (let i = 0; i < buffer.locations.length; i++) {
+			const location = buffer.locations[i];
+			this._gl.disableVertexAttribArray(location);
+		}
+		buffer.locations = new Array(); // clear
 	}
 
 	/**

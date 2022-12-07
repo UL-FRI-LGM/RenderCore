@@ -39,6 +39,9 @@ export class BufferAttribute {
 
 		this.target = (args.target !== undefined) ? args.target : BufferAttribute.TARGET.ARRAY_BUFFER;
 		this.idleTime = 0;
+
+
+		this._locations = new Array();
 	}
 
 	/**
@@ -111,6 +114,8 @@ export class BufferAttribute {
 	 * @returns True if modified.
 	 */
 	get dirty() { return this._dirty; }
+	get update() { return this._update; }
+	set update(update) { this._update = update; }
 
 	get divisor() { return this._divisor; }
 	set divisor(divisor) { this._divisor = divisor; }
@@ -119,6 +124,8 @@ export class BufferAttribute {
 
 	get target() { return this._target; }
 	set target(target) { this._target = target; }
+	get locations() { return this._locations; }
+	set locations(locations) { this._locations = locations; }
 
 
 	update(){

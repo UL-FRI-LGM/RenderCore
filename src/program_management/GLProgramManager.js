@@ -8,8 +8,9 @@ import {GLProgram} from './GLProgram.js';
 
 export class GLProgramManager {
 
-	constructor (gl) {
-		this._gl = gl;
+	constructor (glManager) {
+		this._glManager = glManager;
+		this._gl = glManager.context;
 		this._shaderBuilder = new ShaderBuilder();
 		this._compiledPrograms = {};
 	}
@@ -147,8 +148,11 @@ export class GLProgramManager {
 
 			// Create attribute setter function
 			attributeSetter[info.name] = {};
-			attributeSetter[info.name]['set'] = function (buffer, item_size, instanced = false, divisor = 0,
-                                                          utype = 0, unormalized = false) {
+			attributeSetter[info.name]['set'] = function (buffer, item_size, instanced = false, divisor = 0, utype = 0, unormalized = false) {
+
+				const glBuffer = self._glManager.getGLBuffer(buffer);
+				
+
 				// Caller can use utype and unormalized to pass the actual array type and
 				// int/uint to float normalization flag.
 				// Alternatively, one could check buffer.array.constructor.name but this is not
@@ -157,8 +161,10 @@ export class GLProgramManager {
 				if (utype == 0)
 					utype = type;
 				if(item_size <= 4){
+					buffer.locations.push(location);
+
 					self._gl.enableVertexAttribArray(location);
-					self._gl.bindBuffer(self._gl.ARRAY_BUFFER, buffer);
+					self._gl.bindBuffer(self._gl.ARRAY_BUFFER, glBuffer);
 					if (type == self._gl.FLOAT){
 						self._gl.vertexAttribPointer(location, item_size, utype, unormalized, 0, 0);
 					}else{
@@ -170,9 +176,11 @@ export class GLProgramManager {
 						self._gl.vertexAttribDivisor(location, 0);
 					}
 				}else{
-					self._gl.bindBuffer(self._gl.ARRAY_BUFFER, buffer);
+					self._gl.bindBuffer(self._gl.ARRAY_BUFFER, glBuffer);
 
 					for(let i = 0; i < item_size/4; i++){
+						buffer.locations.push(location + i);
+
 						self._gl.enableVertexAttribArray(location + i);
 						if (type == self._gl.FLOAT){
 							self._gl.vertexAttribPointer(location + i, 4, utype, unormalized, 4*16, i*16);
