@@ -1,4 +1,5 @@
 [
+  "custom_copyTexture",
   "custom_copyDepthToRed",
   "custom_GBufferMini",
   "custom_outline",
