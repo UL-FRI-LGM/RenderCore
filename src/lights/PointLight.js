@@ -42,8 +42,7 @@ export class PointLight extends Light {
 		this.cameraGroup.add(cameraZp);
 		this.cameraGroup.add(cameraZn);
 
-		
-		this.shadowmap = new CubeTexture();
+		this.shadowmap = new CubeTexture( { size: args.smap_size ? args.smap_size : 256 } );
 	}
 
 	set distance(dist) {

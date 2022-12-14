@@ -330,10 +330,13 @@ export class ShaderLoader {
 	 * for packaging, most likely called with ShaderLoader.sAllPrograms as argument.
 	 * One might want to delete urls property of each element.
 	*/
-	resolvePrograms (name_list) {
-		let prog_list = [];
+	resolvePrograms (name_list, delete_urls=true) {
+		let prog_list = {};
 		for (let name of name_list) {
-			prog_list.push(structuredClone(this._programs[name]));
+			let details = structuredClone(this._programs[name]);
+			if (delete_urls)
+				delete details.urls;
+			prog_list[name] = details;
 		}
 		return prog_list;
 	}

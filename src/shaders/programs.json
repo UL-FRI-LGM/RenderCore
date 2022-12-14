@@ -153,6 +153,14 @@
         }
     },
 
+    "custom_copyDepthToRed" : {
+        "description":  "Copy depth buffer values to R component (R32F) for picking depth extraction.",
+        "shaders": {
+            "vertex":   "custom/drawToTexture/copyDepthToRed.vert",
+            "fragment": "custom/drawToTexture/copyDepthToRed.frag"
+        }
+    },
+
     "custom_overlayTextures": {
         "description": "Default gl2 program used for testing.",
         "shaders": {
