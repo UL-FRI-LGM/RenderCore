@@ -266,16 +266,20 @@ export class RendeQuTor
 
             fbm.bindFramebuffer(this.pqueue._renderTarget);
 
-            let d = new Float32Array(9);
+            // Type RED is not supported on Firefox, specs require RGBA so we
+            // read that, 3 x 3 pixels x 4 channels.
+            let d = new Float32Array(9*4);
             gl.readBuffer(gl.COLOR_ATTACHMENT0);
-            gl.readPixels(this.pick_center - 1, this.pick_center - 1, 3, 3, gl.RED, gl.FLOAT, d);
+            gl.readPixels(this.pick_center - 1, this.pick_center - 1, 3, 3, gl.RGBA, gl.FLOAT, d);
 
             fbm.unbindFramebuffer();
 
             let near = this.camera.near;
             let far  = this.camera.far;
-            for (let i = 0; i < 9; ++i)
-                d[i] = (near * far) / ((near - far) * d[i] + far);
+            for (let i = 0; i < 9; ++i) {
+                // NOTE: we are reducing into first 3 x 3 elements, dropping GBA channels.
+                d[i] = (near * far) / ((near - far) * d[4*i] + far);
+            }
             state.depth = d[4];
             // console.log("    pick depth at", x, ",", y, ":", d);
         }
