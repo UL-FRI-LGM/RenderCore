@@ -15,6 +15,7 @@ export class Text2D extends Mesh{
         this.frustumCulled = false;
 
         this.pickable = false;
+        //this.remove(this.outline);
 
         this._text = args.text !== undefined ? args.text : "New text";
         this._fontTexture = args.fontTexture !== undefined ? args.fontTexture : null; //this._fontTexture = this.initializeText2D(fontTexturePath);
@@ -22,6 +23,7 @@ export class Text2D extends Mesh{
         this._xPos = args.xPos !== undefined ? args.xPos : 0;
         this._yPos = args.yPos !== undefined ? args.yPos : 0;
         this._fontSize = args.fontSize !== undefined ? args.fontSize : 32;
+        this._cellAspect = args.cellAspect !== undefined ? args.cellAspect : 1;
         this._mode = args.mode !== undefined ? args.mode : TEXT2D_SPACE_SCREEN;
 
         //TODO refactor this
@@ -35,17 +37,23 @@ export class Text2D extends Mesh{
             this.material.addMap(this._fontTexture);
         }else if (this._mode === TEXT2D_SPACE_WORLD){
             this.geometry = Text2D._assembleGeometry({text: this._text});
-            this.material = Text2D._assembleMaterial({text: this._text, fontSize: this._fontSize, offset: new Vector2(this._xPos, this._yPos),  mode: this._mode});
+            this.material = Text2D._assembleMaterial({text: this._text, fontSize: this._fontSize, cellAspect: this._cellAspect, offset: new Vector2(this._xPos, this._yPos),  mode: this._mode});
 
             this.material.addMap(this._fontTexture);
         }else {
             console.error('[' + this.type + "]: Unknow mode [" + args.mode + ']');
         }
+
+        this.material.transparent = true;
+
+
+        //this.material.depthTest = false;
     }
 
     set text(text){
         this._text = text;
         this.geometry = this.setText2D(this._text, this._xPos, this._yPos, this._fontSize);
+        //this.geometry.computeVertexNormals();
     }
     get text(){
         return this._text;
@@ -83,6 +91,7 @@ export class Text2D extends Mesh{
         geometry.vertices = Text2D._setupVertices(args.text);
         geometry.indices = Text2D._setupIndices(args.text);
         geometry.uv = Text2D._setupUVs(args.text);
+        //geometry.computeVertexNormals();
 
         return geometry;
     }
@@ -156,8 +165,13 @@ export class Text2D extends Mesh{
     static _assembleMaterial(args){
         const material = new Text2DMaterial();
 
-        material.setAttribute("deltaOffset", Text2D._setupDeltaDirections(args.text, args.fontSize, args.offset));
-        // Uniforms aspect and viewport set by MeshRenderer based on actual viewport
+
+        //material.setAttribute("positionIdentifier", Text2D._setupPositionIdentifiers(args.text));
+        //material.setAttribute("centerOffset", Text2D._setupCenterOffsets(args.text));
+        //material.setUniform("offset", [32, 0]);
+        material.setAttribute("deltaOffset", Text2D._setupDeltaDirections(args.text, args.fontSize, args.cellAspect, args.offset));
+        //material.setUniform("aspect", window.innerWidth/window.innerHeight);
+        //material.setUniform("viewport", [window.innerWidth, window.innerHeight]);
         material.setUniform("MODE", args.mode);
 
         return material;
@@ -200,20 +214,35 @@ export class Text2D extends Mesh{
 
         return new Float32Attribute(charPositionIdentifiers, 2);
     }
-    static _setupDeltaDirections(text, fontSize, offset){
+    static _setupDeltaDirections(text, fontSize, cellAspect, offset){
         const charDeltaDirections = new Array(text.length * 4 * 2);
 
         for(let c = 0; c < text.length; c++){
-            charDeltaDirections[c*4*2 + 0] = -1*fontSize/2 + c*fontSize + offset.x;
+            //OK FOR GRID FONT SPRITE
+            // charDeltaDirections[c*4*2 + 0] = -1*fontSize/2 + c*fontSize + offset.x;
+            // charDeltaDirections[c*4*2 + 1] = +1*fontSize/2 + 0*fontSize + offset.y;
+
+            // charDeltaDirections[c*4*2 + 2] = -1*fontSize/2 + c*fontSize + offset.x;
+            // charDeltaDirections[c*4*2 + 3] = -1*fontSize/2 + 0*fontSize + offset.y;
+
+            // charDeltaDirections[c*4*2 + 4] = +1*fontSize/2 + c*fontSize + offset.x;
+            // charDeltaDirections[c*4*2 + 5] = +1*fontSize/2 + 0*fontSize + offset.y;
+
+            // charDeltaDirections[c*4*2 + 6] = +1*fontSize/2 + c*fontSize + offset.x;
+            // charDeltaDirections[c*4*2 + 7] = -1*fontSize/2 + 0*fontSize + offset.y;
+
+
+            //NON UNIFORM CELL WIDTH/HEIGHT
+            charDeltaDirections[c*4*2 + 0] = -1*fontSize/2*cellAspect + c*fontSize*cellAspect + offset.x;
             charDeltaDirections[c*4*2 + 1] = +1*fontSize/2 + 0*fontSize + offset.y;
 
-            charDeltaDirections[c*4*2 + 2] = -1*fontSize/2 + c*fontSize + offset.x;
+            charDeltaDirections[c*4*2 + 2] = -1*fontSize/2*cellAspect + c*fontSize*cellAspect + offset.x;
             charDeltaDirections[c*4*2 + 3] = -1*fontSize/2 + 0*fontSize + offset.y;
 
-            charDeltaDirections[c*4*2 + 4] = +1*fontSize/2 + c*fontSize + offset.x;
+            charDeltaDirections[c*4*2 + 4] = +1*fontSize/2*cellAspect + c*fontSize*cellAspect + offset.x;
             charDeltaDirections[c*4*2 + 5] = +1*fontSize/2 + 0*fontSize + offset.y;
 
-            charDeltaDirections[c*4*2 + 6] = +1*fontSize/2 + c*fontSize + offset.x;
+            charDeltaDirections[c*4*2 + 6] = +1*fontSize/2*cellAspect + c*fontSize*cellAspect + offset.x;
             charDeltaDirections[c*4*2 + 7] = -1*fontSize/2 + 0*fontSize + offset.y;
         }
 

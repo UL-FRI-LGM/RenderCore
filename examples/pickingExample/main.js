@@ -90,10 +90,12 @@ function populateScene(){
                 fontTexture: fontTexture, 
                 xPos: 10, 
                 yPos: 10, 
-                fontSize: 32
+                fontSize: 32,
+                cellAspect: 8/16
             }
         );
         text2D.material.transparent = true;
+        text2D.material.color = new RC.Color(1.0, 1.0, 1.0);
         scene.add(text2D);
     });
 }
