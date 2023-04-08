@@ -40,7 +40,7 @@ export {LoadingManager} from '../loaders/LoadingManager.js';
 export {XHRLoader} from '../loaders/XHRLoader.js';
 export {ShaderLoader} from '../loaders/ShaderLoader.js';
 // export {ObjLoader} from '../loaders/ObjLoader.js';
-// export {ImageLoader} from '../loaders/ImageLoader.js';
+export {ImageLoader} from '../loaders/ImageLoader.js';
 // export {MHDReader} from '../loaders/MHDReader.js';
 // export {RAWLoader} from '../loaders/RAWLoader.js';
 // export {XHRStreamer} from '../loaders/XHRStreamer.js';
