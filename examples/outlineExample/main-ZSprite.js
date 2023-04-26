@@ -126,6 +126,39 @@ const CoreControl = {
         );
         this.tex_insta_pos.flipy = false;
 
+
+        // AMT ZShape pos
+        // Instancing, passing position for each instance in RGBA32F texture, A not used.
+        let sna = 2;
+        let SN = sna * sna * sna;
+        let sarr = new Float32Array(SN * 4);
+        {
+            let off = 0;
+            for (let i = 0; i < sna; ++i) {
+                for (let j = 0; j < sna; ++j) {
+                    for (let k = 0; k < sna; ++k) {
+                        //console.log("off", off);
+                        // console.log(i, j, k);
+                        sarr[off] = 0.3 * i;
+                        sarr[off + 1] = 0.3 * j;
+                        sarr[off + 2] = 0.3 * k;
+                        sarr[off + 3] = 0;
+                        off = off + 4;
+                    }
+                }
+            }
+        }
+
+        this.tex_insta_num_shape = SN;
+        this.tex_insta_pos_shape = new RC.Texture(sarr,
+            RC.Texture.WRAPPING.ClampToEdgeWrapping,
+            RC.Texture.WRAPPING.ClampToEdgeWrapping,
+            RC.Texture.FILTER.NearestFilter,
+            RC.Texture.FILTER.NearestFilter,
+            RC.Texture.FORMAT.RGBA32F, RC.Texture.FORMAT.RGBA, RC.Texture.TYPE.FLOAT,
+            sna * sna, sna);
+        // AMT end
+
         // Testing creation of texture from JS array, simple checker pattern.
         let at = new Uint8Array(2 * 2 * 2);
         at[0] = at[6] = 255; // luminance
@@ -352,6 +385,25 @@ const CoreControl = {
         sprite4.position.set(-5, 5, 5);
         sprite4.drawOutline = true;
         scene.add(sprite4);
+
+        // AMT begin
+        let shm = new RC.ZShapeBasicMaterial({
+            ShapeSize: [0.1, 0.1, 0.02],
+            color: new RC.Color(1, 0, 0),
+            emissive: new RC.Color(0.07, 0.07, 0.06),
+            diffuse: new RC.Color(0, 0.6, 0.7),
+            alpha: 0.5
+        });
+        shm.addInstanceData(this.tex_insta_pos_shape);
+        let zshape = new RC.ZShape(null, shm);
+        zshape.position.set(7, 7, 0);
+        zshape.instanced = true;
+        zshape.instanceCount = this.tex_insta_num_shape;
+        zshape.drawOutline = true;
+        zshape.outlineMaterial.outline_instances_setup([ 4, 6]);
+        scene.add(zshape);
+        // AMT end
+
 
         let lm1 = new RC.ZSpriteBasicMaterial( { SpriteMode: RC.SPRITE_SPACE_WORLD,
                                                  SpriteSize: [8, 8],

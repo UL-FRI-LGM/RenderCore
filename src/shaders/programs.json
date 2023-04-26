@@ -59,7 +59,6 @@
             "fragment": "basic/basic_template-FLAT.frag"
         }
     },
-
     "basic_sprite": {
         "description": "Default gl2 program used for testing.",
         "shaders": {
@@ -79,6 +78,14 @@
         "shaders": {
             "vertex": "basic/basic_zline_template.vert",
             "fragment": "basic/basic_zline_template.frag"
+        }
+    },
+
+    "basic_zshape": {
+        "description": "ZShape instanced from texture; supports PICKING and OUTLINE modes.",
+        "shaders": {
+            "vertex": "basic/basic_zshape_template.vert",
+            "fragment": "basic/basic_zshape_template.frag"
         }
     },
 
