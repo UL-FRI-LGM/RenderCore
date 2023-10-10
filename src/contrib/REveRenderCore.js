@@ -139,6 +139,8 @@ export {ZSpriteBasicMaterial} from '../materials/ZSpriteBasicMaterial.js';
 export {ZSprite} from '../objects/ZSprite.js';
 export {ZShapeBasicMaterial} from '../materials/ZShapeBasicMaterial.js';
 export {ZShape} from '../objects/ZShape.js';
+export {ZTextMaterial} from '../materials/ZTextMaterial.js';
+export {ZText} from '../objects/ZText.js';
 
 // Program Management
 export {MaterialProgramTemplate} from '../program_management/MaterialProgramTemplate.js';
@@ -180,3 +182,11 @@ export {RenderArrayManager} from '../renderers/RenderArrayManager.js';
 
 export {RendeQuTor} from './RendeQuTor.js';
 export {REveCameraControls} from './REveCameraControls.js';
+
+//Fonts 
+export {roboto_font} from '../../../../textures/roboto.js';
+export {roboto_bold_font} from '../../../../textures/roboto-bold.js';
+export {ubuntu_font} from '../../../../textures/ubuntu.js';
+export {ubuntu_bold_font} from '../../../../textures/ubuntu-bold.js';
+export {dejavu_font} from '../../../../textures/dejavu-serif.js';
+export {dejavu_italic_font} from '../../../../textures/dejavu-serif-italic.js';

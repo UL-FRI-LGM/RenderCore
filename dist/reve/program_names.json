@@ -14,5 +14,6 @@
   "custom_GBufferMini_stripes",
   "custom_picker_TRIANGLES",
   "custom_picker_POINTS",
-  "custom_text2D"
+  "custom_text2D",
+  "custom_ZText"
 ]

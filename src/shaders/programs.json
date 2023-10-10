@@ -419,7 +419,14 @@
             "fragment": "custom/text/text2D.frag"
         }
     },
-
+	
+	"custom_ZText": {
+		"description": "ZText.",
+        "shaders": {
+            "vertex": "custom/ZText/ZText.vert",
+            "fragment": "custom/ZText/ZText.frag"
+        }
+    },
 
     "custom_grid": {
         "description": "Grid.",
