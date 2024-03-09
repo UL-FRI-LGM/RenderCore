@@ -42,6 +42,12 @@ export class CustomShaderMaterial  extends Material {
 		}
 	}
 
+	hasSBFlag(flag) {
+		const index = this._flagsSB.indexOf(flag);
+
+		return (index > -1);
+	}
+
 	clearSBFlags() {
 		this._flagsSB.clear();
 	}

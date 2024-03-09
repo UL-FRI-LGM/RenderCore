@@ -137,6 +137,8 @@ export {Grid} from './objects/Grid.js';
 // Instanced, instance-pickable, outline-supporting materials and objects
 export {ZSpriteBasicMaterial} from './materials/ZSpriteBasicMaterial.js';
 export {ZSprite} from './objects/ZSprite.js';
+export {ZShapeBasicMaterial} from './materials/ZShapeBasicMaterial.js';
+export {ZShape} from './objects/ZShape.js';
 
 // Program Management
 export {MaterialProgramTemplate} from './program_management/MaterialProgramTemplate.js';

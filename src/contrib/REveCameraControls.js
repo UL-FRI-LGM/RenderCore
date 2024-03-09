@@ -149,6 +149,8 @@ export class REveCameraControls extends EventDispatcher {
 			else {
                 let dollyDefault  = 1.25*0.5*Math.sqrt(3)*bb_R;
 				camTrans.moveLF(1, dollyDefault);
+				scope.object._near = 0.05 * dollyDefault;
+				scope.object._far = 2 * dollyDefault;
 				scope.object.updateProjectionMatrix();
 			}
 		};

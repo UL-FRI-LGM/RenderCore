@@ -9,6 +9,7 @@
   "phong",
   "basic",
   "basic_zsprite",
+  "basic_zshape",
   "basic_stripes",
   "custom_GBufferMini_stripes",
   "custom_picker_TRIANGLES",
