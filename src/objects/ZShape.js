@@ -21,7 +21,6 @@ export class ZShape extends Mesh {
             */
            geometry = ZShape.makeCubeGeometry();
            console.log("zshape cube geometry ", geometry);
-           this._geometry = geometry;
         }
 
         if (material === null) {
