@@ -21,7 +21,6 @@ struct PLight {
     //float decay;
 
     mat4 VPMat;
-    samplerCube shadowmap;
     bool castShadows;
     bool hardShadows;
     float minBias;
