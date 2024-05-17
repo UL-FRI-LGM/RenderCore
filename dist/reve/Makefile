@@ -22,7 +22,7 @@ REveRenderCore.mjs: ${CONTRIB_DIR}/REveRenderCore.js
 	${NPM_DIR}/rollup $< --format es --file REveRenderCore.mjs
 
 REveRenderCore-min.mjs: REveRenderCore.mjs
-	${NPM_DIR}/uglifyjs REveRenderCore.mjs -c -b indent_level=1 -m -o REveRenderCore-min.mjs
+	${NPM_DIR}/terser REveRenderCore.mjs -c -b indent_level=1 -m -o REveRenderCore-min.mjs
 
 define prog_name_help
 $@ must be created manually. One can use merge-names.js, e.g.:
