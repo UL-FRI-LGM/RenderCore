@@ -31,32 +31,44 @@ export class ZText extends Mesh {
         this.material = new ZTextMaterial();
         // Uniforms aspect and viewport set by MeshRenderer based on actual viewport
         this.material.setUniform("MODE", this._mode);
-        this.material.setUniform("hint_amount", this._fontHinting);
         this.material.setUniform("offset", [this._xPos, this._yPos]);
-        this.material.setUniform("FinalOffset", [0,0]);
+        this.material.setUniform("hint_amount", this._fontHinting);
+        // this.material.setUniform("FinalOffset", [0,0]);
 
         this.material.color = args.color;
         this.material.transparent = true;
-        this.material.addMap(this._fontTexture);
 
-        this.text = args.text !== undefined ? args.text : "Default text";
+        this._text = args.text !== undefined ? args.text : "Default text";
+        if (this._fontTexture != null && this._font != null) {
+            this.material.addMap(this._fontTexture);
+            this.recalcGeometry();
+        } else {
+            this.geometry = undefined; // Avoid bounding box calculation on uninitialized gometry.
+        }
     }
 
-    set text(text) {
-        this._text = text;
+    recalcGeometry() {
         let font_metrics = ZText._fontMetrics( this._font, this._fontSize, this._fontSize * 0 );
         this.geometry = this.setText2D(this._text, 0, 0, font_metrics, this._font);
         this.material.setUniform("scale", font_metrics.cap_scale);
         this.material.setUniform("sdf_oo_N_pix_in_char", this._font.iy / this._font.cap_height);
         this.material.setUniform("sdf_text_size", this._fontSize);
     }
+
+    // Override visibility to avoid rendering of uninitialized objects.
+    get visible() {
+        return super.visible && this._fontTexture != null && this._font != null;
+    }
+    set visible(vis) {
+        super.visible = vis;
+    }
+
+    set text(text) {
+        this._text = text;
+        this.recalcGeometry();
+    }
     get text() {
         return this._text;
-    }
-    set fontTexture(fontTexture) {
-        this._fontTexture = fontTexture;
-        this.material.clearMaps();
-        this.material.addMap(this._fontTexture);
     }
     get fontTexture() {
         return this._fontTexture;
@@ -75,8 +87,7 @@ export class ZText extends Mesh {
     }
     set fontSize(fontSize) {
         this._fontSize = fontSize;
-        let font_metrics = ZText._fontMetrics( this._font, this._fontSize, this._fontSize * 0.2 );
-        this.geometry = this.setText2D(this._text, 0, 0, font_metrics, this._font);
+        this.recalcGeometry();
     }
     get fontSize() {
         return this._fontSize;
@@ -90,6 +101,18 @@ export class ZText extends Mesh {
         this._finalOffsetX = this._finalOffsetX + x;
         this._finalOffsetY = this._finalOffsetY + y;
         this.material.setUniform("FinalOffset", [this._finalOffsetX, this._finalOffsetY]);
+    }
+
+    setTextureAndFont(texture, font) {
+        this._fontTexture = texture;
+        this._font = font;
+        if (font != null && texture != null) {
+            this.material.clearMaps();
+            this.material.addMap(this._fontTexture);
+            this.recalcGeometry();
+        } else {
+            this.geometry = undefined;
+        }
     }
 
     setText2D(text, x, y, font_metrics, font) {
@@ -139,7 +162,7 @@ export class ZText extends Mesh {
             let left   = cpos[0]  + font.aspect * scale * ( font_char.bearing_x + kern - font.ix );
             let right  = left     + font.aspect * scale * ( g[2] - g[0] );
 
-            console.log(schar, scale, top, bottom, left, right);
+            // console.log(schar, scale, top, bottom, left, right);
 
             // POSITIONs
             vertices_positions.push(left, top);

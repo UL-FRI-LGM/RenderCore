@@ -790,8 +790,6 @@ export class RendeQuTor
         // let hp = new CustomShaderMaterial("highPass", {MODE: HIGHPASS_MODE_BRIGHTNESS, targetColor: [0.2126, 0.7152, 0.0722], threshold: 0.75});
         let hp = new CustomShaderMaterial("highPass", { MODE: HIGHPASS_MODE_DIFFERENCE,
                                              targetColor: [0x0/255, 0x0/255, 0xff/255], threshold: 0.1});
-        console.log("XXXXXXXX", hp);
-        // let hp = new CustomShaderMaterial("highPassReve");
         this.RP_HighPass_mat = hp;
         this.RP_HighPass_mat.lights = false;
 

@@ -23,7 +23,7 @@ uniform float aspect;
 uniform vec2 viewport;
 uniform float MODE;
 uniform vec2 offset;
-uniform vec2 FinalOffset;
+// uniform vec2 FinalOffset;
 
 // SDF Uniforms
 uniform float sdf_text_size;
@@ -60,8 +60,8 @@ void main()
 
         sdf_size = 2.0 * viewport.y * sdf_text_size * sdf_oo_N_pix_in_char / scale;
     }
-    else if (MODE == TEXT2D_SPACE_WORLD) {
-
+    else if (MODE == TEXT2D_SPACE_WORLD)
+    {
         // vec4 VPos_clipspace = MVPMat * vec4(VPos.xy, 0.0, 1.0);
         // vec3 VPos_NDC = VPos_clipspace.xyz / VPos_clipspace.w;
         // gl_Position = vec4(VPos_NDC * VPos_clipspace.w, VPos_clipspace.w);

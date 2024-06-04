@@ -50,7 +50,7 @@ export var ImageCache =
 			.then((cblob) => {
 				// console.log("fetch ok, got blob", cblob);
 				let text_prom;
-				if (cblob.type == 'application/gzip') {
+				if (cblob.type == "application/x-gunzip" || cblob.type == 'application/gzip') {
 					const ds = new DecompressionStream("gzip");
 					const stream = cblob.stream(); // new Blob([text], {type: 'application/gzip'}).stream();
 					const dstream = stream.pipeThrough(ds);
