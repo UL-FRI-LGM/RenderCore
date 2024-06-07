@@ -10,6 +10,7 @@ struct Material {
 uniform Material material;
 in vec2 fragUV;
 #fi
+uniform float alpha;
 
 // In SDF
 in float doffset;
@@ -18,6 +19,8 @@ flat in vec2 sdf_texel;
 out vec4 color;
 
 uniform float hint_amount;
+uniform int   u_use_fixed_color;
+uniform vec4  u_fixed_color;
 
 // doffset, hint_amount
 float sdf_alpha( float sdf, float horz_scale, float vert_scale, float vgrad ) {
@@ -29,6 +32,10 @@ float sdf_alpha( float sdf, float horz_scale, float vert_scale, float vgrad ) {
 }
 
 void main() {
+    if (u_use_fixed_color == 1) {
+        color = u_fixed_color;
+        return;
+    }
 	#if (TEXTURE)
     // Sampling the texture, L pattern
     float sdf       = texture(material.texture0, fragUV).r;
@@ -44,11 +51,11 @@ void main() {
     float horz_scale  = 1.1;
     float vert_scale  = 0.6;
 
-    float alpha = sdf_alpha( sdf, horz_scale, vert_scale, vgrad );
-    if (alpha < 0.05)
+    float salpha = sdf_alpha( sdf, horz_scale, vert_scale, vgrad );
+    if (salpha < 0.05)
         discard;
 
-    color = vec4( material.diffuse, alpha );
+    color = vec4( material.diffuse, salpha * alpha);
 
     //vec4 texel = texture(material.texture0, sdf);
     //color = vec4(texel.rgb * material.diffuse, texel.a);
