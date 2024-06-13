@@ -328,6 +328,8 @@ export class MeshRenderer extends Renderer {
 
 			//COMPACT
 			this._drawObject(object);
+
+			this._cleanupPerObjectState();
 		}
 	}
 	_renderPickableObjects(objects, camera){
@@ -349,6 +351,8 @@ export class MeshRenderer extends Renderer {
 			this._setup_material_depth(true, mat.depthFunc, true);
 
 			this._drawObject(object);
+
+			this._cleanupPerObjectState();
 		}
 	}
 	_renderOutline(list, camera){
@@ -368,15 +372,21 @@ export class MeshRenderer extends Renderer {
 			if (mat.getUniform("u_OutlineGivenInstances"))
 				instance_count = mat.getAttribute("a_OutlineInstances").count();
 			this._drawObject(object, instance_count);
+
+			this._cleanupPerObjectState();
 		}
 	}
 	_setupProgram(object, camera, material){
 		let programID = material.requiredProgram(this).programID
 		let program = this._compiledPrograms.get(programID);
 		program.use();
+		this._glManager._currentProgram = program;
 
 		this._setup_uniforms(program, object, camera, material);
 		this._setup_attributes(program, object, material);
+	}
+	_cleanupPerObjectState(){
+		this._glManager._currentProgram = null;
 	}
 	_drawObject(object, instance_count=0){
 		if (typeof object.draw !== "function") console.warn("Object " + object.type + " has no draw function");
@@ -1329,6 +1339,7 @@ export class MeshRenderer extends Renderer {
 		this._setup_material_side(object.material.side);
 		this._setup_material_depth(true, object.material.depthFunc, true);
 		this._drawObject(object);
+		this._cleanupPerObjectState();
 		object.pickingMaterial.setUniform("u_PickInstance", false);
 
 		let r = new Uint32Array(4);

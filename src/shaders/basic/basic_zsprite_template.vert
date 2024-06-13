@@ -86,7 +86,6 @@ void main() {
         VPos_viewspace = MVMat * vec4(0.0, 0.0, 0.0, 1.0);
     #fi
 
-
     if(SpriteMode == SPRITE_SPACE_WORLD)
     {
         // Assume vertices in x,y plane, z = 0; close to (0, 0) as SpriteSize

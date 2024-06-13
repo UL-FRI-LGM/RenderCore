@@ -253,8 +253,9 @@ Object.assign( Box3.prototype, {
 			// RenderCore geometry adaptation
 			const vertices = geometry.vertices;
 
-			for (let i = 0; i < vertices.array.length; i+=vertices.itemSize) {
-				_vector.set(vertices.array[i], vertices.array[i+1], vertices.array[i+2]);
+			let is2d = (vertices.itemSize == 2);
+			for (let i = 0; i < vertices.array.length; i += vertices.itemSize) {
+				_vector.set(vertices.array[i], vertices.array[i+1], is2d ? 0 : vertices.array[i+2]);
 				_vector.applyMatrix4(object.matrixWorld);
 
 				this.expandByPoint(_vector);
@@ -263,7 +264,7 @@ Object.assign( Box3.prototype, {
 
 		var children = object.children;
 
-		for ( i = 0, l = children.length; i < l; i ++ ) {
+		for (let i = 0, l = children.length; i < l; i ++ ) {
 
 			this.expandByObject( children[ i ] );
 

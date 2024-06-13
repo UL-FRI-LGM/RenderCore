@@ -139,6 +139,8 @@ export {ZSpriteBasicMaterial} from '../materials/ZSpriteBasicMaterial.js';
 export {ZSprite} from '../objects/ZSprite.js';
 export {ZShapeBasicMaterial} from '../materials/ZShapeBasicMaterial.js';
 export {ZShape} from '../objects/ZShape.js';
+export {ZTextMaterial} from '../materials/ZTextMaterial.js';
+export {ZText} from '../objects/ZText.js';
 
 // Program Management
 export {MaterialProgramTemplate} from '../program_management/MaterialProgramTemplate.js';

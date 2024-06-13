@@ -60,6 +60,9 @@ export class GLManager {
 		this._textureManager = new GLTextureManager(this._gl);
 		this._attributeManager = new GLAttributeManager(this._gl);
 
+		// render state bridge, set by renderer
+		this._currentProgram = null;
+
 		// region Clear values
 		this.autoClear = true;
 		this._clearColor = new Vector4(0, 0, 0, 0);

@@ -6,13 +6,15 @@ import {FRONT_AND_BACK_SIDE, HIGHPASS_MODE_BRIGHTNESS, HIGHPASS_MODE_DIFFERENCE}
 
 export class RendeQuTor
 {
-    constructor(renderer, scene, camera)
+    constructor(renderer, scene, camera, overlay_scene)
     {
         this.renderer = renderer;
         this.scene    = scene;
         this.camera   = camera;
+        this.ovlscene = overlay_scene;
         this.queue    = new RenderQueue(renderer);
         this.pqueue   = new RenderQueue(renderer);
+        this.ovlpqueue= new RenderQueue(renderer);
         this.vp_w = 0;
         this.vp_h = 0;
         this.pick_radius = 32;
@@ -20,8 +22,13 @@ export class RendeQuTor
 
         this.make_PRP_plain();
         this.make_PRP_depth2r();
+
+        this.make_PRP_overlay();
+        this.make_PRP_depth2r_overlay();
+
         this.renderer.preDownloadPrograms(
-          [ this.PRP_depth2r_mat.requiredProgram(this.renderer)
+          [ this.PRP_depth2r_mat.requiredProgram(this.renderer),
+            this.PRP_depth2r_overlay_mat.requiredProgram(this.renderer)
           ]);
 
         this.SSAA_value = 1;
@@ -48,6 +55,8 @@ export class RendeQuTor
         this.make_RP_Outline();
 
         this.make_RP_GaussHVandBlend();
+
+        this.make_RP_Overlay();
 
         // Only one of the next two gets called from the driver.
         this.make_RP_ToScreen();
@@ -183,6 +192,26 @@ export class RendeQuTor
         }
     }
 
+    render_overlay_and_blend_it()
+    {
+        let tex_ovl = this.pop_std_texture();
+        this.RP_Overlay.outTextures[0].id = tex_ovl;
+        this.queue.render_pass(this.RP_Overlay, "Overlay");
+
+        let ovl_final = this.pop_std_texture();
+        // Reuse blending pass from outline merging.
+        this.RP_Blend.intex_outline_blurred = tex_ovl;
+        this.RP_Blend.intex_main = this.tex_final;
+        this.RP_Blend.outTextures[0].id = ovl_final;
+        this.queue.render_pass(this.RP_Blend, "Blend Overlay");
+
+        if (this.tex_final_push) {
+            this.push_std_texture(this.tex_final);
+        }
+        this.tex_final = ovl_final;
+        this.tex_final_push = true;
+    }
+
     render_tone_map_to_screen()
     {
         this.RP_ToneMapToScreen.input_texture = this.tex_final;
@@ -247,11 +276,11 @@ export class RendeQuTor
         this.camera.postPickRestoreTBLR();
     }
 
-    pick(x, y, detect_depth = false)
+    pick_low_level(rnr_queue, x, y, detect_depth)
     {
         this.renderer.pick_setup(this.pick_center, this.pick_center);
 
-        let state = this.pqueue.render();
+        let state = rnr_queue.render();
         state.x = x;
         state.y = y;
         state.depth = -1.0;
@@ -264,7 +293,7 @@ export class RendeQuTor
             let gl  = rdr.gl;
             let fbm = rdr.glManager._fboManager;
 
-            fbm.bindFramebuffer(this.pqueue._renderTarget);
+            fbm.bindFramebuffer(rnr_queue._renderTarget);
 
             // Type RED is not supported on Firefox, specs require RGBA so we
             // read that, 3 x 3 pixels x 4 channels.
@@ -287,7 +316,17 @@ export class RendeQuTor
         return state;
     }
 
-    pick_instance(state)
+    pick(x, y, detect_depth = false)
+    {
+        return this.pick_low_level(this.pqueue, x, y, detect_depth);
+    }
+
+    pick_overlay(x, y, detect_depth = false)
+    {
+        return this.pick_low_level(this.ovlpqueue, x, y, detect_depth);
+    }
+
+    pick_instance_low_level(rnr_queue, state)
     {
         if (state.object !== this.renderer.pickedObject3D) {
             console.error("RendeQuTor::pick_instance state mismatch", state, this.renderer.pickedObject3D);
@@ -295,12 +334,23 @@ export class RendeQuTor
             // console.log("RenderQuTor::pick_instance going for secondary select");
 
             this.renderer._pickSecondaryEnabled = true;
-            this.pqueue.render();
+            rnr_queue.render();
 
             state.instance = this.renderer._pickedID;
         }
         return state;
     }
+
+    pick_instance(state)
+    {
+        return pick_instance_low_level(this.pqueue, state);
+    }
+
+    pick_instance_overlay(state)
+    {
+        return pick_instance_low_level(this.ovlpqueue, state);
+    }
+
 
 
     //=============================================================================
@@ -349,6 +399,52 @@ export class RendeQuTor
         );
 
         this.pqueue.pushRenderPass(this.PRP_depth2r);
+    }
+
+    // XXXX-MT Probably do not need the next two, could use the above two -- investigate.
+
+    make_PRP_overlay()
+    {
+        let pthis = this;
+
+        this.PRP_overlay = new RenderPass(
+            RenderPass.BASIC,
+            function (textureMap, additionalData) {},
+            function (textureMap, additionalData) {
+                return { scene: pthis.ovlscene, camera: pthis.camera };
+            },
+            function (textureMap, additionalData) {},
+            RenderPass.TEXTURE,
+            { width: this.pick_radius, height: this.pick_radius },
+            "depth_picking_overlay",
+            [ { id: "color_picking_overlay", textureConfig: RenderPass.DEFAULT_R32UI_TEXTURE_CONFIG,
+                clearColorArray:  new Uint32Array([0xffffffff, 0, 0, 0])} ]
+        );
+
+        this.ovlpqueue.pushRenderPass(this.PRP_overlay);
+    }
+
+    make_PRP_depth2r_overlay()
+    {
+        this.PRP_depth2r_overlay_mat = new CustomShaderMaterial("copyDepthToRed");
+        this.PRP_depth2r_overlay_mat.lights = false;
+        let pthis = this;
+
+        this.PRP_depth2r_overlay = new RenderPass(
+            RenderPass.POSTPROCESS,
+            function (textureMap, additionalData) {},
+            function (textureMap, additionalData) {
+                return { material: pthis.PRP_depth2r_overlay_mat, textures: [ textureMap["depth_picking_overlay"] ] };
+            },
+            function (textureMap, additionalData) {},
+            RenderPass.TEXTURE,
+            { width: this.pick_radius, height: this.pick_radius },
+            null,
+            [ { id: "depthr32f_picking_overlay", textureConfig: RenderPass.FULL_FLOAT_R32F_TEXTURE_CONFIG,
+                clearColorArray: new Float32Array([1, 0, 0, 0]) } ]
+        );
+
+        this.ovlpqueue.pushRenderPass(this.PRP_depth2r_overlay);
     }
 
 
@@ -438,6 +534,36 @@ export class RendeQuTor
         this.RP_SSAA_Down.view_setup = function(vport) { this.viewport = vport; };
 
         this.queue.pushRenderPass(this.RP_SSAA_Down);
+    }
+
+    make_RP_Overlay()
+    {
+        let pthis = this;
+
+        this.RP_Overlay = new RenderPass(
+            // Rendering pass type
+            RenderPass.BASIC,
+            // Initialize function
+            function (textureMap, additionalData) {},
+            // Preprocess function
+            function (textureMap, additionalData) { return { scene: pthis.ovlscene, camera: pthis.camera }; },
+            // Postprocess
+            function (textureMap, additionalData) {},
+            // Target
+            RenderPass.TEXTURE,
+            // Viewport
+            null,
+            // Bind depth texture to this ID
+            "depth_main",
+            // Outputs
+            [ { id: "color_overlay", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG,
+                clearColorArray: this.clear_zero_f32arr } ]
+        );
+        this.RP_Overlay.view_setup = function (vport) {
+             this.viewport = { width: vport.width, height: vport.height };
+            };
+
+        this.queue.pushRenderPass(this.RP_Overlay);
     }
 
     //=============================================================================
@@ -645,7 +771,7 @@ export class RendeQuTor
                 {id: "color_final", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
             ]
         );
-        this.RP_Blend.intex_outline_blurred = "gauss_hv";
+        this.RP_Blend.intex_outline_blurred = "gauss_hv"; // also used for blending of overlay
         this.RP_Blend.intex_main = "color_main";
         this.RP_Blend.view_setup = function (vport) { this.viewport = vport; };
 
@@ -664,8 +790,6 @@ export class RendeQuTor
         // let hp = new CustomShaderMaterial("highPass", {MODE: HIGHPASS_MODE_BRIGHTNESS, targetColor: [0.2126, 0.7152, 0.0722], threshold: 0.75});
         let hp = new CustomShaderMaterial("highPass", { MODE: HIGHPASS_MODE_DIFFERENCE,
                                              targetColor: [0x0/255, 0x0/255, 0xff/255], threshold: 0.1});
-        console.log("XXXXXXXX", hp);
-        // let hp = new CustomShaderMaterial("highPassReve");
         this.RP_HighPass_mat = hp;
         this.RP_HighPass_mat.lights = false;
 
