@@ -343,12 +343,12 @@ export class RendeQuTor
 
     pick_instance(state)
     {
-        return pick_instance_low_level(this.pqueue, state);
+        return this.pick_instance_low_level(this.pqueue, state);
     }
 
     pick_instance_overlay(state)
     {
-        return pick_instance_low_level(this.ovlpqueue, state);
+        return this.pick_instance_low_level(this.ovlpqueue, state);
     }
 
 
