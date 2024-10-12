@@ -5,6 +5,7 @@ precision mediump float;
 //**********************************************************************************************************************
 #define TEXT2D_SPACE_WORLD 0.0
 #define TEXT2D_SPACE_SCREEN 1.0
+#define TEXT2D_SPACE_MIXED 2.0
 
 #if (TEXTURE)
 struct Material {
@@ -68,12 +69,24 @@ void main()
 
         vec4 p1 = MVPMat * vec4(VPos.x, VPos.y, 0.0, 1.0);
         vec4 p2 = MVPMat * vec4(VPos.x, VPos.y + 0.1 * sdf_text_size, 0.0, 1.0);
+        gl_Position = p1;
 
         // WTH? Factor should be 5 (10 / 2 --> from clip to NDC size)! * 1 / scale ???
         sdf_size = 2.0 * viewport.y * 5.0 * length(vec2(p1.x - p2.x, p1.y - p2.y)) * sdf_oo_N_pix_in_char / scale;
         // sdf_size = 2.0 * 100.0 * length(vec2(p1.x - p2.x, p1.y - p2.y)) * sdf_oo_N_pix_in_char;
+    }
+    else if (MODE == TEXT2D_SPACE_MIXED)
+    {
+        vec4 orig_clip = MVPMat * vec4(0.0, 0.0, 0.0, 1.0);
+        vec2 orig_scrn = 0.5 * (orig_clip.xy / orig_clip.w + vec2(1.0));
+        // vec2 VPos_scrn = vec2(offset.x + VPos.x/aspect, offset.y + VPos.y);
+        vec2 VPos_scrn = vec2(orig_scrn.x + offset.x + VPos.x/aspect,
+                              orig_scrn.y + offset.y + VPos.y);
+        vec2 VPos_clip = orig_clip.w * (2.0 * VPos_scrn - vec2(1.0));
+        gl_Position = vec4(VPos_clip, orig_clip.z, orig_clip.w);
+        // gl_Position = vec4(orig.x + VPos_clip.x, orig.y + VPos_clip.y, orig.z, 1.0);
 
-        gl_Position = p1;
+        sdf_size = 2.0 * viewport.y * sdf_text_size * sdf_oo_N_pix_in_char / scale;
     }
 
     #if (TEXTURE)
@@ -86,3 +99,9 @@ void main()
     sdf_texel = vec2(1.0 / float(ts.x), 1.0 / float(ts.y));
     #fi
 }
+
+// NOTES:
+// - SCREEN - what should be z_clip? Set as offset.z?
+// - WORLD - should take into account w_clip to calculate sdf_size?
+// - WORLD - Why doesn't this work with ortho
+// - Get rid of FinalOffset, here and in ZText.js
