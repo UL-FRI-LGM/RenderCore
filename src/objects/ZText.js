@@ -176,6 +176,26 @@ export class ZText extends Mesh {
                 prev_char = " ";
                 continue;
             }
+            if ( schar == "\u{2002}" ) { // en-space / two-per-em
+                cpos[0] += 0.5 * font_metrics.ascent;
+                prev_char = " ";
+                continue;
+            }
+            if ( schar == "\u{2004}" ) { // three-per-em-space
+                cpos[0] += 0.333 * font_metrics.ascent;
+                prev_char = " ";
+                continue;
+            }
+            if ( schar == "\u{2005}" ) { // four-per-em-space
+                cpos[0] += 0.25 * font_metrics.ascent;
+                prev_char = " ";
+                continue;
+            }
+            if ( schar == "\u{2006}" ) { // six-per-em-space
+                cpos[0] += 0.166 * font_metrics.ascent;
+                prev_char = " ";
+                continue;
+            }
 
             // Laying out the glyph rectangle
             let font_char = font.chars[schar];
