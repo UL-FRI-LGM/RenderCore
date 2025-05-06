@@ -366,20 +366,36 @@ export class REveCameraControls extends EventDispatcher {
 		var dollyEnd = new Vector2();
 		var dollyDelta = new Vector2();
 
+		// Mouse Control / Shift scaling factor, set on MouseButtonDown, reset on MouseButtonUp.
+		// Ctrl -> 0.1, Ctrl-Shift -> 0.01, Shift -> 10.0
+		function mouseCSScale(event) {
+			let css = 1.0;
+			if (event.ctrlKey) {
+				css = event.shiftKey ? 0.01 : 0.1;
+			} else if (event.shiftKey) {
+				css = scope.MouseCSScaleFactor = 10.0;
+			}
+			console.log("YEBO fac", css);
+			return css;
+		}
+
+		function dolyCSScale(event) {
+			let css = 1.0;
+			if (event.ctrlKey) {
+				css = event.shiftKey ? 0.01 : 0.1;
+			} else if (event.shiftKey) {
+				css = scope.MouseCSScaleFactor = 5.0;
+			}
+			console.log("YEBO fac", css);
+			return css;
+		}
+
 		function getAutoRotationAngle() {
 			return 2 * Math.PI / 60 / 60 * scope.autoRotateSpeed;
 		}
 
-		function getZoomScale() {
-			return Math.pow(0.95, scope.zoomSpeed);
-		}
-
-		function rotateLeft(angle) {
-			sphericalDelta.theta -= angle;
-		}
-
-		function rotateUp(angle) {
-			sphericalDelta.phi -= angle;
+		function getZoomScale(fac) {
+			return Math.pow(0.978, fac * scope.zoomSpeed);
 		}
 
 		function rotateRad(hRotate, vRotate) {
@@ -418,37 +434,60 @@ export class REveCameraControls extends EventDispatcher {
 			sphericalDelta.theta = vRotate;
 		}
 
+		function PanFwdBkwStepPersp(element) {
+			// Same for Pan and FwdBkw
+			let targetDistance = 0.5 * (scope.object.far + scope.object.near) * Math.tan(0.5 * scope.object.fov * Math.PI / 180.0);
+			return targetDistance / element.clientHeight;
+		}
+
+		function PanStepOrtho(element) {
+			return [ (scope.object.right - scope.object.left) / scope.object.zoom / element.clientWidth,
+				     (scope.object.top - scope.object.bottom) / scope.object.zoom / element.clientHeight ];
+		}
+
+		function FwdBkwStepOrtho(element) {
+			// Average of dx/dy
+			let sxy = PanStepOrtho(element);
+			return 0.5 * (sxy[0] + sxy[1]);
+		}
+
 		// deltaX and deltaY are in pixels; right and down are positive
-		var pan = function () {
+		function pan(deltaX, deltaY) {
+			// amt, x seem to be negatd
+			deltaX = -deltaX;
 
-			var offset = new Vector3();
+			let element = scope.domElement === document ? scope.domElement.body : scope.domElement;
 
-			return function pan(deltaX, deltaY) {
-				// amt, x seem to be negatd
-				deltaX = -deltaX;
+			if (scope.object.isPerspectiveCamera) {
+				let step = PanFwdBkwStepPersp(element);
+				// We use only clientHeight for both here so aspect ratio does not distort speed.
+				panOffset.setX(deltaX * step);
+				panOffset.setY(deltaY * step);
+			} else if (scope.object.isOrthographicCamera) {
+				let step = PanStepOrtho(element);
+				panOffset.setX(deltaX * step[0]);
+				panOffset.setY(deltaY * step[1]);
+			} else {
+				// camera neither orthographic nor perspective
+				console.warn('WARNING: REveCameraControls encountered an unknown camera type - pan disabled.');
+				scope.enablePan = false;
+			}
+		}
 
-				var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
-
-				if (scope.object.isPerspectiveCamera) {
-					// perspective
-					let targetDistance = 0.5 * (scope.object.far + scope.object.near) * Math.tan(0.5 * scope.object.fov * Math.PI / 180.0);
-					// we use only clientHeight here so aspect ratio does not distort speed
-					let h = deltaY * targetDistance / element.clientHeight;
-					let w = deltaX * targetDistance / element.clientHeight;
-					panOffset.setX(w);
-					panOffset.setY(h);
-				} else if (scope.object.isOrthographicCamera) {
-					// orthographic
-					panOffset.setX(deltaX * (scope.object.right - scope.object.left) / scope.object.zoom / element.clientWidth);
-					panOffset.setY(deltaY * (scope.object.top - scope.object.bottom) / scope.object.zoom / element.clientHeight);
-				} else {
-					// camera neither orthographic nor perspective
-					console.warn('WARNING: REveCameraControls encountered an unknown camera type - pan disabled.');
-					scope.enablePan = false;
-				}
-				scope.update();
-			};
-		}();
+		function FwdBkw(delta) {
+			let element = scope.domElement === document ? scope.domElement.body : scope.domElement;
+			if (scope.object.isPerspectiveCamera) {
+				let step = PanFwdBkwStepPersp(element);
+				camTrans.moveLF(1, - delta * step);
+			} else if (scope.object.isOrthographicCamera) {
+				let step = FwdBkwStepOrtho(element);
+				camTrans.moveLF(1, - delta * step);
+			} else {
+				// camera neither orthographic nor perspective
+				console.warn('WARNING: REveCameraControls encountered an unknown camera type - fwd-bkw disabled.');
+				scope.enableZoom = false;
+			}
+		}
 
 		function dollyIn(dollyScale) {
 			if (scope.object.isPerspectiveCamera) {
@@ -499,7 +538,7 @@ export class REveCameraControls extends EventDispatcher {
 			rotateEnd.set(event.clientX, event.clientY);
 
 			rotateDelta.subVectors(rotateEnd, rotateStart).multiplyScalar(scope.rotateSpeed);
-
+			rotateDelta.multiplyScalar(mouseCSScale(event));
 			var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
 
 			rotateRad(-2 * Math.PI * rotateDelta.y / element.clientHeight, 2 * Math.PI * rotateDelta.x / element.clientWidth);
@@ -511,28 +550,29 @@ export class REveCameraControls extends EventDispatcher {
 
 		function handleMouseMoveDolly(event) {
 			dollyEnd.set(event.clientX, event.clientY);
-
 			dollyDelta.subVectors(dollyEnd, dollyStart);
 
-			if (dollyDelta.y > 0) {
-				dollyIn(getZoomScale());
-			} else if (dollyDelta.y < 0) {
-				dollyOut(getZoomScale());
+			if (scope.object.isPerspectiveCamera) {
+				FwdBkw(dollyDelta.y * mouseCSScale(event));
+			} else {
+				if (dollyDelta.y < 0) {
+					dollyIn(getZoomScale(dolyCSScale(event)));
+				} else if (dollyDelta.y > 0) {
+					dollyOut(getZoomScale(dolyCSScale(event)));
+				}
 			}
-
 			dollyStart.copy(dollyEnd);
-
 			scope.update();
 		}
 
 		function handleMouseMovePan(event) {
 			panEnd.set(event.clientX, event.clientY);
 			panDelta.subVectors(panEnd, panStart).multiplyScalar(scope.panSpeed);
+			panDelta.multiplyScalar(mouseCSScale(event));
 
 			pan(panDelta.x, panDelta.y);
 
 			panStart.copy(panEnd);
-
 			scope.update();
 		}
 
@@ -541,12 +581,22 @@ export class REveCameraControls extends EventDispatcher {
 		}
 
 		function handleMouseWheel(event) {
-			if (event.deltaY < 0) {
-				dollyOut(getZoomScale());
-			} else if (event.deltaY > 0) {
-				dollyIn(getZoomScale());
+			if (scope.object.isPerspectiveCamera) {
+				let step;
+				if (event.deltaMode == 0) {
+					step = event.deltaY;
+				} else { // 1 is lines, 2 pages -- we don't care, just take 1/50 of height
+					let element = scope.domElement === document ? scope.domElement.body : scope.domElement;
+					step = event.deltaY * 0.05 * element.clientHeight;
+				}
+				FwdBkw(0.5 * mouseCSScale(event) * step);
+			} else {
+				if (event.deltaY > 0) {
+					dollyOut(getZoomScale(dolyCSScale(event)));
+				} else if (event.deltaY < 0) {
+					dollyIn(getZoomScale(dolyCSScale(event)));
+				}
 			}
-
 			scope.update();
 		}
 
@@ -555,22 +605,22 @@ export class REveCameraControls extends EventDispatcher {
 
 			switch (event.keyCode) {
 				case scope.keys.UP:
-					pan(0, scope.keyPanSpeed);
+					pan(0, scope.keyPanSpeed * mouseCSScale(event));
 					needsUpdate = true;
 					break;
 
 				case scope.keys.BOTTOM:
-					pan(0, - scope.keyPanSpeed);
+					pan(0, - scope.keyPanSpeed * mouseCSScale(event));
 					needsUpdate = true;
 					break;
 
 				case scope.keys.LEFT:
-					pan(scope.keyPanSpeed, 0);
+					pan(scope.keyPanSpeed * mouseCSScale(event), 0);
 					needsUpdate = true;
 					break;
 
 				case scope.keys.RIGHT:
-					pan(- scope.keyPanSpeed, 0);
+					pan(- scope.keyPanSpeed * mouseCSScale(event), 0);
 					needsUpdate = true;
 					break;
 			}
@@ -700,27 +750,15 @@ export class REveCameraControls extends EventDispatcher {
 				case 0:
 					switch (scope.mouseButtons.LEFT) {
 						case MOUSE.ROTATE:
-							if (event.ctrlKey || event.metaKey || event.shiftKey) {
-								if (scope.enablePan === false) return;
-								handleMouseDownPan(event);
-								state = STATE.PAN;
-							} else {
-								if (scope.enableRotate === false) return;
-								handleMouseDownRotate(event);
-								state = STATE.ROTATE;
-							}
+							if (scope.enableRotate === false) return;
+							handleMouseDownRotate(event);
+							state = STATE.ROTATE;
 							break;
 
 						case MOUSE.PAN:
-							if (event.ctrlKey || event.metaKey || event.shiftKey) {
-								if (scope.enableRotate === false) return;
-								handleMouseDownRotate(event);
-								state = STATE.ROTATE;
-							} else {
-								if (scope.enablePan === false) return;
-								handleMouseDownPan(event);
-								state = STATE.PAN;
-							}
+							if (scope.enablePan === false) return;
+							handleMouseDownPan(event);
+							state = STATE.PAN;
 							break;
 
 						default:
