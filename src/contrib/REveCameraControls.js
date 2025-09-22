@@ -155,6 +155,15 @@ export class REveCameraControls extends EventDispatcher {
 			}
 		};
 
+
+		this.getCamTrans = function() {
+			return camTrans;
+		};
+
+		this.setCamTrans = function (elements) {
+			camTrans.elements = elements;
+		};
+
 		this.setCameraCenter = function (x, y, z) {
 			this.cameraCenter.set(x, y, z);
 
