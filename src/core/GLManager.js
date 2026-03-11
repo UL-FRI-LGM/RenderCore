@@ -62,6 +62,7 @@ export class GLManager {
 
 		// render state bridge, set by renderer
 		this._currentProgram = null;
+		this._currentMaterial = null;
 
 		// region Clear values
 		this.autoClear = true;

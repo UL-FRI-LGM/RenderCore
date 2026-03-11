@@ -104,6 +104,8 @@ export {SkyBox2BasicMaterial} from './materials/SkyBox2BasicMaterial.js';
 export {DirectionalShadowMaterial} from './materials/DirectionalShadowMaterial.js';
 export {PointShadowMaterial} from './materials/PointShadowMaterial.js';
 export {VertexNormalMaterial} from './materials/VertexNormalMaterial.js';
+export {ZMultiMeshBasicMaterial} from './materials/ZMultiMeshBasicMaterial.js';
+
 
 // Objects
 export {Geometry} from './objects/Geometry.js';
@@ -135,6 +137,7 @@ export {Text2D} from './objects/Text2D.js';
 export {Grid} from './objects/Grid.js';
 
 // Instanced, instance-pickable, outline-supporting materials and objects
+export {ZMultiMesh} from './objects/ZMultiMesh.js';
 export {ZSpriteBasicMaterial} from './materials/ZSpriteBasicMaterial.js';
 export {ZSprite} from './objects/ZSprite.js';
 export {ZShapeBasicMaterial} from './materials/ZShapeBasicMaterial.js';

@@ -81,6 +81,13 @@
         }
     },
 
+    "basic_zmultimesh": {
+        "description": "ZMultiMesh multiple meshes from same vert/index arrays; supports PICKING and OUTLINE modes.",
+        "shaders": {
+            "vertex": "basic/basic_zmultimesh_template.vert",
+            "fragment": "basic/basic_zmultimesh_template.frag"
+        }
+    },
     "basic_zshape": {
         "description": "ZShape instanced from texture; supports PICKING and OUTLINE modes.",
         "shaders": {
