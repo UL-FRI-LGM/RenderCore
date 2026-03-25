@@ -7,7 +7,7 @@ import {MaterialProgramTemplate} from '../program_management/MaterialProgramTemp
 export class MeshPhongMaterial extends Material {
 
 	constructor() {
-		super(Material);
+		super();
 
 		this.type = "MeshPhongMaterial";
 

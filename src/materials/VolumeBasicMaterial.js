@@ -12,7 +12,7 @@ import {MaterialProgramTemplate} from '../program_management/MaterialProgramTemp
 export class VolumeBasicMaterial extends Material {
 
 	constructor() {
-		super(Material);
+		super();
 
 		this.type = "VolumeBasicMaterial";
 
