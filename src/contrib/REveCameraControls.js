@@ -38,7 +38,7 @@ export class REveCameraControls extends EventDispatcher {
 		var MOUSE = { ROTATE: 0, DOLLY: 1, PAN: 2 };
 		var TOUCH = { ROTATE: 0, PAN: 1, DOLLY_PAN: 2, DOLLY_ROTATE: 3 };
 
-		super(EventDispatcher);
+		super();
 
 		if (!REveCameraControls.matrixExtendDone) {
 			ExtendRCMatrix();
@@ -111,11 +111,6 @@ export class REveCameraControls extends EventDispatcher {
 		// Touch fingers
 		this.touches = { ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN };
 
-		// for reset
-		this.target0 = this.target.clone();
-		this.position0 = this.object.position.clone();
-		this.zoom0 = this.object.zoom;
-
 		//
 		// public methods
 		//
@@ -173,12 +168,6 @@ export class REveCameraControls extends EventDispatcher {
 			let binv = camBase.clone();
 			binv.getInverse(camBase);
 			camTrans.multiplyMatrices(binv, bt);
-
-			if (this.centerMarker) {
-				this.centerMarker.position = this.cameraCenter;
-				this.centerMarker.visible = true;
-				this.centerMarker.updateMatrix();
-			}
 		};
 
 		this.getPolarAngle = function () {
@@ -187,25 +176,6 @@ export class REveCameraControls extends EventDispatcher {
 
 		this.getAzimuthalAngle = function () {
 			return spherical.theta;
-		};
-
-		this.saveState = function () {
-			scope.target0.copy(scope.target);
-			scope.position0.copy(scope.object.position);
-			scope.zoom0 = scope.object.zoom;
-		};
-
-		this.reset = function () {
-			scope.target.copy(scope.target0);
-			scope.object.position.copy(scope.position0);
-			scope.object.zoom = scope.zoom0;
-
-			scope.object.updateProjectionMatrix();
-			scope.dispatchEvent(changeEvent);
-
-			scope.update();
-
-			state = STATE.NONE;
 		};
 
 		// osschar - need to reset internal panOffset
@@ -236,7 +206,6 @@ export class REveCameraControls extends EventDispatcher {
 		// alja - set camera matrix from two operations camBase and camTrans
 		this.update = function () {
 			var lastPosition = new Vector3();
-			var lastQuaternion = new Quaternion();
 			return function update() {
 				// dolly scale
 				if (scale != 1.0) {
@@ -293,7 +262,6 @@ export class REveCameraControls extends EventDispatcher {
 					scope.dispatchEvent(changeEvent);
 
 					lastPosition.copy(cam.getBaseVector(4));
-					lastQuaternion.copy(scope.object.quaternion);
 					zoomChanged = false;
 
 					sphericalDelta.theta = 0;

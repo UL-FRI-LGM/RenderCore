@@ -15,7 +15,7 @@ export class PerspectiveCamera extends Camera {
 		 */
 
 	constructor(fov, aspect, near, far, left = undefined, right = undefined, top = undefined, bottom = undefined) {
-		super(Camera);
+		super();
 
 		this.type = "PerspectiveCamera";
 
