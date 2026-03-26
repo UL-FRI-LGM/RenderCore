@@ -9,15 +9,18 @@ import { Group } from '../objects/Group.js';
 export class Light extends Object3D {
 
 	constructor(color, intensity, args = {}) {
-		super(Object3D);
+		super();
 
 		this.type = "Light";
+
+		// We seem to need quaternions for the lights (could be cleaned up).
+		if ( ! Object3D.sDefaultQuaternionsAndAutoUpdate) {
+			this.enableQuaternions(true);
+		}
 
 		this._color = new Color(color);
 		this._intensity  = intensity !== undefined ? intensity : 1;
 
-
-		//
 		this._frustumCulled = false;
 		this._castShadows = args.castShadows !== undefined ? args.castShadows : false;
 		this._hardShadows = args.hardShadows !== undefined ? args.hardShadows : true;

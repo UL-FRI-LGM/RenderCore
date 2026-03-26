@@ -34,12 +34,26 @@ export class Geometry {
 		// Bounding
 		this._boundingBox = null;
 		this._boundingSphere = null;
+		this._externalBounds = false;
 
 		// Parameter on change listener
 		this._onChangeListener = null;
 
 		// If this is set to true.. wireframe will be rendered instead of planes
 		this._drawWireframe = false;
+	}
+
+	/**
+	 * Set an external bounding box, it will NEVER be recomputed.
+	 * Also, the bounding sphere will be calculated from these vertices.
+	 * Potentially pre-set the bounding sphere (if it significantly reduces the bounding volume),
+	 * to be fine tuned later, for now we'll just set it from the box.
+	 */
+	setExternalBoundingBox(box) {
+		this._boundingBox = box;
+		this._boundingSphere = new Sphere();
+		box.getBoundingSphere( this._boundingSphere );
+		this._externalBounds = true;
 	}
 
 	/**
@@ -637,7 +651,11 @@ export class Geometry {
 	/**
 	 * Compute minimal bounding box that encapsulates all triangles.
 	 */
-	computeBoundingBox() {
+	computeBoundingBox()
+	{
+		if (this._externalBounds) {
+			return;
+		}
 
 		// Check if the bounding box already exist
 		if ( this._boundingBox === null ) {
@@ -660,7 +678,12 @@ export class Geometry {
 	/**
 	 * Compute minimal bounding sphere that encapsulates all triangles.
 	 */
-	computeBoundingSphere() {
+	computeBoundingSphere()
+	{
+		if (this._externalBounds) {
+			return;
+		}
+
 		let box = new Box3();
 		let vector = new Vector3();
 

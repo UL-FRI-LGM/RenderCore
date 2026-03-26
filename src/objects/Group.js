@@ -6,7 +6,7 @@ import {Object3D} from '../core/Object3D.js';
 
 export class Group extends Object3D {
 	constructor () {
-		super(Object3D);
+		super(true);
 
 		this.type = "Group";
 

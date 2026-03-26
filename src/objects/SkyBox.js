@@ -3,7 +3,7 @@ import {Float32Attribute, Uint32Attribute} from '../core/BufferAttribute.js';
 
 export class SkyBox extends RC.Object3D {
     constructor(textureArray, camera, scale = camera.far, color = new RC.Color(1,1,1), scene) {
-      super(RC.Object3D);
+      super();
       this.textureArray = textureArray;
       this.camera = camera; //new RC.PerspectiveCamera(75, this.canvas.width/this.canvas.height, 0.1, 1000.0);
 

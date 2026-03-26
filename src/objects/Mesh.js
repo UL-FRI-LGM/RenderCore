@@ -27,7 +27,7 @@ export class Mesh extends Object3D {
 	 * @param material Material of the mesh.
 	 */
 	constructor(geometry, material, pickingMaterial, outlineMaterial, args = {}) {
-		super(Object3D);
+		super();
 
 		this.type = "Mesh";
 

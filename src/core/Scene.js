@@ -9,7 +9,7 @@ export class Scene extends Object3D {
 	 * Create new Scene object.
 	 */
 	constructor() {
-		super(Object3D);
+		super();
 
 		this.type = "Scene";
 

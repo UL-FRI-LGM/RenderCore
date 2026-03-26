@@ -54,7 +54,6 @@ export class MeshRenderer extends Renderer {
 			point: [],
 			spot: []
 		};
-		this._zVector = new Vector3();
 		// endregion
 
 		// Enable depth testing (disable depth testing with gl.ALWAYS)
@@ -1303,19 +1302,8 @@ export class MeshRenderer extends Renderer {
 	 */
 	_objectInFrustum(object) {
 		if(!object.frustumCulled) return true;
-
-
-		if(object._UPDATE_BOUNDS){
-			const boundingSphere = object.boundingSphere;
-
-			// Apply TRS on sphere
-			this._sphere.copy(boundingSphere).applyMatrix4(object.matrixWorld);
-
-			object._UPDATE_BOUNDS = false;
-		}
-
 		// Check if the frustum intersects the sphere
-		return this._frustum.intersectsSphere(this._sphere)
+		return this._frustum.intersectsSphere(object.boundingSphereWorld);
 	}
 
 
