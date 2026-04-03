@@ -159,6 +159,10 @@ export class REveCameraControls extends EventDispatcher {
 			camTrans.elements = elements;
 		};
 
+		this.getCamBase = function() {
+			return camBase;
+		};
+
 		this.setCameraCenter = function (x, y, z) {
 			this.cameraCenter.set(x, y, z);
 
