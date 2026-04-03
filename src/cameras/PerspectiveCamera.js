@@ -15,7 +15,7 @@ export class PerspectiveCamera extends Camera {
 		 */
 
 	constructor(fov, aspect, near, far, left = undefined, right = undefined, top = undefined, bottom = undefined) {
-		super(Camera);
+		super();
 
 		this.type = "PerspectiveCamera";
 
@@ -299,6 +299,37 @@ export class PerspectiveCamera extends Camera {
 		this._bottom = (y - q/2)/h*(this._top_store - this._bottom_store) + this._bottom_store;
 		this._left = (x - p/2)/w*(this._right_store - this._left_store) + this._left_store;
 		this._right = (x + p/2)/w*(this._right_store - this._left_store) + this._left_store;
+		this.updateProjectionMatrix();
+	}
+
+	optimizeNearFar(scene_bbox) {
+		this.matrixWorldInverse.getInverse(this.matrixWorld);
+		let e = this.matrixWorldInverse.elements;
+		let m = scene_bbox.min;
+		let M = scene_bbox.max;
+		let n = 1e10;
+		let f = -1e10;
+		const check = (x, y, z) => {
+			let w = 1 / ( e[ 3 ] * x + e[ 7 ] * y + e[ 11 ] * z + e[ 15 ] );
+			let d = - (e[2] * x + e[6] * y + e[10] * z + e[14]) * w;
+			if (d < n) n = d;
+			if (d > f) f = d;
+		};
+		check(m.x, m.y, m.z);
+		check(M.x, m.y, m.z);
+		check(M.x, M.y, m.z);
+		check(M.x, m.y, M.z);
+		check(M.x, M.y, M.z);
+		check(m.x, M.y, m.z);
+		check(m.x, m.y, M.z);
+		check(m.x, M.y, M.z);
+		// console.log("optimizeNearFar after calc:", n, f);
+		if (n < 1) n = 1;
+		if (f < n) f = n;
+		this._near = 0.999 * n;
+		this._far = 1.001 * f;
+		// console.log("optimizeNearFar after applied:", this._near, this._far);
+		this._updateTBLR();
 		this.updateProjectionMatrix();
 	}
 };

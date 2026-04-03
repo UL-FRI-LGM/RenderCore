@@ -29,6 +29,8 @@ var _extents = new Vector3();
 var _triangleNormal = new Vector3();
 var _testAxis = new Vector3();
 
+var _transformedBox = new Box3();
+
 /**
  * Copyright © 2010-2021 three.js authors
  */
@@ -248,17 +250,28 @@ Object.assign( Box3.prototype, {
 
 		var geometry = object.geometry;
 
-		if ( geometry !== undefined ) {
+		if ( geometry !== undefined )
+		{
+			if (geometry._externalBounds)
+			{
+				_transformedBox.copy(geometry._boundingBox);
+				_transformedBox.applyMatrix4(object.matrixWorld);
 
-			// RenderCore geometry adaptation
-			const vertices = geometry.vertices;
+				this.expandByPoint(_transformedBox.min);
+				this.expandByPoint(_transformedBox.max);
+			}
+			else
+			{
+				// RenderCore geometry adaptation
+				const vertices = geometry.vertices;
 
-			let is2d = (vertices.itemSize == 2);
-			for (let i = 0; i < vertices.array.length; i += vertices.itemSize) {
-				_vector.set(vertices.array[i], vertices.array[i+1], is2d ? 0 : vertices.array[i+2]);
-				_vector.applyMatrix4(object.matrixWorld);
+				let is2d = (vertices.itemSize == 2);
+				for (let i = 0; i < vertices.array.length; i += vertices.itemSize) {
+					_vector.set(vertices.array[i], vertices.array[i+1], is2d ? 0 : vertices.array[i+2]);
+					_vector.applyMatrix4(object.matrixWorld);
 
-				this.expandByPoint(_vector);
+					this.expandByPoint(_vector);
+				}
 			}
 		}
 

@@ -16,9 +16,14 @@ import { Line } from '../objects/Line.js';
 export class Camera extends Object3D {
 
 	constructor() {
-		super(Object3D);
+		super();
 
 		this.type = "Camera";
+
+        // We seem to need quaternions for the cameras (could be cleaned up, esp. lookAt).
+		if ( ! Object3D.sDefaultQuaternionsAndAutoUpdate) {
+			this.enableQuaternions(true);
+		}
 
 		this._matrixWorldInverse = new Matrix4(); 	//VMat
 		this._projectionMatrix = new Matrix4(); 	//PMat

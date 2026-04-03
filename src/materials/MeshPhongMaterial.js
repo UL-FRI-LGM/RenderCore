@@ -7,7 +7,7 @@ import {MaterialProgramTemplate} from '../program_management/MaterialProgramTemp
 export class MeshPhongMaterial extends Material {
 
 	constructor() {
-		super(Material);
+		super();
 
 		this.type = "MeshPhongMaterial";
 
@@ -66,7 +66,7 @@ export class MeshPhongMaterial extends Material {
 		this.requiredProgramTemplate = new MaterialProgramTemplate(this.programName2, this.flags, this.values, renderer);
 		return this.requiredProgramTemplate;
 	}
-
+	
 	toJson() {
 		let obj = super.toJson();
 

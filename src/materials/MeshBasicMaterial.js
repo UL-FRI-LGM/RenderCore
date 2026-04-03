@@ -13,7 +13,7 @@ export class MeshBasicMaterial extends Material {
 	 * Create new MeshBasicMaterial object.
 	 */
 	constructor() {
-		super(Material);
+		super();
 
 		this.type = "MeshBasicMaterial";
 

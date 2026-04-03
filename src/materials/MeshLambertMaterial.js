@@ -6,7 +6,7 @@ import {MaterialProgramTemplate} from '../program_management/MaterialProgramTemp
 export class MeshLambertMaterial extends Material {
 
 	constructor() {
-		super(Material);
+		super();
 
 		this.type = "MeshLambertMaterial";
 

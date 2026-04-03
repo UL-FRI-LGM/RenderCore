@@ -74,6 +74,9 @@ export class Material {
 		this._instancedTranslation = false;
 
 		this._receiveShadows = true;
+
+		this._flagsUSER = [];
+		this._valuesUSER = {};
 	}
 
 
@@ -598,6 +601,21 @@ export class Material {
 		if(this._heightMap) this._flags.push("HEIGHT_MAP");
 
 		if(this._normalFlat) this._flags.push("NORMAL_FLAT");
+
+
+		// AMT tmp
+		// Add user defined flags
+		for (let i = 0; i < this._flagsUSER.length; i++) {
+			console.log("AMT add flag ", this._flagsUSER[i]);
+			this._flags.push(this._flagsUSER[i]);
+		}
+
+		// Add user defined values
+		for (let name in this._valuesUSER) {
+			if (this._valuesUSER.hasOwnProperty(name)) {
+				this.values[name] = this._valuesUSER[name];
+			}
+		}
 	}
 
 	toJson() {

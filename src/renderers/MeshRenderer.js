@@ -54,7 +54,6 @@ export class MeshRenderer extends Renderer {
 			point: [],
 			spot: []
 		};
-		this._zVector = new Vector3();
 		// endregion
 
 		// Enable depth testing (disable depth testing with gl.ALWAYS)
@@ -381,12 +380,14 @@ export class MeshRenderer extends Renderer {
 		let program = this._compiledPrograms.get(programID);
 		program.use();
 		this._glManager._currentProgram = program;
+		this._glManager._currentMaterial = material;
 
 		this._setup_uniforms(program, object, camera, material);
 		this._setup_attributes(program, object, material);
 	}
 	_cleanupPerObjectState(){
 		this._glManager._currentProgram = null;
+		this._glManager._currentMaterial = null;
 	}
 	_drawObject(object, instance_count=0){
 		if (typeof object.draw !== "function") console.warn("Object " + object.type + " has no draw function");
@@ -596,13 +597,13 @@ export class MeshRenderer extends Renderer {
 			for (let i = 1; i < notSet.length; i++) {
 				notSetString += ", " + notSet[i];
 			}
-
+/*
 			console.error("----------------------------------------");
 			console.error("Uniforms (" + notSetString + ") not set!");
 			console.error(object);
 			console.error(program);
 			console.error(uniformSetter);
-			console.error("----------------------------------------");
+			console.error("----------------------------------------");*/
 		}
 	}
 
@@ -1301,19 +1302,8 @@ export class MeshRenderer extends Renderer {
 	 */
 	_objectInFrustum(object) {
 		if(!object.frustumCulled) return true;
-
-
-		if(object._UPDATE_BOUNDS){
-			const boundingSphere = object.boundingSphere;
-
-			// Apply TRS on sphere
-			this._sphere.copy(boundingSphere).applyMatrix4(object.matrixWorld);
-
-			object._UPDATE_BOUNDS = false;
-		}
-
 		// Check if the frustum intersects the sphere
-		return this._frustum.intersectsSphere(this._sphere)
+		return this._frustum.intersectsSphere(object.boundingSphereWorld);
 	}
 
 

@@ -5,7 +5,7 @@ import {Camera} from './Camera.js';
 
 export class OrthographicCamera extends Camera {
 	constructor(left, right, top, bottom, near, far) {
-		super(Camera);
+		super();
 
 		this.type = "OrthographicCamera";
 

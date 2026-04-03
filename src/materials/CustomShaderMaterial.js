@@ -11,7 +11,7 @@ import {MaterialProgramTemplate} from '../program_management/MaterialProgramTemp
 export class CustomShaderMaterial  extends Material {
 
 	constructor(programName, uniforms = {}, attributes = {}) {
-		super(Material);
+		super();
 
 		this.type = "CustomShaderMaterial";
 
