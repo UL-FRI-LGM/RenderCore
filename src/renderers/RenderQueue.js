@@ -380,6 +380,14 @@ export class RenderQueue {
 		const reference = this._textureMap[name];
 		this._renderer.takeScreenshot(reference, sizeMultiplier, segmented, this);
 	}
+	readTexturePixels(name, out = undefined){
+		const reference = this._textureMap[name];
+		if (!reference) {
+			console.error("RenderQueue.readTexturePixels: no texture named", name);
+			return null;
+		}
+		return this._renderer.readTexturePixels(reference, out);
+	}
 	pickRGB(name, pickX, pickY){
 		const reference = this._textureMap[name];
 		return this._renderer.pickRGB(reference, pickX, pickY, this);

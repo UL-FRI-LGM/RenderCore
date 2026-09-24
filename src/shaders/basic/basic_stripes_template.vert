@@ -26,9 +26,15 @@ uniform float halfLineWidth;
 uniform float MODE;
 //uniform float JOIN_MODE;
 
-in vec3 VPos;       // Vertex position
+// The segment's two endpoints, per INSTANCE -- one instance is one segment,
+// four vertices. Both are views of the same position buffer, offset by one
+// vertex, so nothing is built to feed them.
 in vec3 prevVertex;
 in vec3 nextVertex;
+
+// Which of the four corners this vertex is: x is -1 at the start of the
+// segment and +1 at the end, y is the side. Per vertex, and the same four
+// values for every stripe in existence.
 in vec2 deltaOffset;
 
 #if (COLORS)
@@ -54,10 +60,36 @@ uniform float pointSize;
 out vec3 vViewPosition;
 #fi
 
+#if (DEPTH_BIAS)
+// Pull the stripe towards the viewer by a constant amount in NDC depth.
+//
+// A stripe is extruded in screen space -- that is the point of it, it is how a
+// line keeps its thickness -- so both extruded vertices carry the depth of the
+// line vertex they came from and the depth does not vary ACROSS the width at
+// all. Lying on a surface seen at a grazing angle, the surface's depth changes
+// a great deal over those few pixels while the stripe's does not, and the
+// surface wins wherever it comes out in front.
+//
+// Polygon offset cannot fix that: its slope term scales with the POLYGON's
+// depth slope, which for a stripe runs along the line and has nothing to do
+// with the slope of the surface across it.
+//
+// NDC rather than world units, because that is where the comparison happens: a
+// constant here is a constant number of depth-buffer steps at any distance,
+// while a world-space offset is far too small far away and wasteful close up.
+uniform float depthBias;
+#fi
+
 
 //MAIN
 //**********************************************************************************************************************//
 void main() {
+    // The vertex's own position. It used to be an attribute, which meant
+    // storing every position twice over -- once as VPos, once as prev or next
+    // of the neighbouring vertex. It is just whichever end of the segment this
+    // corner belongs to.
+    vec3 VPos = (deltaOffset.x < 0.0) ? prevVertex : nextVertex;
+
     if(MODE == STRIPE_SPACE_WORLD){
         //VIEWSPACE DEFAULT
 
@@ -404,5 +436,11 @@ void main() {
 
     #if (CLIPPING_PLANES)
     vViewPosition = -VPos4.xyz;
+    #fi
+
+    #if (DEPTH_BIAS)
+    // Last, so it applies to whichever MODE branch above produced gl_Position.
+    // Times w because the perspective divide is still to come.
+    gl_Position.z -= depthBias * gl_Position.w;
     #fi
 }

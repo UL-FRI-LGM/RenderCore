@@ -366,6 +366,23 @@ export class GLManager {
 		return this._attributeManager.getGLBuffer(attribute);
 	}
 
+	/// Locations are per program and therefore per context, so they are
+	/// recorded against this context's cache entry, not against the attribute.
+	addAttributeLocation(attribute, location) {
+		this._attributeManager.addLocation(attribute, location);
+	}
+
+	/// See Renderer.ageResources() for what these two are for.
+	ageResources() {
+		this._textureManager.incrementTime();
+		this._attributeManager.incrementTime();
+	}
+
+	collectResources(idleTimeDelta = 2) {
+		this._textureManager.deleteTextures(true, idleTimeDelta);
+		this._attributeManager.deleteBuffers(true, idleTimeDelta);
+	}
+
 	deleteAttributeBuffers() {
 		this._attributeManager.deleteBuffers();
 	}

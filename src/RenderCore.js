@@ -139,11 +139,12 @@ export {Grid} from './objects/Grid.js';
 // Instanced, instance-pickable, outline-supporting materials and objects
 export {ZMultiMesh} from './objects/ZMultiMesh.js';
 export {ZSpriteBasicMaterial} from './materials/ZSpriteBasicMaterial.js';
-export {ZSprite} from './objects/ZSprite.js';
+export {ZSprite, ZLogo} from './objects/ZSprite.js';
 export {ZShapeBasicMaterial} from './materials/ZShapeBasicMaterial.js';
 export {ZShape} from './objects/ZShape.js';
 export {ZTextMaterial} from './materials/ZTextMaterial.js';
-export {ZText} from './objects/ZText.js';
+export {ZText, ZTextAxis} from './objects/ZText.js';
+export {Z3DAxis} from './objects/Z3DAxis.js';
 
 // Program Management
 export {MaterialProgramTemplate} from './program_management/MaterialProgramTemplate.js';

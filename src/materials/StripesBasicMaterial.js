@@ -1,5 +1,6 @@
 import { STRIPE_SPACE_SCREEN } from "../constants.js";
-import { Float32Attribute } from "../core/BufferAttribute.js";
+import { BufferAttribute, Float32Attribute } from "../core/BufferAttribute.js";
+import { StripesGeometry } from "../objects/StripesGeometry.js";
 import { Color } from "../math/Color.js";
 import { StripeBasicMaterial } from "./StripeBasicMaterial.js";
 
@@ -26,8 +27,39 @@ export class StripesBasicMaterial extends StripeBasicMaterial {
         this.prevVertex = (args.baseGeometry !== undefined) ? StripesBasicMaterial._setupPrevVertices(args.baseGeometry) : null;
         this.nextVertex = (args.baseGeometry !== undefined) ? StripesBasicMaterial._setupNextVertices(args.baseGeometry) : null;
         this.deltaOffset = (args.baseGeometry !== undefined) ? StripesBasicMaterial._setupDeltaDirections(args.baseGeometry) : null;
+        this.depthBias = (args.depthBias !== undefined) ? args.depthBias : 0;
     }
 
+
+    /// Constant bias towards the viewer, in NDC depth units, for a stripe that
+    /// has to win against a surface it is drawn on -- an axis panel ruling a
+    /// floor, most obviously. Negative values push away.
+    ///
+    /// Compiled in only when asked for: zero removes the flag, so a stripe that
+    /// does not want it pays nothing and gets the same program it always had.
+    /// See basic_stripes_template.vert for why polygon offset cannot do this.
+    ///
+    /// Beware it wins against EVERYTHING nearby, not only the surface it was
+    /// meant for -- a track passing just behind a biased line will be drawn over
+    /// by it. Hence off by default and set per material rather than globally.
+    get depthBias() { return this._depthBias; }
+    set depthBias(v) {
+        v = v || 0;
+        this._depthBias = v;
+
+        if (v !== 0) {
+            if (!this.hasSBFlag("DEPTH_BIAS")) {
+                this.addSBFlag("DEPTH_BIAS");
+                // The flag set changed, so the cached template no longer
+                // describes this material -- drop it and let it be rebuilt.
+                this.requiredProgramTemplate = null;
+            }
+            this.setUniform("depthBias", v);
+        } else if (this.hasSBFlag("DEPTH_BIAS")) {
+            this.rmSBFlag("DEPTH_BIAS");
+            this.requiredProgramTemplate = null;
+        }
+    }
 
     get lineWidth() { return this._lineWidth; }
     set lineWidth(lineWidth) {
@@ -56,163 +88,65 @@ export class StripesBasicMaterial extends StripeBasicMaterial {
     }
 
 
-    static _setupPrevVertices(baseGeometry){
-        if(baseGeometry.indices){
-            const baseVertices = baseGeometry.vertices;
-            const baseIndices = baseGeometry.indices;
-            const stripePrevVertices = new Array(baseIndices.count() * 2 * 3);
-        
-            for(let i = 0; i < baseIndices.count(); i++) {
-                if(i % 2 === 0){
-                    stripePrevVertices[i*3*2 + 0] = baseVertices.array[(baseIndices.array[i-0])*3 + 0];
-                    stripePrevVertices[i*3*2 + 1] = baseVertices.array[(baseIndices.array[i-0])*3 + 1];
-                    stripePrevVertices[i*3*2 + 2] = baseVertices.array[(baseIndices.array[i-0])*3 + 2];
-        
-                    stripePrevVertices[i*3*2 + 3] = baseVertices.array[(baseIndices.array[i-0])*3 + 0];
-                    stripePrevVertices[i*3*2 + 4] = baseVertices.array[(baseIndices.array[i-0])*3 + 1];
-                    stripePrevVertices[i*3*2 + 5] = baseVertices.array[(baseIndices.array[i-0])*3 + 2];
-                }else{
-                    stripePrevVertices[i*3*2 + 0] = baseVertices.array[(baseIndices.array[i-1])*3 + 0];
-                    stripePrevVertices[i*3*2 + 1] = baseVertices.array[(baseIndices.array[i-1])*3 + 1];
-                    stripePrevVertices[i*3*2 + 2] = baseVertices.array[(baseIndices.array[i-1])*3 + 2];
-        
-                    stripePrevVertices[i*3*2 + 3] = baseVertices.array[(baseIndices.array[i-1])*3 + 0];
-                    stripePrevVertices[i*3*2 + 4] = baseVertices.array[(baseIndices.array[i-1])*3 + 1];
-                    stripePrevVertices[i*3*2 + 5] = baseVertices.array[(baseIndices.array[i-1])*3 + 2];
-                }
-            }
-        
-            return new Float32Attribute(stripePrevVertices, 3);
-        }else{
-            const baseIndices = baseGeometry.vertices;
-            const stripePrevVertices = new Array(baseIndices.count() * 2 * 3);
-        
-            for(let v = 0; v < baseIndices.count(); v++) {
-                if(v % 2 === 0){
-                    stripePrevVertices[v*3*2 + 0] = baseIndices.array[(v-0)*3 + 0];
-                    stripePrevVertices[v*3*2 + 1] = baseIndices.array[(v-0)*3 + 1];
-                    stripePrevVertices[v*3*2 + 2] = baseIndices.array[(v-0)*3 + 2];
-        
-                    stripePrevVertices[v*3*2 + 3] = baseIndices.array[(v-0)*3 + 0];
-                    stripePrevVertices[v*3*2 + 4] = baseIndices.array[(v-0)*3 + 1];
-                    stripePrevVertices[v*3*2 + 5] = baseIndices.array[(v-0)*3 + 2];
-                }else{
-                    stripePrevVertices[v*3*2 + 0] = baseIndices.array[(v-1)*3 + 0];
-                    stripePrevVertices[v*3*2 + 1] = baseIndices.array[(v-1)*3 + 1];
-                    stripePrevVertices[v*3*2 + 2] = baseIndices.array[(v-1)*3 + 2];
-        
-                    stripePrevVertices[v*3*2 + 3] = baseIndices.array[(v-1)*3 + 0];
-                    stripePrevVertices[v*3*2 + 4] = baseIndices.array[(v-1)*3 + 1];
-                    stripePrevVertices[v*3*2 + 5] = baseIndices.array[(v-1)*3 + 2];
-                }
-            }
-        
-            return new Float32Attribute(stripePrevVertices, 3);
-        }
+    // The three attributes a stripe needs, none of them built.
+    //
+    // One segment is one instance of a four-vertex quad, so:
+    //
+    //   prevVertex   the segment's start   per instance, a VIEW of the caller's
+    //   nextVertex   the segment's end     positions at offsets 0 and 12, both
+    //                                      with stride 24 -- no copy at all
+    //   deltaOffset  which corner          per vertex, four values, ONE buffer
+    //                                      shared by every stripe in existence
+    //
+    // The vertex's own position is not an attribute any more: the shader takes
+    // it as `(deltaOffset.x < 0.0) ? prevVertex : nextVertex`, which is what it
+    // always was.
+    //
+    // This replaces four arrays built per geometry -- expanded vertices, prev,
+    // next and delta, each twice the base size and each first materialised as a
+    // boxed `new Array` before being copied into a Float32Array. A track of a
+    // thousand points built eight thousand vertices' worth of data to draw two
+    // thousand. Now it builds none.
+
+    static _setupPrevVertices(baseGeometry) {
+        return StripesBasicMaterial._endpointView(baseGeometry, 0);
     }
-    static _setupNextVertices(baseGeometry){
-        if(baseGeometry.indices){
-            const baseVertices = baseGeometry.vertices;
-            const baseIndices = baseGeometry.indices;
-            const stripeNextVertices = new Array(baseIndices.count() * 2 * 3);
-    
-            for(let i = 0; i < baseIndices.count(); i++) {
-                if(i % 2 === 0){
-                    stripeNextVertices[i*3*2 + 0] = baseVertices.array[(baseIndices.array[i+1])*3 + 0];
-                    stripeNextVertices[i*3*2 + 1] = baseVertices.array[(baseIndices.array[i+1])*3 + 1];
-                    stripeNextVertices[i*3*2 + 2] = baseVertices.array[(baseIndices.array[i+1])*3 + 2];
-        
-                    stripeNextVertices[i*3*2 + 3] = baseVertices.array[(baseIndices.array[i+1])*3 + 0];
-                    stripeNextVertices[i*3*2 + 4] = baseVertices.array[(baseIndices.array[i+1])*3 + 1];
-                    stripeNextVertices[i*3*2 + 5] = baseVertices.array[(baseIndices.array[i+1])*3 + 2];
-                }else{
-                    stripeNextVertices[i*3*2 + 0] = baseVertices.array[(baseIndices.array[i+0])*3 + 0];
-                    stripeNextVertices[i*3*2 + 1] = baseVertices.array[(baseIndices.array[i+0])*3 + 1];
-                    stripeNextVertices[i*3*2 + 2] = baseVertices.array[(baseIndices.array[i+0])*3 + 2];
-        
-                    stripeNextVertices[i*3*2 + 3] = baseVertices.array[(baseIndices.array[i+0])*3 + 0];
-                    stripeNextVertices[i*3*2 + 4] = baseVertices.array[(baseIndices.array[i+0])*3 + 1];
-                    stripeNextVertices[i*3*2 + 5] = baseVertices.array[(baseIndices.array[i+0])*3 + 2];
-                }
-            }
-    
-            return new Float32Attribute(stripeNextVertices, 3);
-        }else{
-            const baseIndices = baseGeometry.vertices;
-            const stripeNextVertices = new Array(baseIndices.count() * 2 * 3);
-        
-            for(let v = 0; v < baseIndices.count(); v = v+1) {
-                if(v % 2 === 0){
-                    stripeNextVertices[v*3*2 + 0] = baseIndices.array[(v+1)*3 + 0];
-                    stripeNextVertices[v*3*2 + 1] = baseIndices.array[(v+1)*3 + 1];
-                    stripeNextVertices[v*3*2 + 2] = baseIndices.array[(v+1)*3 + 2];
-        
-                    stripeNextVertices[v*3*2 + 3] = baseIndices.array[(v+1)*3 + 0];
-                    stripeNextVertices[v*3*2 + 4] = baseIndices.array[(v+1)*3 + 1];
-                    stripeNextVertices[v*3*2 + 5] = baseIndices.array[(v+1)*3 + 2];
-                }else{
-                    stripeNextVertices[v*3*2 + 0] = baseIndices.array[(v+0)*3 + 0];
-                    stripeNextVertices[v*3*2 + 1] = baseIndices.array[(v+0)*3 + 1];
-                    stripeNextVertices[v*3*2 + 2] = baseIndices.array[(v+0)*3 + 2];
-        
-                    stripeNextVertices[v*3*2 + 3] = baseIndices.array[(v+0)*3 + 0];
-                    stripeNextVertices[v*3*2 + 4] = baseIndices.array[(v+0)*3 + 1];
-                    stripeNextVertices[v*3*2 + 5] = baseIndices.array[(v+0)*3 + 2];
-                }
-            }
-        
-            return new Float32Attribute(stripeNextVertices, 3);
-        }
+
+    static _setupNextVertices(baseGeometry) {
+        return StripesBasicMaterial._endpointView(baseGeometry, 12);
     }
-    static _setupDeltaDirections(baseGeometry){
-        if(baseGeometry.indices){
-            const indices = baseGeometry.indices;
-            const stripeDeltaDirections = new Array(indices.count() * 2 * 2);
-    
-            for(let i = 0; i < indices.count(); i++) {
-                // stripeDeltaDirections[i*4*2 + 0] = -1;
-                // stripeDeltaDirections[i*4*2 + 1] = +1;
-    
-                // stripeDeltaDirections[i*4*2 + 2] = -1;
-                // stripeDeltaDirections[i*4*2 + 3] = -1;
-    
-                // stripeDeltaDirections[i*4*2 + 4] = +1;
-                // stripeDeltaDirections[i*4*2 + 5] = +1;
-    
-                // stripeDeltaDirections[i*4*2 + 6] = +1;
-                // stripeDeltaDirections[i*4*2 + 7] = -1;
-                stripeDeltaDirections[i*4 + 0] = (i % 2 == 0) ? -1 : +1;
-                stripeDeltaDirections[i*4 + 1] = +1;
-    
-                stripeDeltaDirections[i*4 + 2] = (i % 2 == 0) ? -1 : +1;
-                stripeDeltaDirections[i*4 + 3] = -1;
-            }
-    
-            return new Float32Attribute(stripeDeltaDirections, 2);
-        }else{
-            const baseIndices = baseGeometry.vertices;
-            const stripeDeltaDirections = new Array(baseIndices.count() * 2 * 2);
-    
-            for(let v = 0; v < baseIndices.count(); v++) {
-                // stripeDeltaDirections[v*4*2 + 0] = -1;
-                // stripeDeltaDirections[v*4*2 + 1] = +1;
-    
-                // stripeDeltaDirections[v*4*2 + 2] = -1;
-                // stripeDeltaDirections[v*4*2 + 3] = -1;
-    
-                // stripeDeltaDirections[v*4*2 + 4] = +1;
-                // stripeDeltaDirections[v*4*2 + 5] = +1;
-    
-                // stripeDeltaDirections[v*4*2 + 6] = +1;
-                // stripeDeltaDirections[v*4*2 + 7] = -1;
-                stripeDeltaDirections[v*4 + 0] = (v % 2 == 0) ? -1 : +1;
-                stripeDeltaDirections[v*4 + 1] = +1;
-    
-                stripeDeltaDirections[v*4 + 2] = (v % 2 == 0) ? -1 : +1;
-                stripeDeltaDirections[v*4 + 3] = -1;
-            }
-    
-            return new Float32Attribute(stripeDeltaDirections, 2);
-        }
+
+    /// One end of every segment, as a strided view. byteOffset 0 is the start
+    /// vertex of each pair, 12 the end.
+    static _endpointView(baseGeometry, byteOffset) {
+        const arr = StripesGeometry.orderedPositions(baseGeometry);
+        const n = (arr.length / 6) | 0;   // segments
+
+        return new BufferAttribute(arr, 3, 1, { stride: 24, offset: byteOffset, count: n });
+    }
+
+    /// The four corners of the quad, one buffer for every stripe in the
+    /// process. It says start-or-end and which side, which depends on nothing
+    /// at all -- not the positions, not even how many there are, now that the
+    /// quad is per instance.
+    ///
+    /// Sharing it is the point: a scene can hold thousands of stripe objects,
+    /// and eight floats each is not the cost -- allocating and freeing a buffer
+    /// per object is, and one buffer that every draw touches stays in cache
+    /// instead of walking thousands that do not.
+    ///
+    /// Sharing one attribute between viewers is only safe because a
+    /// BufferAttribute is pure data: the GL buffer, the version last uploaded,
+    /// the idle counter and the attrib locations all live in the per-context
+    /// entry in GLAttributeManager, so each context uploads and ages its own.
+    /// It was not always so -- see that class -- and when those lived on the
+    /// attribute this static filled only in whichever viewer rendered first.
+    static _setupDeltaDirections(baseGeometry) {
+        if ( ! StripesBasicMaterial._delta)
+            StripesBasicMaterial._delta =
+                Float32Attribute([-1, +1,  -1, -1,  +1, +1,  +1, -1], 2);
+        return StripesBasicMaterial._delta;
     }
 }
+
+StripesBasicMaterial._delta = null;

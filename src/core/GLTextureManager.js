@@ -59,7 +59,7 @@ export class GLTextureManager {
 		// }
 		this._gl.bindTexture(this._gl.TEXTURE_2D, null);
 
-		this._cached_textures.set(texture, glTexture);
+		this._cached_textures.set(texture, { glTexture: glTexture, version: -1, idleTime: 0 });
 
 
 		return glTexture;
@@ -67,7 +67,7 @@ export class GLTextureManager {
 
 	_updateTexture(texture){
 		// if(!texture.image) console.error(texture);
-		const glTexture = this._cached_textures.get(texture);
+		const glTexture = this._cached_textures.get(texture).glTexture;
 
 		const internalFormat = this._formatToGL(texture._internalFormat);
 		const format = this._formatToGL(texture._format);
@@ -102,8 +102,6 @@ export class GLTextureManager {
 		}
 		this._gl.bindTexture(this._gl.TEXTURE_2D, null);
 
-
-		texture.dirty = false;
 	}
 	// updateTexture(texture, isRTT) {
 	// 	texture.idleTime = 0;
@@ -117,7 +115,7 @@ export class GLTextureManager {
 	// 	// If texture was not found, create a new one and add it to the cached textures
 	// 	if (glTexture === undefined) {
 	// 		glTexture = this._gl.createTexture();
-	// 		this._cached_textures.set(texture, glTexture);
+	// 		this._cached_textures.set(texture, { glTexture: glTexture, version: -1, idleTime: 0 });
 	// 		newTexture = true;
 	// 	}
 
@@ -200,14 +198,14 @@ export class GLTextureManager {
 		this._gl.texImage2D(this._gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, internalFormat, size, size, 0, format, type, null);
 		this._gl.bindTexture(this._gl.TEXTURE_CUBE_MAP, null);
 
-		this._cached_textures.set(texture, glTexture);
+		this._cached_textures.set(texture, { glTexture: glTexture, version: -1, idleTime: 0 });
 
 
 		return glTexture;
 	}
 	_updateCubeTexture(texture){
 		// if(!texture.image) console.error(texture);
-		const glTexture = this._cached_textures.get(texture);
+		const glTexture = this._cached_textures.get(texture).glTexture;
 
 		const internalFormat = this._formatToGL(texture._internalFormat);
 		const format = this._formatToGL(texture._format);
@@ -259,8 +257,6 @@ export class GLTextureManager {
 		}
 		this._gl.bindTexture(this._gl.TEXTURE_CUBE_MAP, null);
 
-
-		texture.dirty = false;
 	}
 	// updateCubeTexture(texture, isRTT = false) {
 	// 	texture.idleTime = 0;
@@ -274,7 +270,7 @@ export class GLTextureManager {
 	// 	// If texture was not found, create a new one and add it to the cached textures
 	// 	if (glTexture === undefined) {
 	// 			glTexture = this._gl.createTexture();
-	// 			this._cached_textures.set(texture, glTexture);
+	// 			this._cached_textures.set(texture, { glTexture: glTexture, version: -1, idleTime: 0 });
 	// 			newTexture = true;
 	// 	}
 
@@ -344,40 +340,26 @@ export class GLTextureManager {
 	// }
 
 	getGLTexture(texture) {
-		texture.idleTime = 0;
+		if ( ! this._cached_textures.has(texture)) this._createGLTexture(texture);
 
-		if(this._cached_textures.has(texture)){
-			const glTexture = this._cached_textures.get(texture);
-			if(texture.dirty) this._updateTexture(texture);
-
-
-			return glTexture; 
-		}else{
-			//console.warn("Warning: Texture texture not found: [" + texture + "]!");
-			const glTexture = this._createGLTexture(texture);
-			if(texture.dirty) this._updateTexture(texture);
-
-
-			return glTexture;
+		const entry = this._cached_textures.get(texture);
+		entry.idleTime = 0;
+		if (entry.version !== texture.version) {
+			this._updateTexture(texture);
+			entry.version = texture.version;
 		}
+		return entry.glTexture;
 	}
 	getGLCubeTexture(texture) {
-		texture.idleTime = 0;
+		if ( ! this._cached_textures.has(texture)) this._createGLCubeTexture(texture);
 
-		if(this._cached_textures.has(texture)){
-			const glCubeTexture = this._cached_textures.get(texture);
-			if(texture.dirty) this._updateCubeTexture(texture);
-
-
-			return glCubeTexture; 
-		}else{
-			//console.warn("Warning: Cube texture texture not found: [" + texture + "]!");
-			const glCubeTexture = this._createGLCubeTexture(texture);
-			if(texture.dirty) this._updateCubeTexture(texture);
-
-
-			return glCubeTexture;
+		const entry = this._cached_textures.get(texture);
+		entry.idleTime = 0;
+		if (entry.version !== texture.version) {
+			this._updateCubeTexture(texture);
+			entry.version = texture.version;
 		}
+		return entry.glTexture;
 	}
 
 	clearBoundTexture() {
@@ -397,27 +379,24 @@ export class GLTextureManager {
 		this._gl.clearColor(currentClearColor[0], currentClearColor[1], currentClearColor[2], currentClearColor[3]);
 	}
 
-	deleteTexture(texture, glTexture) {
-		texture.dirty = true;
+	/// Nothing is written back to the texture: the next use finds no entry,
+	/// makes one at version -1 and re-uploads from the image that is still there.
+	deleteTexture(texture, entry) {
 		this._cached_textures.delete(texture);
-		this._gl.deleteTexture(glTexture);
+		this._gl.deleteTexture(entry.glTexture);
 	}
 	deleteTextures(checkIdleTime = false, idleTimeDelta = 1000) {
-		// Delete all cached textures
-		if(checkIdleTime){
-			for (const [key_texture, val_glTexture] of this._cached_textures) {
-				if(key_texture.idleTime >= idleTimeDelta) this.deleteTexture(key_texture, val_glTexture);
-			}
-		}else{
-			for (const [key_texture, val_glTexture] of this._cached_textures) {
-				this.deleteTexture(key_texture, val_glTexture);
-			}
+		for (const [texture, entry] of this._cached_textures) {
+			if ( ! checkIdleTime || entry.idleTime >= idleTimeDelta)
+				this.deleteTexture(texture, entry);
 		}
 	}
 
+	/// Age everything this context holds by one cycle. Per context, so a shared
+	/// texture no longer ages once per viewer that holds it.
 	incrementTime(){
-		for (const [key_texture, val_glTexture] of this._cached_textures) {
-			key_texture.idleTime = key_texture.idleTime + 1;
+		for (const entry of this._cached_textures.values()) {
+			entry.idleTime = entry.idleTime + 1;
 		}
 	}
 

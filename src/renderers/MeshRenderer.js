@@ -338,6 +338,26 @@ export class MeshRenderer extends Renderer {
 		}
 	}
 	_renderPickableObjects(objects, camera){
+		// Diagnostics for the "picking silently returns nothing" class of bug,
+		// enabled by setting window.__RC_PICKDBG. glGetError is sticky and returns
+		// one error per call, so it must be drained around each step to attribute a
+		// failure to the right one -- a program that fails to link, for instance,
+		// shows up only as GL_INVALID_OPERATION at useProgram and at draw.
+		const dbg = window.__RC_PICKDBG;
+		const drain = dbg ? (tag) => {
+				let es = [], e;
+				while ((e = this._gl.getError()) !== this._gl.NO_ERROR) es.push("0x" + e.toString(16));
+				if (es.length) console.log("RC_PICKDBG   err@" + tag + " [" + es.join(",") + "]");
+			} : null;
+
+		if (dbg) {
+			drain("stale, before pass");
+			let names = [];
+			for (let i = 0; i < objects.length; i++)
+				names.push(objects.get(i).type + ":" + !!objects.get(i).pickable);
+			console.log("RC_PICKDBG pass n=" + objects.length + " [" + names.join(",") + "]");
+		}
+
 		for (let i = 0; i < objects.length; i++) {
 			const object = objects.get(i);
 
@@ -351,11 +371,13 @@ export class MeshRenderer extends Renderer {
 			const mat = object.pickingMaterial;
 
 			this._setupProgram(object, camera, mat);
+			if (dbg) drain("setupProgram");
 
 			this._setup_material_side(mat.side);
 			this._setup_material_depth(true, mat.depthFunc, true);
 
 			this._drawObject(object);
+			if (dbg) drain("drawObject");
 
 			this._cleanupPerObjectState();
 		}

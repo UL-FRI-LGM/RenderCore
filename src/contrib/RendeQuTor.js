@@ -6,12 +6,16 @@ import {FRONT_AND_BACK_SIDE, HIGHPASS_MODE_BRIGHTNESS, HIGHPASS_MODE_DIFFERENCE}
 
 export class RendeQuTor
 {
-    constructor(renderer, scene, camera, overlay_scene)
+    constructor(renderer, scene, camera, overlay_scene, overlay_camera)
     {
         this.renderer = renderer;
         this.scene    = scene;
         this.camera   = camera;
         this.ovlscene = overlay_scene;
+        // The overlay lives in a fixed (0,0)-(1,1) screen box, so it gets its own
+        // orthographic camera. Falling back to the scene camera reproduces the old
+        // behaviour for callers that do not pass one.
+        this.ovlcamera = overlay_camera || camera;
         this.queue    = new RenderQueue(renderer);
         this.pqueue   = new RenderQueue(renderer);
         this.ovlpqueue= new RenderQueue(renderer);
@@ -32,6 +36,12 @@ export class RendeQuTor
           ]);
 
         this.SSAA_value = 1;
+
+        // Image grabbing (see make_RP_ToneMapToTexture / grab_image). capture_scale
+        // multiplies the screen viewport: 1 gives exactly what the operator sees,
+        // SSAA_value gives the full supersampled image without the final downsample.
+        this.capture_scale   = 1;
+        this.capture_pixels  = null;
 
         this.clear_zero_f32arr = new Float32Array([0,0,0,0]);
 
@@ -62,6 +72,8 @@ export class RendeQuTor
         this.make_RP_ToScreen();
         this.make_RP_ToneMapToScreen();
 
+        this.make_RP_ToneMapToTexture();
+
         this.RP_GBuffer.obj_list = [];
 
         this.renderer.preDownloadPrograms(
@@ -70,7 +82,8 @@ export class RendeQuTor
             this.RP_GaussH_mat.requiredProgram(this.renderer),
             this.RP_Blend_mat.requiredProgram(this.renderer),
             this.RP_ToScreen_mat.requiredProgram(this.renderer),
-            this.RP_ToneMapToScreen_mat.requiredProgram(this.renderer)
+            this.RP_ToneMapToScreen_mat.requiredProgram(this.renderer),
+            this.RP_ToneMapToTexture_mat.requiredProgram(this.renderer)
           ]);
     }
 
@@ -83,6 +96,9 @@ export class RendeQuTor
         // this.make_RP_SSAA_Down(); this.RP_SSAA_Down.input_texture = "color_bloom";
         this.make_RP_ToScreen();
         this.RP_ToScreen.input_texture = "color_bloom";
+
+        this.make_RP_ToneMapToTexture();
+        this.RP_ToneMapToTexture.input_texture = "color_bloom";
     }
 
     updateViewport(w, h)
@@ -95,7 +111,13 @@ export class RendeQuTor
         {
             rq[i].view_setup(vp);
         }
-        // Picking render-passes stay constant.
+        // Scene picking render-passes stay constant (they use a narrow window),
+        // but the overlay pick pass is full-viewport, so it has to follow along.
+        let orq = this.ovlpqueue._renderQueue;
+        for (let i = 0; i < orq.length; i++)
+        {
+            if (orq[i].view_setup) orq[i].view_setup(vp);
+        }
     }
 
     //=============================================================================
@@ -242,6 +264,33 @@ export class RendeQuTor
     {
         this.tex_outline = null;
 
+        // Re-arm the outline accumulator's clear HERE, at the start of the
+        // frame, not only where it is consumed.
+        //
+        // render_outline() turns the clear OFF for the second and later
+        // outlines of a frame, so they accumulate into one texture on purpose;
+        // render_main_and_blend_outline() turns it back on once it has consumed
+        // them. The flag is therefore OFF for the stretch between those two
+        // calls, and it is only ever turned back on by the second of them.
+        //
+        // So any frame that ends in that window leaves it off for good: a
+        // program still compiling, a shader that failed to build, an exception
+        // anywhere in the viewer's render path, a queue that reports itself
+        // unused. It does not matter which -- what matters is that the
+        // invariant was owned by a later step that is not guaranteed to run.
+        //
+        // Once off, no outline is ever cleared again: highlights pile up
+        // instead of replacing each other, old ones never go away, and a stale
+        // selection outline keeps showing through. Rare, because the frame has
+        // to end inside that window; permanent once it does; and invisible in
+        // the selection bookkeeping, which stays correct throughout. That
+        // combination is what made it so hard to pin down.
+        //
+        // Re-arming here makes it a frame-local invariant: one assignment, and
+        // no way for it to stick.
+        if (this.RP_Outline)
+            this.RP_Outline.outTextures[0].clearColorArray = this.clear_zero_f32arr;
+
         this.queue.render_begin(used_check);
     }
 
@@ -321,9 +370,29 @@ export class RendeQuTor
         return this.pick_low_level(this.pqueue, x, y, detect_depth);
     }
 
+    /// Overlay picking cannot use the narrow-window trick that pick() relies on.
+    /// Screen-mode ZText computes its clip position directly from the `offset`
+    /// uniform and the viewport aspect, ignoring the projection matrix entirely,
+    /// so narrowing a camera has no effect on where it lands. Render the overlay
+    /// pick pass at full viewport instead and read the pixel under the cursor.
+    /// This runs on mouse-down only, so the extra fill costs nothing that matters.
+    /// Overlay picking cannot use the narrow-window trick that pick() relies on.
+    /// Screen-mode ZText computes its clip position directly from the `offset`
+    /// uniform and the viewport aspect, ignoring the projection matrix entirely,
+    /// so narrowing a camera has no effect on where it lands. Render the overlay
+    /// pick pass at full viewport instead and read the pixel under the cursor.
+    /// This runs on mouse-down only, so the extra fill costs nothing that matters.
     pick_overlay(x, y, detect_depth = false)
     {
-        return this.pick_low_level(this.ovlpqueue, x, y, detect_depth);
+        this.renderer.pick_setup(x, this.vp_h - 1 - y);
+
+        let state = this.ovlpqueue.render();
+        state.x = x;
+        state.y = y;
+        state.depth = -1.0;
+        state.object = this.renderer.pickedObject3D;
+
+        return state;
     }
 
     pick_instance_low_level(rnr_queue, state)
@@ -411,15 +480,19 @@ export class RendeQuTor
             RenderPass.BASIC,
             function (textureMap, additionalData) {},
             function (textureMap, additionalData) {
-                return { scene: pthis.ovlscene, camera: pthis.camera };
+                return { scene: pthis.ovlscene, camera: pthis.ovlcamera };
             },
             function (textureMap, additionalData) {},
             RenderPass.TEXTURE,
-            { width: this.pick_radius, height: this.pick_radius },
+            { width: this.vp_w || 100, height: this.vp_h || 100 },
             "depth_picking_overlay",
             [ { id: "color_picking_overlay", textureConfig: RenderPass.DEFAULT_R32UI_TEXTURE_CONFIG,
                 clearColorArray:  new Uint32Array([0xffffffff, 0, 0, 0])} ]
         );
+        // Full viewport, unlike the scene pick pass -- see pick_overlay().
+        this.PRP_overlay.view_setup = function (vport) {
+             this.viewport = { width: vport.width, height: vport.height };
+            };
 
         this.ovlpqueue.pushRenderPass(this.PRP_overlay);
     }
@@ -546,21 +619,32 @@ export class RendeQuTor
             // Initialize function
             function (textureMap, additionalData) {},
             // Preprocess function
-            function (textureMap, additionalData) { return { scene: pthis.ovlscene, camera: pthis.camera }; },
+            function (textureMap, additionalData) { return { scene: pthis.ovlscene, camera: pthis.ovlcamera }; },
             // Postprocess
             function (textureMap, additionalData) {},
             // Target
             RenderPass.TEXTURE,
             // Viewport
             null,
-            // Bind depth texture to this ID
-            "depth_main",
+            // Bind depth texture to this ID -- its own, NOT depth_main: the overlay
+            // is meant to sit in front of the scene, not depth-test against it.
+            "depth_overlay",
             // Outputs
             [ { id: "color_overlay", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG,
                 clearColorArray: this.clear_zero_f32arr } ]
         );
+        // Supersampled like the scene, NOT at native resolution.
+        //
+        // RP_SSAA_Super renders the scene at vport * SSAA_value and the blend
+        // samples it down, so the scene gets its antialiasing at composite
+        // time. The overlay used to render at vport, which meant none of that
+        // reached it: text, frames and annotation connectors were composited
+        // one-to-one and came out visibly stepped, worst on a thin diagonal.
+        // Rendering it at the same scale lets the very same downsample in
+        // RP_Blend antialias both.
         this.RP_Overlay.view_setup = function (vport) {
-             this.viewport = { width: vport.width, height: vport.height };
+             this.viewport = { width: vport.width * pthis.SSAA_value,
+                               height: vport.height * pthis.SSAA_value };
             };
 
         this.queue.pushRenderPass(this.RP_Overlay);
@@ -590,10 +674,179 @@ export class RendeQuTor
         this.queue.pushRenderPass(this.RP_ToScreen);
     }
 
+    //--------------------------------------------------------------------------
+    // A note on the overlay, and on what it would take to put GUI in the scene.
+    //
+    // The overlay is drawn by its own orthographic camera over a fixed (0,0)-(1,1)
+    // box, into its own depth buffer, so its contents are always in front of the
+    // scene rather than depth-testing against it. It also has its own picking
+    // queue (PRP_overlay) and the viewer handles its events separately and first
+    // -- hover, drag and resize are resolved against overlay elements before the
+    // scene ever sees the mouse. That separation is the point: overlay elements
+    // behave like GUI, not like geometry.
+    //
+    // What the overlay cannot currently express is a GUI element anchored in the
+    // *scene* -- a callout on a detector element, a measurement annotation, a
+    // leader line -- because its camera knows nothing about world coordinates.
+    //
+    // Note this is NOT the same as "world-anchored text", which already works:
+    // TEXT2D_SPACE_MIXED anchors at a world position and holds a constant pixel
+    // size, which is what the viewer axis labels use. The difference is the
+    // overlay semantics -- always in front, own depth, own event handling. A
+    // MIXED element living in the main scene still disappears behind geometry.
+    //
+    // If that is wanted, the change is small: this pass takes {scene, camera}
+    // from its preprocess function, so a second overlay pass differing only in
+    // the camera (the scene camera instead of ovlcamera) is close to a copy, with
+    // a companion to REveScene::SetIsOverlay saying which camera a scene belongs
+    // to. It is most obviously useful in 3D; doing it there makes it free in 2D.
+    // Deliberately not done yet -- 2D projected views need only the screen-space
+    // overlay, because with an orthographic camera the projected -> screen map is
+    // affine and the client already owns it.
+    //--------------------------------------------------------------------------
+
+    // Same tone mapping as RP_ToneMapToScreen, but rendered into an 8-bit texture
+    // with the background NOT composited in and straight alpha preserved. This is
+    // the image to grab: everything the operator sees except the background, so it
+    // can be placed over any backdrop downstream.
+    make_RP_ToneMapToTexture()
+    {
+        this.RP_ToneMapToTexture_mat = new CustomShaderMaterial("ToneMapping",
+            { MODE: 3.0, gamma: 1.0, exposure: 2.0, knee: 0.85, u_keep_alpha: 1 });
+        this.RP_ToneMapToTexture_mat.lights = false;
+
+        let pthis = this;
+
+        this.RP_ToneMapToTexture = new RenderPass(
+            RenderPass.POSTPROCESS,
+            function (textureMap, additionalData) {},
+            function (textureMap, additionalData) {
+                return { material: pthis.RP_ToneMapToTexture_mat,
+                         textures: [ textureMap[this.input_texture] ] };
+            },
+            function (textureMap, additionalData) {},
+            RenderPass.TEXTURE,
+            null,
+            null,
+            [ { id: "color_capture", textureConfig: RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG } ]
+        );
+        this.RP_ToneMapToTexture.input_texture = "color_main";
+        this.RP_ToneMapToTexture.view_setup = function (vport) {
+            let s = pthis.capture_scale;
+            this.viewport = (s === 1) ? { width: vport.width, height: vport.height }
+                                      : { width:  Math.round(vport.width  * s),
+                                          height: Math.round(vport.height * s) };
+        };
+
+        this.queue.pushRenderPass(this.RP_ToneMapToTexture);
+    }
+
+    /// Read the float buffer that feeds the final pass and report how far it
+    /// actually goes above 1.0. This is the measurement that says whether a tone
+    /// curve is earning its keep: ROOT colours are LDR, but lit surfaces and
+    /// specular highlights can push the float16 buffer well past white.
+    hdr_stats()
+    {
+        let tex = this.queue._textureMap[this.tex_final];
+        if (!tex) return null;
+
+        let rdr = this.renderer, gl = rdr.gl;
+        let w = tex.width, h = tex.height;
+        let buf = new Float32Array(w * h * 4);
+
+        const fb = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D,
+                                rdr.glManager._textureManager.getGLTexture(tex), 0);
+        let ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+        if (ok) {
+            gl.readBuffer(gl.COLOR_ATTACHMENT0);
+            gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, buf);
+        }
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.deleteFramebuffer(fb);
+        if (!ok) return null;
+
+        let max = 0, n_gt1 = 0, n_gt105 = 0, n_lit = 0, sum = 0;
+        for (let i = 0; i < buf.length; i += 4) {
+            if (buf[i + 3] <= 0.001) continue;         // untouched background
+            ++n_lit;
+            for (let c = 0; c < 3; ++c) {
+                let v = buf[i + c] / Math.max(buf[i + 3], 1e-6); // un-premultiply
+                if (v > max) max = v;
+                sum += v;
+                if (v > 1.0)  ++n_gt1;
+                if (v > 1.05) ++n_gt105;
+            }
+        }
+        let r = { w, h, covered_px: n_lit, max_channel: max,
+                  frac_over_1: n_lit ? n_gt1 / (3 * n_lit) : 0,
+                  frac_over_105: n_lit ? n_gt105 / (3 * n_lit) : 0,
+                  mean_channel: n_lit ? sum / (3 * n_lit) : 0 };
+        console.log("HDRSTATS " + JSON.stringify(r));
+        return r;
+    }
+
+    /// Select the tone curve of the final passes: true keeps the exposure curve,
+    /// false passes colours through unchanged while still compositing the
+    /// background correctly. Applies to both the screen and the capture pass so a
+    /// grabbed image always matches what is on screen.
+    /// mode: "knee" (default), "exposure" (the old curve), "linear" (clamp only).
+    set_tone_mapping(mode_name)
+    {
+        // Accepts a name or the shader's numeric MODE, so a value streamed from
+        // the server can be passed straight through.
+        let mode = (typeof mode_name === "number")
+                 ? mode_name
+                 : ({ reinhard: 0.0, exposure: 1.0, linear: 2.0, knee: 3.0 })[mode_name];
+        if (mode === undefined || !(mode >= 0.0 && mode <= 3.0)) {
+            console.warn("RendeQuTor.set_tone_mapping: unknown mode", mode_name, "-- using knee");
+            mode = 3.0;
+        }
+        if (this.RP_ToneMapToScreen_mat)  this.RP_ToneMapToScreen_mat.setUniform("MODE", mode);
+        if (this.RP_ToneMapToTexture_mat) this.RP_ToneMapToTexture_mat.setUniform("MODE", mode);
+    }
+
+    /// Knee position for the knee curve: colours below it pass through exactly.
+    set_tone_knee(k)
+    {
+        k = Math.min(Math.max(k, 0.0), 0.99);
+        if (this.RP_ToneMapToScreen_mat)  this.RP_ToneMapToScreen_mat.setUniform("knee", k);
+        if (this.RP_ToneMapToTexture_mat) this.RP_ToneMapToTexture_mat.setUniform("knee", k);
+    }
+
+    /// Set the grab resolution as a multiple of the screen viewport and re-run
+    /// the viewport setup so the capture target is resized.
+    set_capture_scale(s)
+    {
+        this.capture_scale = s;
+        if (this.vp_w && this.vp_h) this.updateViewport(this.vp_w, this.vp_h);
+    }
+
+    /// Render the current tex_final into the capture texture. Must be called
+    /// while tex_final is still alive, i.e. before render_tone_map_to_screen().
+    /// Does not consume tex_final, so the on-screen pass still runs normally.
+    render_tone_map_to_capture()
+    {
+        this.RP_ToneMapToTexture.input_texture = this.tex_final;
+
+        this.queue.render_pass(this.RP_ToneMapToTexture, "Tone Map To Capture");
+    }
+
+    /// Read the capture texture back. Returns { width, height, pixels } with
+    /// RGBA8 in WebGL orientation (bottom-left origin, i.e. rows need flipping
+    /// before they become a top-down image), or null on failure.
+    grab_image()
+    {
+        let r = this.queue.readTexturePixels("color_capture", this.capture_pixels);
+        if (r) this.capture_pixels = r.pixels;
+        return r;
+    }
+
     make_RP_ToneMapToScreen()
     {
         this.RP_ToneMapToScreen_mat = new CustomShaderMaterial("ToneMapping",
-            { MODE: 1.0, gamma: 1.0, exposure: 2.0 });
+            { MODE: 3.0, gamma: 1.0, exposure: 2.0, knee: 0.85 });
             // u_clearColor set from MeshRenderer
         this.RP_ToneMapToScreen_mat.lights = false;
 

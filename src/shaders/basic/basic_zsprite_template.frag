@@ -41,6 +41,19 @@ uniform vec3 ambient;
     in vec2 fragUV;
 #fi
 
+// Hover affordance for a screen-space sprite: a thin frame plus a resize grip
+// in the bottom-right corner. Behind a flag because the ordinary -- and
+// instanced -- ZSprite is a hot path that should not carry it.
+// Requires TEXTURE: it reuses fragUV, and it has to run before the zero-alpha
+// discard so the frame survives outside the image silhouette.
+#if (SPRITE_FRAME)
+    uniform vec2 SpriteSize;      // device px; the same uniform the vertex stage uses
+    uniform vec4 u_FrameColor;
+    uniform float u_FrameLW;      // device px; 0 turns the whole affordance off
+    uniform float u_GripSq;       // grip square side, device px
+    uniform float u_GripGap;      // clearance between grip and frame, device px
+#fi
+
 #if (PICK_MODE_RGB)
     uniform vec3 u_RGB_ID;
     layout(location = 0) out vec4 objectID;
@@ -99,6 +112,31 @@ void main() {
         #for I_TEX in 0 to NUM_TEX
             color *= texture(material.texture##I_TEX, fragUV);
         #end
+
+        // Must sit between the texture fetch and the discard below: the frame is
+        // drawn where the image is transparent, so it needs to overwrite alpha
+        // before the zero-alpha test throws those fragments away.
+        #if (SPRITE_FRAME)
+            if (u_FrameLW > 0.0) {
+                // uv is (0,0) at the bottom-left, so p is device px from there.
+                vec2 p = fragUV * SpriteSize;
+                vec2 d = min(p, SpriteSize - p);
+                bool on_frame = min(d.x, d.y) < u_FrameLW;
+
+                // Grip square tucked into the frame's inner corner. As in ZText,
+                // the frame supplies the bottom and right sides and these two
+                // arms the top and left, so the two read as one square.
+                float gx = SpriteSize.x - p.x;
+                float gy = p.y;
+                float o  = u_FrameLW + u_GripGap;
+                float e  = o + u_GripSq;
+                bool in_sq   = gx >= o && gx <= e && gy >= o && gy <= e;
+                bool on_grip = in_sq && (gy > e - u_FrameLW || gx > e - u_FrameLW);
+
+                if (on_frame || on_grip) color = u_FrameColor;
+            }
+        #fi
+
         #if (TRANSPARENT)
             if (color.w <= 0.00392) discard;
         #fi

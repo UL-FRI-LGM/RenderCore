@@ -1,0 +1,14 @@
+{
+  "name": "image-gator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reference receiver for REve viewer image captures (CMS P5 -> central computing)",
+  "main": "image-gator.js",
+  "scripts": {
+    "start": "node image-gator.js"
+  },
+  "dependencies": {
+    "express": "^5.0.0",
+    "sharp": "^0.34.0"
+  }
+}

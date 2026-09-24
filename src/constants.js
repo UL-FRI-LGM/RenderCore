@@ -4,7 +4,7 @@ import {Vector3} from './math/Vector3.js'
 export const singleton = Symbol();
 export const singletonEnforcer = Symbol();
 
-export const revision = 1;
+export const revision = "2.2";
 
 // Material side constants
 export const FRONT_SIDE = 0;
@@ -54,6 +54,11 @@ export const STRIPE_JOIN_ROUND = 3;
 export const TEXT2D_SPACE_WORLD = 0;
 export const TEXT2D_SPACE_SCREEN = 1;
 export const TEXT2D_SPACE_MIXED = 2; // world pos, screen size, front facing
+/// Per-vertex 3D anchor + screen-space offset, with a size-attenuation knob.
+/// MIXED anchors a whole text block at the object origin; ANCHOR gives every
+/// vertex its own 3D point, so one mesh can carry a complete 3D axis -- ticks
+/// and glyphs together -- in a single draw call. See Z3DAxis.
+export const TEXT2D_SPACE_ANCHOR = 3;
 
 // Highpass modes
 export const HIGHPASS_MODE_BRIGHTNESS = 0;

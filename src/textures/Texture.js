@@ -93,11 +93,12 @@ export class Texture {
 		// Set it to false when loading data from raw arrays where first data is at (0,0).
 		this._flipy = true;
 
-		this._dirty = true;
+		// Version counter. The texture is DATA; whether a given GL context
+		// holds it is that context's business -- see GLTextureManager.
+		this._version = 0;
 		this.update = {
 			size: true,
 		};
-		this.idleTime = 0;
 	}
 
 	applyConfig(texConfig) {
@@ -113,8 +114,16 @@ export class Texture {
 	}
 
 	// region GETTERS
-	get dirty() { return this._dirty; }
-	set dirty(dirty) { this._dirty = dirty; }
+	get version() { return this._version; }
+
+	/// The contents changed: every context re-uploads on its next use.
+	needsUpload() { this._version++; }
+
+	/// Legacy spelling. Nothing is globally dirty any more -- whether a texture
+	/// is up to date is a per-context question, answered in GLTextureManager --
+	/// so the getter is always false and assigning false does nothing.
+	get dirty() { return false; }
+	set dirty(dirty) { if (dirty) this._version++; }
 	get update() { return this._update; }
 	set update(update) { this._update = update; }
 	get image() { return this._image; }
@@ -155,53 +164,53 @@ export class Texture {
 	set image(value) {
 		if (value !== this._image) {
 			this._image = value;
-			this._dirty = true;
+			this._version++;
 		}
 	}
 
 	set wrapS(value) {
 		if (value !== this._wrapS) {
 			this._wrapS = value;
-			this._dirty = true;
+			this._version++;
 		}
 	}
 	set wrapT(value) {
 		if (value !== this._wrapT) {
 			this._wrapT = value;
-			this._dirty = true;
+			this._version++;
 		}
 	}
 
 	set minFilter(value) {
 		if (value !== this._minFilter) {
 			this._minFilter = value;
-			this._dirty = true;
+			this._version++;
 		}
 	}
 	set magFilter(value) {
 		if (value !== this._magFilter) {
 			this._magFilter = value;
-			this._dirty = true;
+			this._version++;
 		}
 	}
 
 	set internalFormat(value) {
 		if (value !== this._internalFormat) {
 			this._internalFormat = value;
-			this._dirty = true;
+			this._version++;
 		}
 	}
 	set format(value) {
 		if (value !== this._format) {
 			this._format = value;
-			this._dirty = true;
+			this._version++;
 		}
 	}
 
 	set width(value) {
 		if (value !== this._width) {
 			this._width = value;
-			this._dirty = true;
+			this._version++;
 			this.update.size = true;
 		}
 	}
@@ -209,7 +218,7 @@ export class Texture {
 	set height(value) {
 		if (value !== this._height) {
 			this._height = value;
-			this._dirty = true;
+			this._version++;
 			this.update.size = true;
 		}
 	}
@@ -217,14 +226,14 @@ export class Texture {
 	set flipy(value) {
 		if (value !== this._flipy) {
 			this._flipy = value;
-			this._dirty = true;
+			this._version++;
 		}
 	}
 
 	set type(value) {
 		if (value !== this._type) {
 			this._type = value;
-			this._dirty = true;
+			this._version++;
 		}
 	}
 	// endregion

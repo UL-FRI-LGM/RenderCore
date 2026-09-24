@@ -31,17 +31,35 @@ export class BufferAttribute {
 		this._itemSize = itemSize;
 		this._divisor = divisor; // Divisor used by instancing
 
-		// Tells if local copies are up to date
-		this._dirty = true;
+		// Version counters. This object is DATA; whether any particular GL
+		// context has that data is the business of that context's
+		// GLAttributeManager, which remembers the versions it last uploaded.
+		// So the same attribute can be used by several contexts at once, and
+		// each uploads on its own schedule -- see the note in
+		// GLAttributeManager.
+		//
+		// _version bumps whenever the contents change, _allocVersion only when
+		// the buffer has to be reallocated because the size changed.
+		this._version = 0;
+		this._allocVersion = 0;
 
 		this._drawType = BufferAttribute.DRAW_TYPE.STATIC;
-		this._update = false;
 
 		this.target = (args.target !== undefined) ? args.target : BufferAttribute.TARGET.ARRAY_BUFFER;
-		this.idleTime = 0;
 
-
-		this._locations = new Array();
+		// Interleaving, in BYTES, straight through to vertexAttribPointer.
+		// Both zero -- the default -- is the tightly packed case and behaves
+		// exactly as before.
+		//
+		// With them, an attribute can be a VIEW of a buffer rather than a copy
+		// of part of it: two attributes over one array, reading different
+		// fields of the same records. Stripes use it to take the two endpoints
+		// of a segment out of a plain list of positions without building
+		// anything, and count() has to be told the item count separately
+		// because it can no longer be derived from the array length.
+		this._stride = (args.stride !== undefined) ? args.stride : 0;
+		this._offset = (args.offset !== undefined) ? args.offset : 0;
+		this._count  = (args.count  !== undefined) ? args.count  : -1;
 	}
 
 	/**
@@ -50,6 +68,7 @@ export class BufferAttribute {
 	 * @returns Item count.
 	 */
 	count() {
+		if (this._count >= 0) return this._count;
 		return this._array.length / this._itemSize;
 	}
 
@@ -60,9 +79,9 @@ export class BufferAttribute {
 	 */
 	set array(val) {
 		if (this._array.length == val.length)
-			this._update = true;
+			this._version++;               // same size, re-upload in place
 		else
-			this._dirty = true;
+			this.needsRealloc();           // size changed, reallocate too
 		this._array = val;
 	}
 
@@ -73,16 +92,25 @@ export class BufferAttribute {
 	 */
 	set itemSize(val) {
 		this._itemSize = val;
-		this._dirty = true;
+		this.needsRealloc();
 	}
 
+	/// The contents changed: every context re-uploads on its next use.
+	needsUpload() { this._version++; }
+
+	/// The contents AND the size changed: every context reallocates as well.
+	needsRealloc() { this._version++; this._allocVersion++; }
+
 	/**
-	 * Set dirty flag.
+	 * Legacy spelling of needsRealloc(). Kept because application code sets it;
+	 * assigning false is now meaningless and does nothing, since whether a
+	 * buffer is up to date is a per-context question and the answer lives in
+	 * that context's GLAttributeManager.
 	 *
 	 * @param val Value to be set.
 	 */
 	set dirty(val) {
-		this._dirty = val;
+		if (val) this.needsRealloc();
 	}
 
 	set drawType(drawType){
@@ -113,23 +141,23 @@ export class BufferAttribute {
 	 *
 	 * @returns True if modified.
 	 */
-	get dirty() { return this._dirty; }
-	get update() { return this._update; }
-	set update(update) { this._update = update; }
+	get version()      { return this._version; }
+	get allocVersion() { return this._allocVersion; }
 
 	get divisor() { return this._divisor; }
+	get stride()  { return this._stride;  }
+	get offset()  { return this._offset;  }
 	set divisor(divisor) { this._divisor = divisor; }
 
 	get drawType() { return this._drawType; }
 
 	get target() { return this._target; }
 	set target(target) { this._target = target; }
-	get locations() { return this._locations; }
-	set locations(locations) { this._locations = locations; }
 
 
+	/// Legacy spelling of needsUpload().
 	update(){
-		this._update = true;
+		this._version++;
 	}
 };
 

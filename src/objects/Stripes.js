@@ -28,6 +28,14 @@ export class Stripes extends Mesh {
 
         this._dashed = false;
 
+        // One segment is one instance of a four-vertex quad. The geometry holds
+        // six indices and nothing that grows with the data; the segment count
+        // comes from the geometry, which knows how many endpoints it was given.
+        if (this.geometry && this.geometry.segmentCount !== undefined) {
+            this.instanced = true;
+            this.instanceCount = this.geometry.segmentCount;
+        }
+
 
         // const spriteGeometry = new SpriteGeometry({baseGeometry: args.geometry});
         // const spriteMaterial = new SpriteBasicMaterial({

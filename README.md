@@ -245,6 +245,48 @@ scene.add(spriteObject);
 ```
 
 
+## GL resource management
+
+A `BufferAttribute` or a `Texture` holds data. The WebGL buffer or texture built
+from it is only a **cache** of that data, owned by the `GLManager` of the context
+that built it. Nothing in RenderCore registers, reference-counts or disposes a GL
+resource: an object that stops being drawn simply stops being asked for, and the
+buffer behind it can be dropped and rebuilt from the data, which is still there.
+
+Two consequences worth knowing.
+
+**The same attribute or texture can be used by several contexts at once.** Each
+`GLManager` keeps its own cache entry -- the GL object, the version it last
+uploaded, its idle counter and the attrib locations it is bound to -- so two
+canvases sharing one geometry each upload it once, independently. Nothing that
+is per context lives on the attribute; the attribute carries only data and a
+version counter, bumped whenever the data changes.
+
+**Freeing memory is a question only the application can answer.** The renderer
+sees a stream of draw calls and cannot tell an object that was removed from one
+that merely was not visible this frame. So the application brackets a change to
+the scene:
+
+```js
+renderer.ageResources();      // before: age everything this context holds
+// ... rebuild the scene: add, remove, replace ...
+renderer.collectResources();  // after: drop whatever the rebuild did not use
+```
+
+"Still needed" is then answered by whether anything reached for the resource
+while the scene was being rebuilt -- no bookkeeping, no ownership, no destructors.
+`collectResources(n)` takes the number of cycles a resource may go untouched
+before it is dropped; the default of 2 gives one cycle of grace, so a resource
+used by every second rebuild is not thrashed. Dropping writes nothing back to the
+attribute or texture, so a resource collected too eagerly costs an upload and
+nothing else.
+
+An application that loads a scene once and keeps it never has to call either one,
+which is why neither is on the render path. An application whose scene changes --
+a new dataset, a new event -- calls them around each change and its GPU memory
+follows the scene on its own. ROOT's REve does exactly this, once per update
+cycle, in `EveManager` around the point where the scenes finish applying changes.
+
 ## External sources
 Framework contains some functionalities adopted from [Three.js](https://github.com/mrdoob/three.js/) 3D library.
 

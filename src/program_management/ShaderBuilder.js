@@ -122,6 +122,17 @@ export class ShaderBuilder {
 					// Try to build the shader
 					var shader = shaderTemplate.tree.build(flags, values)
 
+					// Dump the shader a set of flags actually produced. Set
+					// window.__RC_SHADERDBG to a substring of the template name.
+					// Invaluable when a variant misbehaves: the #if/#else blocks
+					// mean the compiled source can differ from the file in ways
+					// that are not obvious by reading it.
+					if (typeof window !== "undefined" && window.__RC_SHADERDBG &&
+					    templateName.indexOf(window.__RC_SHADERDBG) !== -1) {
+						console.log("RC_SHADERDBG " + templateName + " flags=" + JSON.stringify(flags) +
+						            "\n----8<----\n" + shader + "\n---->8----");
+					}
+
 					// Add shader to cached shaders map
 					cachedShaders[shaderName] = shader;
 

@@ -161,14 +161,20 @@ export class GLProgramManager {
 				if (utype == 0)
 					utype = type;
 				if(item_size <= 4){
-					buffer.locations.push(location);
+					self._glManager.addAttributeLocation(buffer, location);
 
 					self._gl.enableVertexAttribArray(location);
 					self._gl.bindBuffer(self._gl.ARRAY_BUFFER, glBuffer);
+					// Stride and offset are the attribute's own, in bytes; zero
+					// and zero is tightly packed, which is what everything that
+					// does not ask for interleaving gets.
+					const a_stride = buffer.stride || 0;
+					const a_offset = buffer.offset || 0;
+
 					if (type == self._gl.FLOAT){
-						self._gl.vertexAttribPointer(location, item_size, utype, unormalized, 0, 0);
+						self._gl.vertexAttribPointer(location, item_size, utype, unormalized, a_stride, a_offset);
 					}else{
-						self._gl.vertexAttribIPointer(location, item_size, utype, 0, 0);
+						self._gl.vertexAttribIPointer(location, item_size, utype, a_stride, a_offset);
 					}
 					if(instanced) {
 						self._gl.vertexAttribDivisor(location, divisor);
@@ -179,7 +185,7 @@ export class GLProgramManager {
 					self._gl.bindBuffer(self._gl.ARRAY_BUFFER, glBuffer);
 
 					for(let i = 0; i < item_size/4; i++){
-						buffer.locations.push(location + i);
+						self._glManager.addAttributeLocation(buffer, location + i);
 
 						self._gl.enableVertexAttribArray(location + i);
 						if (type == self._gl.FLOAT){

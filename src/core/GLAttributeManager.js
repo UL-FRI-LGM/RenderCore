@@ -35,107 +35,109 @@ export class GLAttributeManager {
 	}
 
 
-	_createGLBuffer(attribute){
-		const bufferType = (attribute.target) ? this.TARGET.get(attribute.target) : this._gl.ARRAY_BUFFER;
-		const size = attribute.size;
-		const usage = this.DRAW_TYPE.get(attribute.drawType);
-
-		const glBuffer = this._gl.createBuffer();
-		this._gl.bindBuffer(bufferType, glBuffer);
-		this._gl.bufferData(bufferType, size, usage); //allocation
-		this._gl.bindBuffer(bufferType, null);
-	
-		this._cached_buffers.set(attribute, glBuffer);
-
-
-		return glBuffer;
+	/**
+	 * The per-context cache entry for an attribute. The attribute itself is
+	 * DATA and may be shared by any number of contexts; everything below is
+	 * true only of this one:
+	 *
+	 *   glBuffer      this context's buffer object
+	 *   version       the attribute version last uploaded into it
+	 *   allocVersion  the attribute version it was last sized for
+	 *   idleTime      cycles since anything in this context asked for it
+	 *   locations     the attrib locations it is currently bound to, which are
+	 *                 per program and therefore per context
+	 *
+	 * Keeping these on the attribute is what used to make sharing impossible:
+	 * whichever context uploaded first cleared the flag and the rest drew from
+	 * a buffer that had been allocated and never filled.
+	 */
+	_entry(attribute) {
+		let entry = this._cached_buffers.get(attribute);
+		if (entry === undefined) {
+			entry = { glBuffer: this._gl.createBuffer(),
+			          version: -1, allocVersion: -1,
+			          idleTime: 0, locations: [] };
+			this._cached_buffers.set(attribute, entry);
+		}
+		return entry;
 	}
 
-	/**
-	 * Checks if the given attribute is already tracked in the global properties and has its WebGL buffer set (if not it creates a new buffer).
-	 * If the properties attribute and object attribute versions mismatch, it updates the properties attribute with object attribute.
-	 * @param {BufferAttribute} attribute Object attribute
-	 * @param bufferType WebGL buffer type
-	 */
-	_updateAttribute (attribute) {
-		const glBuffer = this._cached_buffers.get(attribute);
-		const bufferType = (attribute.target) ? this.TARGET.get(attribute.target) : this._gl.ARRAY_BUFFER;
+	/// Bring this context's buffer up to the attribute's current version.
+	/// A fresh entry is at -1, so it always allocates and uploads once.
+	_sync(attribute, entry) {
+		if (entry.allocVersion === attribute.allocVersion &&
+		    entry.version      === attribute.version) return;
 
-		// If the WebGL buffer property is undefined, create a new buffer (attribute not found in properties)
-		if (attribute.dirty || attribute._update) {
-			this._gl.bindBuffer(bufferType, glBuffer);
-			if (attribute.dirty) {
-				const usage = this.DRAW_TYPE.get(attribute.drawType);
-				this._gl.bufferData(bufferType, attribute.size, usage); // recreate buffer
-				attribute.dirty = false; // Mark attribute not dirty
-			}
-			//this._gl.bufferSubData(bufferType, 0, attribute.array); // Write the data to buffer
+		const bufferType = (attribute.target) ? this.TARGET.get(attribute.target)
+		                                      : this._gl.ARRAY_BUFFER;
+		this._gl.bindBuffer(bufferType, entry.glBuffer);
+
+		if (entry.allocVersion !== attribute.allocVersion) {
+			const usage = this.DRAW_TYPE.get(attribute.drawType);
+			this._gl.bufferData(bufferType, attribute.size, usage);
+			entry.allocVersion = attribute.allocVersion;
+			entry.version = -1;                 // the new storage holds nothing
+		}
+		if (entry.version !== attribute.version) {
 			this._gl.bufferSubData(bufferType, 0, attribute.array, 0, 0);
-			this._gl.bindBuffer(bufferType, null);
-
-			
-			attribute._update = false;
+			entry.version = attribute.version;
 		}
+
+		this._gl.bindBuffer(bufferType, null);
 	}
 
 	/**
-	 * Fetches cached WebGL buffer for the given attribute object
-	 * @param {BufferAttribute} attribute An attribute whose WebGL buffer should be retrieved
-	 * @returns {map} Attributes WebGL buffer container
+	 * Fetches this context's WebGL buffer for the given attribute, creating and
+	 * filling it if needed. Touching it also clears its idle counter, which is
+	 * the whole of the liveness bookkeeping: an attribute nothing asked for
+	 * during a rebuild is one nothing needs any more.
+	 *
+	 * @param {BufferAttribute} attribute
+	 * @returns the WebGL buffer
 	 */
-	 getGLBuffer (attribute) {
-		attribute.idleTime = 0;
+	getGLBuffer (attribute) {
+		const entry = this._entry(attribute);
+		entry.idleTime = 0;
+		this._sync(attribute, entry);
+		return entry.glBuffer;
+	}
 
-		if(this._cached_buffers.has(attribute)){
-			const glBuffer = this._cached_buffers.get(attribute);
-			if(attribute.dirty || attribute._update) this._updateAttribute(attribute);
-
-
-			return glBuffer; 
-		}else{
-			//console.error("Warning: GLBuffer not found: [" + attribute + "]!");
-			const glBuffer = this._createGLBuffer(attribute);
-			if(attribute.dirty || attribute._update) this._updateAttribute(attribute);
-			
-
-			return glBuffer;
-		}
+	/// Record that this context has bound the attribute to a vertex attrib
+	/// location, so eviction can disable exactly the ones it enabled.
+	addLocation (attribute, location) {
+		const entry = this._cached_buffers.get(attribute);
+		if (entry !== undefined) entry.locations.push(location);
 	}
 
 	/**
-	 * Deletes cached WebGL buffer for the given attribute object
-	 * @param {BufferAttribute} attribute An attribute whose local version will be deleted
+	 * Drops this context's buffer for an attribute. Nothing is written back to
+	 * the attribute: the next use simply finds no entry, makes one at version
+	 * -1, and uploads. That is what lets a caller forget about GL resources
+	 * entirely -- the data is still there, and the buffer is only a cache of it.
 	 */
-	deleteBuffer(buffer, glBuffer) {
-		buffer.dirty = true; //so it will be updated when created again
-		this._cached_buffers.delete(buffer);
-		this._gl.deleteBuffer(glBuffer);
-
-		for (let i = 0; i < buffer.locations.length; i++) {
-			const location = buffer.locations[i];
-			this._gl.disableVertexAttribArray(location);
+	deleteBuffer(attribute, entry) {
+		for (let i = 0; i < entry.locations.length; i++) {
+			this._gl.disableVertexAttribArray(entry.locations[i]);
 		}
-		buffer.locations = new Array(); // clear
+		this._gl.deleteBuffer(entry.glBuffer);
+		this._cached_buffers.delete(attribute);
 	}
 
 	/**
-	 * Clears buffer cache
+	 * Clears buffer cache -- everything, or only what has gone idle.
 	 */
 	deleteBuffers(checkIdleTime = false, idleTimeDelta = 1000) {
-		if(checkIdleTime){
-			for (const [key_buffer, val_glBuffer] of this._cached_buffers) {
-				if(key_buffer.idleTime >= idleTimeDelta) this.deleteBuffer(key_buffer, val_glBuffer);
-			}
-		}else{
-			for (const [key_buffer, val_glBuffer] of this._cached_buffers) {
-				this.deleteBuffer(key_buffer, val_glBuffer);
-			}
+		for (const [attribute, entry] of this._cached_buffers) {
+			if ( ! checkIdleTime || entry.idleTime >= idleTimeDelta)
+				this.deleteBuffer(attribute, entry);
 		}
 	}
 
+	/// Age everything this context holds by one cycle. Counted per context, so
+	/// a shared attribute no longer ages once per viewer that holds it.
 	incrementTime(){
-		for (const [key_buffer, val_glBuffer] of this._cached_buffers) {
-			key_buffer.idleTime = key_buffer.idleTime + 1;
+		for (const entry of this._cached_buffers.values()) {
+			entry.idleTime = entry.idleTime + 1;
 		}
 	}
 };

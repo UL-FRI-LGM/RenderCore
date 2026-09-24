@@ -27,7 +27,6 @@ uniform float halfLineWidth;
 uniform float MODE;
 //uniform float JOIN_MODE;
 
-in vec3 VPos;       // Vertex position
 in vec3 prevVertex;
 in vec3 nextVertex;
 in vec2 deltaOffset;
@@ -45,6 +44,12 @@ in vec2 deltaOffset;
 //MAIN
 //**********************************************************************************************************************//
 void main() {
+    // The vertex's own position, derived rather than supplied: a segment is one
+    // instance of a four-vertex quad, so this corner is whichever end of the
+    // segment it belongs to. Must match basic_stripes_template.vert, which
+    // shares this geometry.
+    vec3 VPos = (deltaOffset.x < 0.0) ? prevVertex : nextVertex;
+
     if(MODE == STRIPE_SPACE_WORLD){
         //VIEWSPACE DEFAULT
 
