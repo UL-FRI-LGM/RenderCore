@@ -183,4 +183,3 @@ export {RenderArrayManager} from '../renderers/RenderArrayManager.js';
 // REve specifics
 
 export {RendeQuTor} from './RendeQuTor.js';
-export {REveCameraControls} from './REveCameraControls.js';
