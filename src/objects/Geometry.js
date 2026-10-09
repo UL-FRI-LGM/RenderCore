@@ -35,6 +35,8 @@ export class Geometry {
 		this._boundingBox = null;
 		this._boundingSphere = null;
 		this._externalBounds = false;
+		// Raised whenever the bounds change; Object3D compares it to rebuild its own.
+		this._boundsVersion = 0;
 
 		// Parameter on change listener
 		this._onChangeListener = null;
@@ -54,6 +56,22 @@ export class Geometry {
 		this._boundingSphere = new Sphere();
 		box.getBoundingSphere( this._boundingSphere );
 		this._externalBounds = true;
+		++this._boundsVersion;
+	}
+
+	/**
+	 * Report that the vertices changed in place, through vertices.array.
+	 * Assigning vertices or calling setExternalBoundingBox() does this itself.
+	 * Computed bounds are dropped, and the bounding sphere is recomputed on
+	 * next use; external bounds are kept.
+	 * Objects using this geometry rebuild their spheres on the next frame.
+	 */
+	boundsChanged() {
+		if (!this._externalBounds) {
+			this._boundingBox = null;
+			this._boundingSphere = null;
+		}
+		++this._boundsVersion;
 	}
 
 	/**
@@ -657,14 +675,16 @@ export class Geometry {
 			return;
 		}
 
-		// Check if the bounding box already exist
+		// Check if the bounding box already exist; recomputing it is a change
 		if ( this._boundingBox === null ) {
 			this._boundingBox = new Box3();
+		} else {
+			++this._boundsVersion;
 		}
 
 		// Create new bounding box using the vertices
 		if (this._vertices) {
-			this._boundingBox.setFromArray(this._vertices.array);
+			this._boundingBox.setFromArray(this._vertices.array, this._vertices.itemSize);
 		}
 		else {
 			this._boundingBox.makeEmpty();
@@ -687,24 +707,28 @@ export class Geometry {
 		let box = new Box3();
 		let vector = new Vector3();
 
-		// Check if the sphere already exists
+		// Check if the sphere already exists; recomputing it is a change. The
+		// first computation follows a change that raised the version already.
 		if (this._boundingSphere === null) {
 			this._boundingSphere = new Sphere();
+		} else {
+			++this._boundsVersion;
 		}
 
-		if (this._vertices) {
+		if (this._vertices && this._vertices.array.length >= this._vertices.itemSize) {
 			let array = this._vertices.array;
+			let itemSize = this._vertices.itemSize;
 			let center = this._boundingSphere.center;
 
 			// Set initial bounding sphere based on the bounding box
-			box.setFromArray(array);
+			box.setFromArray(array, itemSize);
 			box.center(center);
 
 			// Optimize sphere radius
 			let maxRadiusSq = 0;
 
-			for (let i = 0; i < array.length; i += 3) {
-				vector.fromArray(array, i);
+			for (let i = 0; i < array.length; i += itemSize) {
+				vector.set(array[i], array[i + 1], itemSize === 2 ? 0 : array[i + 2]);
 				maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(vector));
 			}
 
@@ -713,6 +737,10 @@ export class Geometry {
 			if (isNaN(this._boundingSphere.radius)) {
 				console.error('Geometry error: Bounding sphere radius is NaN.');
 			}
+		} else {
+			// No vertices: the empty sphere, which expandBySphere() skips.
+			this._boundingSphere.center.set(0, 0, 0);
+			this._boundingSphere.radius = -1;
 		}
 	}
 
@@ -811,6 +839,13 @@ export class Geometry {
 
 		return this._boundingSphere;
 	}
+
+	/**
+	 * Get the bounds version, raised whenever the bounds change.
+	 *
+	 * @returns Bounds version.
+	 */
+	get boundsVersion() { return this._boundsVersion; }
 	// endregion
 
 	// region SETTERS
@@ -839,6 +874,12 @@ export class Geometry {
 	 */
 	set vertices(values) {
 		this._vertices = values;
+
+		if (!this._externalBounds) {
+			this._boundingBox = null;
+			this._boundingSphere = null;
+		}
+		++this._boundsVersion;
 
 		// Notify onChange subscriber
 		if (this._onChangeListener) {

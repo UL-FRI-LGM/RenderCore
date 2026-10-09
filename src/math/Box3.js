@@ -55,7 +55,8 @@ Object.assign( Box3.prototype, {
 
 	},
 
-	setFromArray: function ( array ) {
+	// itemSize 2 reads the array as (x, y) pairs with z = 0.
+	setFromArray: function ( array, itemSize = 3 ) {
 
 		var minX = + Infinity;
 		var minY = + Infinity;
@@ -65,11 +66,13 @@ Object.assign( Box3.prototype, {
 		var maxY = - Infinity;
 		var maxZ = - Infinity;
 
-		for ( var i = 0, l = array.length; i < l; i += 3 ) {
+		var is2d = ( itemSize === 2 );
+
+		for ( var i = 0, l = array.length; i < l; i += itemSize ) {
 
 			var x = array[ i ];
 			var y = array[ i + 1 ];
-			var z = array[ i + 2 ];
+			var z = is2d ? 0 : array[ i + 2 ];
 
 			if ( x < minX ) minX = x;
 			if ( y < minY ) minY = y;
@@ -246,7 +249,7 @@ Object.assign( Box3.prototype, {
 		// Computes the world-axis-aligned bounding box of an object (including its children),
 		// accounting for both the object's, and children's, world transforms
 
-		object.updateWorldMatrix( false, false );
+		object.computeWorldMatrix( false, false );
 
 		var geometry = object.geometry;
 

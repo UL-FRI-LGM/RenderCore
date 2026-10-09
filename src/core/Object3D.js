@@ -15,6 +15,9 @@ import {MeshBasicMaterial} from "../materials/MeshBasicMaterial.js";
 import {MeshPhongMaterial} from "../materials/MeshPhongMaterial.js";
 import {Mesh} from "../objects/Mesh.js";
 
+// Scratch for _rebuildSubtreeSphere(), which does not recurse.
+const _childSphere = new Sphere();
+const _prevMatrix = new Matrix4();
 
 export class Object3D {
 
@@ -64,8 +67,22 @@ export class Object3D {
 		this._renderingPrimitive = TRIANGLES;	//default rendering primitive
 		this._pickable = false;
 		this._zVector = new Vector3();
+
+		// Bounds. _boundingSphereWorld is the sphere around the own geometry in
+		// world space, redone when _boundsDirty is set; it decides whether the
+		// object is drawn. _subtreeSphere encloses the object and everything below
+		// it, in the object's frame, and _subtreeSphereWorld is the same in world
+		// space; it decides whether the subtree is visited. Radius below 0 means
+		// empty, Infinity unbounded. updateMatrixWorld() rebuilds them, and
+		// compares the geometry and its bounds version with _boundsGeometry and
+		// _boundsGeometryVersion, as Geometry does not notify its objects.
 		this._boundingSphereWorld = new Sphere(new Vector3(0, 0, 0), Infinity);
-		this._UPDATE_BOUNDS = true;
+		this._boundsDirty = true;
+		this._subtreeSphere = new Sphere(new Vector3(0, 0, 0), -1);
+		this._subtreeSphereWorld = new Sphere(new Vector3(0, 0, 0), -1);
+		this._subtreeDirty = true;
+		this._boundsGeometry = null;
+		this._boundsGeometryVersion = -1;
 	}
 
 	enableQuaternions(enable_auto_update) {
@@ -99,6 +116,8 @@ export class Object3D {
 	//region GETTERS
 	get parent() { return this._parent; }
 	get children() { return this._children; }
+	// The children the renderer descends into. Group may leave some out.
+	get drawnChildren() { return this._children; }
 	get position() { return this._position; }
 	get positionX() { return this._position.x; }
 	get positionY() { return this._position.y; }
@@ -118,17 +137,24 @@ export class Object3D {
 	get staticStateDirty(){ return this._staticStateDirty; }
 	get renderingPrimitive(){ return this._renderingPrimitive; }
 	get pickable(){ return this._pickable; }
+	// A plain structural node: no geometry and nothing to draw. Group overrides.
+	get isGroup() { return false; }
+	get subtreeSphere() { return this._subtreeSphere; }
+	get subtreeSphereWorld() { return this._subtreeSphereWorld; }
 	get matrix() { return this._matrix; }
 	set matrix(matrix) {
 		this._matrix = matrix;
-		this._matrixWorldNeedsUpdate = true;
+		this.matrixChanged();
 	}
 	setMatrixFromArray(arr) {
 		this._matrix.fromArray(arr);
-		this._matrixWorldNeedsUpdate = true;
+		this.matrixChanged();
 	}
+	// The parent's subtree sphere holds this object's sphere moved by this
+	// matrix, so the parent is marked here as well as during the traversal.
 	matrixChanged() {
 		this._matrixWorldNeedsUpdate = true;
+		if (this._parent) this._parent._subtreeDirty = true;
 	}
 	/**
 	 * Get model view matrix of the mesh.
@@ -282,6 +308,7 @@ export class Object3D {
 	set frustumCulled(val) {
 		if (val !== this._frustumCulled) {
 			this._frustumCulled = val;
+			this._subtreeDirty = true;
 
 			// Notify onChange subscriber
 			if (this._onChangeListener) {
@@ -375,6 +402,7 @@ export class Object3D {
 	applyMatrix(matrix) {
 				this._matrix.multiplyMatrices(matrix, this._matrix);
 				this._matrix.decompose(this._position, this._quaternion, this._scale);
+				this.matrixChanged();
 
 				// Notify onChange subscriber
 				if (this._onChangeListener) {
@@ -389,18 +417,31 @@ export class Object3D {
 				}
 	}
 
+	// Recompose from position, quaternion and scale; only a different matrix
+	// counts as a change, so still objects with auto-update cost nothing more.
 	updateMatrix() {
+		_prevMatrix.copy(this._matrix);
 		this._matrix.compose(this._position, this._quaternion, this._scale);
-		this._matrixWorldNeedsUpdate = true;
+		if (this._matrix.equals(_prevMatrix)) return;
 
-
-		this._UPDATE_BOUNDS = true;
+		this.matrixChanged();
+		this._boundsDirty = true;
 	}
 
+	/**
+	 * Compose world matrices down the tree, then rebuild subtree spheres on the
+	 * way back up. Call it on the scene root; a call on an inner object marks
+	 * the parent, whose sphere the next call on the root rebuilds.
+	 *
+	 * @returns True when this object's subtree sphere, as its parent sees it,
+	 * changed: the sphere was rebuilt, or the local matrix changed.
+	 */
 	updateMatrixWorld(parentWorldUpdated = false) {
 		if ( this._matrixAutoUpdate ) this.updateMatrix();
 
-		if (this._matrixWorldNeedsUpdate || parentWorldUpdated) {
+		const localChanged = this._matrixWorldNeedsUpdate;
+
+		if (localChanged || parentWorldUpdated) {
 			if (this.parent === null) {
 				this._matrixWorld.copy(this._matrix);
 			} else {
@@ -409,18 +450,80 @@ export class Object3D {
 			this._matrixWorldNeedsUpdate = false;
 			parentWorldUpdated = true;
 
-			this._UPDATE_BOUNDS = true;
+			this._boundsDirty = true;
 		}
 
-		for (var i = 0; i < this._children.length; i++) {
-			this._children[i].updateMatrixWorld(parentWorldUpdated);
+		let childChanged = false;
+		for (let i = 0; i < this._children.length; i++) {
+			if (this._children[i].updateMatrixWorld(parentWorldUpdated)) childChanged = true;
+		}
+
+		const geo = this._geometry || null;
+		if (geo !== this._boundsGeometry || (geo !== null && geo.boundsVersion !== this._boundsGeometryVersion)) {
+			this._boundsGeometry = geo;
+			this._boundsGeometryVersion = geo !== null ? geo.boundsVersion : -1;
+			this._subtreeDirty = true;
+			this._boundsDirty = true;
+		}
+
+		const rebuilt = this._subtreeDirty || childChanged;
+		if (rebuilt) {
+			this._rebuildSubtreeSphere();
+			// For a call on an inner object; from the root, the parent rebuilds anyway.
+			if (this._parent) this._parent._subtreeDirty = true;
+		}
+		if (rebuilt || parentWorldUpdated) {
+			this._subtreeSphereWorld.copy(this._subtreeSphere).applyMatrix4(this._matrixWorld);
+		}
+
+		return rebuilt || localChanged;
+	}
+
+	/**
+	 * The own geometry's sphere combined with each child's subtree sphere moved
+	 * by the child's matrix. An object that is not frustum culled is unbounded,
+	 * so no ancestor is culled away from under it. So is an object with no
+	 * geometry that is not a Group, such as a Light.
+	 */
+	_rebuildSubtreeSphere() {
+		const s = this._subtreeSphere;
+		this._subtreeDirty = false;
+
+		const geo = this._geometry || null;
+
+		if (!this._frustumCulled || (geo === null && !this.isGroup)) {
+			s.center.set(0, 0, 0);
+			s.radius = Infinity;
+			return;
+		}
+
+		if (geo !== null) {
+			s.copy(geo.boundingSphere);
+		} else {
+			s.center.set(0, 0, 0);
+			s.radius = -1;
+		}
+
+		for (let i = 0; i < this._children.length; i++) {
+			const child = this._children[i];
+			_childSphere.copy(child._subtreeSphere).applyMatrix4(child._matrix);
+			s.expandBySphere(_childSphere);
+			if (s.radius === Infinity) return;
 		}
 	}
-	//THREE version of matrix world update
-	updateWorldMatrix( updateParents, updateChildren ) {
+	/**
+	 * Recompute matrixWorld from the parent's, for code that needs current
+	 * world matrices between frames, like Box3.expandByObject(). Only the
+	 * matrices: the bounds and the dirty flags are left to updateMatrixWorld(),
+	 * which the next frame runs from the scene root.
+	 *
+	 * @param updateParents Recompute the ancestors first.
+	 * @param updateChildren Recompute the whole subtree too.
+	 */
+	computeWorldMatrix( updateParents, updateChildren ) {
 		const parent = this.parent;
 		if ( updateParents === true && parent !== null ) {
-			parent.updateWorldMatrix( true, false );
+			parent.computeWorldMatrix( true, false );
 		}
 
 		if ( this.matrixAutoUpdate ) this.updateMatrix();
@@ -432,13 +535,13 @@ export class Object3D {
 		}
 
 
-		this._UPDATE_BOUNDS = true;
+		this._boundsDirty = true;
 
 		// update children
 		if ( updateChildren === true ) {
 			const children = this.children;
-			for ( let i = 0, l = children.length; i < l; i  ) {
-				children[ i ].updateWorldMatrix( false, true );
+			for ( let i = 0, l = children.length; i < l; i ++ ) {
+				children[ i ].computeWorldMatrix( false, true );
 			}
 		}
 	}
@@ -455,6 +558,9 @@ export class Object3D {
 
 		object._parent = this;
 		this._children.push(object);
+		this._subtreeDirty = true;
+		// The world matrix and sphere were the old parent's.
+		object._matrixWorldNeedsUpdate = true;
 
 				// Notify onChange subscriber
 				if (this._onChangeListener) {
@@ -469,6 +575,7 @@ export class Object3D {
 		if (index !== -1) {
 			object._parent = null;
 			this._children.splice(index, 1);
+			this._subtreeDirty = true;
 
 						// Notify onChange subscriber
 						if (this._onChangeListener) {
@@ -480,8 +587,10 @@ export class Object3D {
 
 	clear() {
 				let self = this;
+				this._subtreeDirty = true;
 
 				this._children = this._children.filter(function (child) {
+						child._parent = null;
 						// Notify onChange subscriber
 						if (self._onChangeListener) {
 								var update = {uuid: child._uuid, changes: {parentUuid: null, objectRef: child}};
@@ -754,9 +863,9 @@ export class Object3D {
 	}
 
 	get boundingSphereWorld() {
-		if (this._geometry && this._UPDATE_BOUNDS) {
+		if (this._geometry && this._boundsDirty) {
 			this._boundingSphereWorld.copy(this.geometry.boundingSphere).applyMatrix4(this.matrixWorld);
-			this._UPDATE_BOUNDS = false;
+			this._boundsDirty = false;
 		}
 		return this._boundingSphereWorld;
 	}

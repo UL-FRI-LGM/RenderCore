@@ -601,6 +601,26 @@ Object.assign( Matrix4.prototype, {
 
 	},
 
+	// An upper bound on how far the 3x3 part stretches any vector, for bounding
+	// spheres. getMaxScaleOnAxis() is less than that when the columns are not
+	// orthogonal, as in a non-uniform scale followed by a rotation. The bound is
+	// the largest row sum of |M^T M| (Gershgorin); without shear it equals
+	// getMaxScaleOnAxis().
+	getMaxStretch: function () {
+
+		var te = this.elements;
+
+		var xx = te[ 0 ] * te[ 0 ] + te[ 1 ] * te[ 1 ] + te[ 2 ] * te[ 2 ];
+		var yy = te[ 4 ] * te[ 4 ] + te[ 5 ] * te[ 5 ] + te[ 6 ] * te[ 6 ];
+		var zz = te[ 8 ] * te[ 8 ] + te[ 9 ] * te[ 9 ] + te[ 10 ] * te[ 10 ];
+		var xy = Math.abs( te[ 0 ] * te[ 4 ] + te[ 1 ] * te[ 5 ] + te[ 2 ] * te[ 6 ] );
+		var xz = Math.abs( te[ 0 ] * te[ 8 ] + te[ 1 ] * te[ 9 ] + te[ 2 ] * te[ 10 ] );
+		var yz = Math.abs( te[ 4 ] * te[ 8 ] + te[ 5 ] * te[ 9 ] + te[ 6 ] * te[ 10 ] );
+
+		return Math.sqrt( Math.max( xx + xy + xz, yy + xy + yz, zz + xz + yz ) );
+
+	},
+
 	makeTranslation: function ( x, y, z ) {
 
 		this.set(

@@ -38,7 +38,7 @@ export class Raycaster {
 
 		// Recurse through the hierarchy
 		if (recursive === true) {
-			var children = object.children;
+			var children = object.drawnChildren;
 
 			for (var i = 0; i < children.length; i++) {
 				Raycaster._intersectObject(children[i], raycaster, intersects, true);
