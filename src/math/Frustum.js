@@ -105,6 +105,9 @@ Object.assign( Frustum.prototype, {
 
 	intersectsSphere: function ( sphere ) {
 
+		// A radius below 0 is an empty sphere.
+		if ( sphere.radius < 0 ) return false;
+
 		var planes = this.planes;
 		var center = sphere.center;
 		var negRadius = - sphere.radius;

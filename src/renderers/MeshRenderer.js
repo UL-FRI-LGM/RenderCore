@@ -160,7 +160,7 @@ export class MeshRenderer extends Renderer {
 		// Render outlined objects
 		if (this._outlineEnabled) {
 			this._outlineEnabled = false;
-			this._renderOutline(this._outlineArray, camera);
+			this._renderOutline(this._outlineArray, scene, camera);
 			return;
 		}
 		// Render picking objects
@@ -382,10 +382,12 @@ export class MeshRenderer extends Renderer {
 			this._cleanupPerObjectState();
 		}
 	}
-	_renderOutline(list, camera){
+	_renderOutline(list, scene, camera){
 		// Only render top-levels
 		for (let i = 0; i < list.length; i++) {
 			const object = list[i];
+			// The model-view matrix is only current for objects drawn in this pass.
+			if (!this._isDrawn(object, scene)) continue;
 
 			const mat = object.outlineMaterial ? object.outlineMaterial :
 						  (object.material.normalFlat ? this._defaultOutlineMatFlat : this._defaultOutlineMat);
@@ -1084,8 +1086,34 @@ export class MeshRenderer extends Renderer {
 	 * @param camera Camera observing the scene.
 	 */
 	// TODO: Optimize required programs string. Overhead due to the string comparison is too big!
+	/**
+	 * Whether _updateObjects() drew `object` in this pass, decided bottom-up:
+	 * keep the two in step. Ancestors' subtree spheres hold the object's own
+	 * sphere, so the object's frustum test stands for theirs.
+	 */
+	_isDrawn(object, scene) {
+		if (object.isGroup || !object.visible) return false;
+		if (object.frustumCulled && !this._screenshotInProgress && !this._objectInFrustum(object)) return false;
+		let o = object;
+		for (let p = o.parent; p !== null; o = p, p = p.parent) {
+			if (!p.visible) return false;
+			if (p.isGroup && !p.visibleChildren && p.self !== o) return false;
+		}
+		return o === scene;
+	}
+
+	// The drawing rules; _isDrawn() repeats them bottom-up.
 	_updateObjects(object, camera) {
-		if (object.visible && (this._objectInFrustum(object) || this._screenshotInProgress)) {
+		if (!object.visible) return;
+
+		const children = object.children;
+		const cull = object.frustumCulled && !this._screenshotInProgress;
+
+		// The subtree sphere decides whether to descend, the object's own sphere
+		// whether to draw the object itself. A Group has nothing of its own.
+		if (cull && children.length > 0 && !this._frustum.intersectsSphere(object.subtreeSphereWorld)) return;
+
+		if (!object.isGroup && (!cull || this._objectInFrustum(object))) {
 			object.fillRenderArray(this._renderArrayManager);
 			object.project(this._projScreenMatrix);
 
@@ -1094,11 +1122,12 @@ export class MeshRenderer extends Renderer {
 				this._fillRequiredPrograms(requiredPrograms[rp]);
 			}
 			object.update(this._glManager, camera);
+		}
 
-			// Recursively descend through children and project them
-			for (let i = 0; i < object.children.length; i++) {
-				this._updateObjects(object.children[i], camera);
-			}
+		// Recursively descend through the children that are drawn
+		const drawn = object.drawnChildren;
+		for (let i = 0; i < drawn.length; i++) {
+			this._updateObjects(drawn[i], camera);
 		}
 	}
 	_fillRequiredPrograms(requiredProgram){

@@ -149,7 +149,30 @@ Object.assign( Sphere.prototype, {
 	applyMatrix4: function ( matrix ) {
 
 		this.center.applyMatrix4( matrix );
-		this.radius = this.radius * matrix.getMaxScaleOnAxis();
+		this.radius = this.radius * matrix.getMaxStretch();
+
+		return this;
+
+	},
+
+	// Grow to the smallest sphere enclosing this one and `sphere`. A radius
+	// below 0 is an empty sphere, Infinity an unbounded one.
+	expandBySphere: function ( sphere ) {
+
+		var r1 = this.radius, r2 = sphere.radius;
+
+		if ( r2 < 0 || r1 === Infinity ) return this;
+		if ( r1 < 0 || r2 === Infinity ) return this.copy( sphere );
+
+		var d = this.center.distanceTo( sphere.center );
+
+		if ( d + r2 <= r1 ) return this;
+		if ( d + r1 <= r2 ) return this.copy( sphere );
+
+		var r = 0.5 * ( d + r1 + r2 );
+
+		this.center.lerp( sphere.center, ( r - r1 ) / d );
+		this.radius = r;
 
 		return this;
 
