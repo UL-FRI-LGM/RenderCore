@@ -163,10 +163,42 @@ window.setStrokesVisible = function (strokes, on) {
     zl.tablesChanged();
 };
 
+// --- camera: left drag orbits the origin, wheel zooms, a click picks ---------
+
+const orbit = { theta: 0, phi: 0, r: 420, drag: null, moved: false };
+function placeCamera() {
+    const cp = Math.cos(orbit.phi), sp = Math.sin(orbit.phi);
+    camera.position.set(orbit.r * cp * Math.sin(orbit.theta), orbit.r * sp, orbit.r * cp * Math.cos(orbit.theta));
+    camera.lookAt(new RC.Vector3(0, 0, 0), new RC.Vector3(0, 1, 0));
+}
+window.setView = function (theta, phi, r) { orbit.theta = theta; orbit.phi = phi; orbit.r = r; placeCamera(); };
+
 function mousedown(event) {
     if (event.which !== 1) return;
+    orbit.drag = { x: event.clientX, y: event.clientY };
+    orbit.moved = false;
+}
+function mousemove(event) {
+    if (!orbit.drag) return;
+    const dx = event.clientX - orbit.drag.x, dy = event.clientY - orbit.drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) orbit.moved = true;
+    if (!orbit.moved) return;
+    orbit.theta -= dx * 0.005;
+    orbit.phi = Math.max(-1.5, Math.min(1.5, orbit.phi + dy * 0.005));
+    orbit.drag = { x: event.clientX, y: event.clientY };
+    placeCamera();
+}
+function mouseup(event) {
+    if (event.which !== 1 || !orbit.drag) return;
     const pr = window.devicePixelRatio || 1;
-    window.pickAt(event.clientX * pr, event.clientY * pr);
+    if (!orbit.moved) window.pickAt(event.clientX * pr, event.clientY * pr);
+    orbit.drag = null;
+}
+function wheel(event) {
+    orbit.r *= Math.exp(event.deltaY * 0.001);
+    orbit.r = Math.max(5, Math.min(5000, orbit.r));
+    placeCamera();
+    event.preventDefault();
 }
 
 // --- render -----------------------------------------------------------------
@@ -209,6 +241,10 @@ function render() {
 window.onload = function () {
     window.addEventListener("resize", resize, false);
     window.addEventListener("mousedown", mousedown, false);
+    window.addEventListener("mousemove", mousemove, false);
+    window.addEventListener("mouseup", mouseup, false);
+    window.addEventListener("wheel", wheel, { passive: false });
+    placeCamera();
     resize();
     window.requestAnimationFrame(render);
 };
