@@ -6,20 +6,23 @@
  *   texel 3p + 1 : dx, dy, dz, S     unit direction, zero = none given; dW/dt
  *   texel 3p + 2 : nx, ny, nz, param ribbon vector, zero = camera-facing; time or path length
  *
- * tables: RGBA32I; strokes from texel 0, segments from texel segBase
- *   stroke k  at texel k               : firstSeg, nSeg, rgba (0xRRGGBBAA), flags
+ * tables: RGBA32I; texel 0 is the header, strokes from texel 1, segments from segBase
+ *   header    at texel 0               : nStrokes, nSegs, segBase, version
+ *   stroke k  at texel 1 + k           : firstSeg, nSeg, rgba (0xRRGGBBAA), flags
  *   segment s at texel segBase + 2s     : i0, i1, floatBitsToInt(L), stroke
  *                      segBase + 2s + 1 : iPrev, iNext, flags, spare   (-1 = no neighbour)
  *
  * Stroke flags: bit 0 visible. Segment flags: bit 0 break, no join to the
  * previous segment; bit 1 cap at the start; bit 2 cap at the end.
- * segBase is the stroke count rounded up to an even number.
+ * segBase is 1 + nStrokes rounded up to an even number. The header makes the
+ * texture self-describing: ZLines reads the counts from it.
  *
  * Both arrays are allocated at the full size of their texture, so each array
  * is the texture's image as it is; the tables array is also what the draw
  * planner of ZLines walks.
  */
 export class ZLinesData {
+    static VERSION = 1;
     static STROKE_VISIBLE = 1;
     static SEG_BREAK = 1;
     static SEG_CAP_START = 2;
@@ -33,6 +36,7 @@ export class ZLinesData {
         this.points  = new Float32Array(4 * this.pointsSize[0] * this.pointsSize[1]);
         this.tables  = new Int32Array(4 * this.tablesSize[0] * this.tablesSize[1]);
         this.tablesF = new Float32Array(this.tables.buffer);   // the view that writes and reads L
+        this.tables.set([nStrokes, nSegs, this.segBase, ZLinesData.VERSION], 0);
     }
 
     /**
@@ -41,10 +45,12 @@ export class ZLinesData {
      * is the path REve takes, with the arrays as views into the scene's binary
      * blob; nothing is copied.
      */
-    static fromArrays(points, tables, nPoints, nSegs, nStrokes, pointsSize, tablesSize, segBase = undefined) {
+    static fromArrays(points, tables, pointsSize, tablesSize) {
         const d = Object.create(ZLinesData.prototype);
-        d.nPoints = nPoints; d.nSegs = nSegs; d.nStrokes = nStrokes;
-        d.segBase = segBase !== undefined ? segBase : ZLinesData.segBaseFor(nStrokes);
+        if (tables[3] !== ZLinesData.VERSION)
+            throw new Error("ZLinesData.fromArrays: tables header version " + tables[3] + ", expected " + ZLinesData.VERSION);
+        d.nStrokes = tables[0]; d.nSegs = tables[1]; d.segBase = tables[2];
+        d.nPoints = (points.length / 12) | 0;
         d.pointsSize = pointsSize; d.tablesSize = tablesSize;
         if (points.length < 4 * pointsSize[0] * pointsSize[1])
             throw new Error("ZLinesData.fromArrays: points array smaller than its texture");
@@ -55,8 +61,8 @@ export class ZLinesData {
         return d;
     }
 
-    /** The segment table starts after the strokes, on an even texel. */
-    static segBaseFor(nStrokes) { return nStrokes + (nStrokes & 1); }
+    /** The segment table starts after the header and the strokes, on an even texel. */
+    static segBaseFor(nStrokes) { const n = 1 + nStrokes; return n + (n & 1); }
 
     /** Texture dimensions for n RGBA texels: even width near the square root of n. */
     static textureSize(nTexels) {
@@ -72,7 +78,7 @@ export class ZLinesData {
         a[o + 8] = nx; a[o + 9] = ny; a[o + 10] = nz; a[o + 11] = param;
     }
     setStroke(k, firstSeg, nSeg, rgba, flags = ZLinesData.STROKE_VISIBLE) {
-        const a = this.tables, o = 4 * k;
+        const a = this.tables, o = 4 * (1 + k);
         a[o] = firstSeg; a[o + 1] = nSeg; a[o + 2] = rgba | 0; a[o + 3] = flags;
     }
     setSegment(s, i0, i1, L, stroke, iPrev = -1, iNext = -1, flags = 0) {
@@ -82,14 +88,14 @@ export class ZLinesData {
     }
 
     // readers the planner uses
-    strokeFirstSeg(k) { return this.tables[4 * k]; }
-    strokeCount(k)    { return this.tables[4 * k + 1]; }
-    strokeColor(k)    { return this.tables[4 * k + 2] >>> 0; }
-    strokeFlags(k)    { return this.tables[4 * k + 3]; }
-    strokeVisible(k)  { return (this.tables[4 * k + 3] & ZLinesData.STROKE_VISIBLE) !== 0; }
+    strokeFirstSeg(k) { return this.tables[4 * (1 + k)]; }
+    strokeCount(k)    { return this.tables[4 * (1 + k) + 1]; }
+    strokeColor(k)    { return this.tables[4 * (1 + k) + 2] >>> 0; }
+    strokeFlags(k)    { return this.tables[4 * (1 + k) + 3]; }
+    strokeVisible(k)  { return (this.tables[4 * (1 + k) + 3] & ZLinesData.STROKE_VISIBLE) !== 0; }
     setStrokeVisible(k, on) {
-        if (on) this.tables[4 * k + 3] |=  ZLinesData.STROKE_VISIBLE;
-        else    this.tables[4 * k + 3] &= ~ZLinesData.STROKE_VISIBLE;
+        if (on) this.tables[4 * (1 + k) + 3] |=  ZLinesData.STROKE_VISIBLE;
+        else    this.tables[4 * (1 + k) + 3] &= ~ZLinesData.STROKE_VISIBLE;
     }
     segStroke(s) { return this.tables[4 * (this.segBase + 2 * s) + 3]; }
     segLength(s) { return this.tablesF[4 * (this.segBase + 2 * s) + 2]; }
@@ -164,7 +170,7 @@ export class ZLinesBuilder {
         if (this._open >= 0) this.endStroke();
         const d = new ZLinesData(this.nPoints, this.nSegs, this.nStrokes);
         d.points.set(this._points);
-        d.tables.set(this._strokes);
+        d.tables.set(this._strokes, 4);
         for (let s = 0, o = 4 * d.segBase; s < d.nSegs; ++s, o += 8) {
             const g = this._segs, q = 8 * s;
             d.tables[o] = g[q]; d.tables[o + 1] = g[q + 1]; d.tablesF[o + 2] = g[q + 2];

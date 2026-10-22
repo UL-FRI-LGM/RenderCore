@@ -10,8 +10,9 @@ import {ZLinesBasicMaterial} from '../materials/ZLinesBasicMaterial.js';
  * shader from the points' positions and directions and the segment's arc
  * length; a zero direction is replaced by the Catmull-Rom estimate from the
  * neighbour points. The data layout is described in ZLinesData.js, which
- * also holds the builder for strokes authored on the client; REve hands over
- * the server-packed arrays through ZLinesData.fromArrays().
+ * also holds the builder for strokes authored on the client. The object itself
+ * keeps only the two textures, see setTextures(); the counts come from the
+ * header texel of the tables texture.
  *
  * The strip has 2 * (samples + 1) vertices and no vertex buffer: the shader
  * derives t and the side from gl_VertexID. The strip is drawn u_Margin pixels
@@ -41,7 +42,9 @@ export class ZLines extends Mesh {
         this.frustumCulled = false;
 
         this.runThreshold = 64;
-        this._data = null;
+        this.nStrokes = 0;
+        this.nSegs = 0;
+        this.segBase = 0;
         this._pointsTex = null;
         this._tablesTex = null;
         this._plan = null;
@@ -62,7 +65,8 @@ export class ZLines extends Mesh {
     get margin() { return this.material.margin; }
     set margin(px) { for (const m of this.materials) m.margin = px; }
 
-    get data() { return this._data; }
+    get pointsTexture() { return this._pointsTex; }
+    get tablesTexture() { return this._tablesTex; }
 
     static _makeTexture(image, size, internalFormat, format, type) {
         const tex = new Texture(image,
@@ -73,27 +77,44 @@ export class ZLines extends Mesh {
         return tex;
     }
 
-    /** Build the two textures over data.points and data.tables and keep data for draw(). */
-    setData(data) {
-        this._data = data;
-        this._pointsTex = ZLines._makeTexture(data.points, data.pointsSize,
-            Texture.FORMAT.RGBA32F, Texture.FORMAT.RGBA, Texture.TYPE.FLOAT);
-        this._tablesTex = ZLines._makeTexture(data.tables, data.tablesSize,
-            Texture.FORMAT.RGBA32I, Texture.FORMAT.RGBA_INTEGER, Texture.TYPE.INT);
+    /**
+     * The two data textures. The tables texture's image starts with a header
+     * texel (nStrokes, nSegs, segBase, version), so the texture describes
+     * itself, and the image is the stroke and segment table that the planner
+     * walks; nothing else is kept. This is what REve calls, with textures over
+     * views into the scene's binary blob.
+     */
+    setTextures(pointsTex, tablesTex) {
+        const h = tablesTex.image;
+        if (h[3] !== 1) throw new Error("ZLines.setTextures: tables header version " + h[3] + ", expected 1");
+        this._pointsTex = pointsTex;
+        this._tablesTex = tablesTex;
+        this.nStrokes = h[0];
+        this.nSegs = h[1];
+        this.segBase = h[2];
         for (const m of this.materials) {
-            m._instanceData = [this._pointsTex, this._tablesTex];
-            m.segBase = data.segBase;
+            m._instanceData = [pointsTex, tablesTex];
+            m.segBase = this.segBase;
         }
-        this.instanceCount = data.nSegs;
+        this.instanceCount = this.nSegs;
         this._plan = null;
     }
 
-    /** The point positions changed in data.points: re-upload. */
+    /** Convenience for a ZLinesData built on the client: make its textures and install them. */
+    setData(data) {
+        this.setTextures(
+            ZLines._makeTexture(data.points, data.pointsSize,
+                Texture.FORMAT.RGBA32F, Texture.FORMAT.RGBA, Texture.TYPE.FLOAT),
+            ZLines._makeTexture(data.tables, data.tablesSize,
+                Texture.FORMAT.RGBA32I, Texture.FORMAT.RGBA_INTEGER, Texture.TYPE.INT));
+    }
+
+    /** The points texture's image changed: re-upload. */
     pointsChanged() {
         if (this._pointsTex) this._pointsTex.needsUpload();
     }
 
-    /** The tables changed in data.tables (visibility, colours): re-upload and re-plan. */
+    /** The tables texture's image changed (visibility, colours): re-upload and re-plan. */
     tablesChanged() {
         if (this._tablesTex) this._tablesTex.needsUpload();
         this._plan = null;
@@ -106,14 +127,16 @@ export class ZLines extends Mesh {
     }
 
     _makePlan() {
-        const d = this._data;
+        // Walk the stroke table in the tables texture: texel 1 + k is
+        // (firstSeg, nSeg, rgba, flags), flags bit 0 is visible.
+        const t = this._tablesTex ? this._tablesTex.image : null;
         const runs = [];
         let nVisible = 0;
-        if (d) {
-            for (let k = 0; k < d.nStrokes; ++k) {
-                const n = d.strokeCount(k);
-                if (n <= 0 || !d.strokeVisible(k)) continue;
-                const first = d.strokeFirstSeg(k);
+        if (t) {
+            for (let k = 0, o = 4; k < this.nStrokes; ++k, o += 4) {
+                const n = t[o + 1];
+                if (n <= 0 || (t[o + 3] & 1) === 0) continue;
+                const first = t[o];
                 const last = runs.length - 2;
                 if (last >= 0 && runs[last] + runs[last + 1] === first)
                     runs[last + 1] += n;

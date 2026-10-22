@@ -16,8 +16,10 @@ precision highp isampler2D;
 //   (x, y, z, W)          position; width scale
 //   (dx, dy, dz, S)       unit direction, zero = none given; dW/dt
 //   (nx, ny, nz, param)   ribbon vector; time or path length (not read yet)
-// instanceData1, tables, RGBA32I; strokes from texel 0, segments from u_SegBase:
-//   stroke k   at k                   : (firstSeg, nSeg, rgba 0xRRGGBBAA, flags)
+// instanceData1, tables, RGBA32I; texel 0 is the header, strokes from texel 1,
+// segments from u_SegBase:
+//   header     at 0                   : (nStrokes, nSegs, segBase, version)
+//   stroke k   at 1 + k               : (firstSeg, nSeg, rgba 0xRRGGBBAA, flags)
 //   segment s  at u_SegBase + 2s      : (i0, i1, floatBitsToInt(L), stroke)
 //              at u_SegBase + 2s + 1  : (iPrev, iNext, flags, spare), -1 = none
 // Segment flags: bit 0 break (no join to the previous segment), bit 1 cap at
@@ -86,7 +88,7 @@ void main()
     ivec4 sb = fetch_table(u_SegBase + 2 * seg + 1);
     int   i0 = sa.x, i1 = sa.y;
     float L  = intBitsToFloat(sa.z);
-    ivec4 st = fetch_table(sa.w);
+    ivec4 st = fetch_table(1 + sa.w);
 
     uint c = uint(st.z);
     v_color = vec4(float((c >> 24) & 0xffu), float((c >> 16) & 0xffu),
