@@ -1,9 +1,13 @@
 // ZLines example: helical tracks from one point, drawn as cubic Hermite
-// segments from (position, direction, arc length) records, one draw call.
-// Click a track to pick it (secondary, per-line pick) and outline it.
+// segments, one stroke per track, built through ZLinesBuilder.
+// Click a track to pick it (secondary, per-segment pick) and outline its stroke.
 // URL options: ?n=400 tracks, ?samples=12 quads per segment, ?step=30 degrees
-// per control point, ?poly=1 draws the dense polyline version instead,
-// ?world=1 gives the width in world units, ?width=3 line width.
+// per control point, ?poly=1 draws the dense polyline version instead (2
+// degrees per point, zero directions, samples 1), ?catmull=1 writes zero
+// directions so the shader takes Catmull-Rom tangents from the neighbours,
+// ?wvar=1 makes the width grow along each track, ?hide=k hides every k-th
+// stroke, ?world=1 gives the width in world units, ?width=3 line width,
+// ?direct=1 renders without RendeQuTor.
 
 import * as RC from "../../src/contrib/REveRenderCore.js";
 
@@ -14,6 +18,9 @@ const STEP_DEG = parseFloat(q.get("step") || "30");
 const POLY     = q.get("poly") === "1";
 const WORLD    = q.get("world") === "1";
 const WIDTH    = parseFloat(q.get("width") || "3");
+const CATMULL  = q.get("catmull") === "1";
+const WVAR     = q.get("wvar") === "1";
+const HIDE     = parseInt(q.get("hide") || "0");
 const DIRECT   = q.get("direct") === "1";   // plain renderer.render, no RendeQuTor
 
 const canvas = new RC.Canvas(document.body);
@@ -71,30 +78,43 @@ function helixRecords(pt, phi0, eta, charge, stepDeg, maxR, maxZ, dense) {
         lens.push(L);
         if (last) break;
     }
-    return dense ? { points: points } : { points: points, dirs: dirs, lens: lens };
+    return { points: points, dirs: dirs, lens: lens };
 }
 
 let seed = 12345;
 function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
 
-const lines = [];
+const builder = new RC.ZLinesBuilder();
 for (let i = 0; i < N_TRACKS; ++i) {
     const pt = 0.3 + 4.7 * rnd() * rnd();
     const charge = rnd() < 0.5 ? -1 : 1;
     const l = helixRecords(pt, 2 * Math.PI * rnd(), -2 + 4 * rnd(), charge, STEP_DEG, 120, 300, POLY);
-    l.color = charge < 0 ? [0.3, 0.5, 1.0] : [1.0, 0.4, 0.3];
-    lines.push(l);
+    const col = charge < 0 ? [0.3, 0.5, 1.0] : [1.0, 0.4, 0.3];
+    const n = l.points.length;
+    const zeroDirs = POLY || CATMULL;
+    // ?wvar=1: W from 0.5 at the first point to 2 at the last, linear in the
+    // point index, so dW/dt per segment is the constant step.
+    const dW = n > 1 ? 1.5 / (n - 1) : 0;
+    const idx = [];
+    for (let j = 0; j < n; ++j) {
+        const p = l.points[j], d = zeroDirs ? [0, 0, 0] : l.dirs[j];
+        const W = WVAR ? 0.5 + dW * j : 1, S = WVAR ? dW : 0;
+        idx.push(builder.addPoint(p[0], p[1], p[2], d[0], d[1], d[2], W, S));
+    }
+    const visible = !(HIDE > 0 && i % HIDE === HIDE - 1);
+    builder.beginStroke(RC.ZLinesBuilder.rgba(col[0], col[1], col[2]), visible ? 1 : 0);
+    // Polylines take the chord as arc length; Hermite segments the helix arc.
+    builder.addPolyline(idx, POLY ? undefined : l.lens.slice(0, n - 1));
+    builder.endStroke();
 }
-const packed = RC.ZLines.pack(lines);
-// first instance of each line, so a line index expands to its instances
-const lineStart = new Int32Array(lines.length + 1);
-for (let i = 0, n = 0; i < lines.length; ++i) { lineStart[i] = n; n += lines[i].points.length; lineStart[i + 1] = n; }
+const data = builder.build();
 
 const zl = new RC.ZLines(null, { samples: POLY ? 1 : SAMPLES, lineWidth: WIDTH, screenWidth: !WORLD });
-zl.setLines(packed);
+zl.setData(data);
 zl.pickable = true;
 scene.add(zl);
-console.log("ZLines:", N_TRACKS, "tracks,", packed.nPoints, "points, samples", zl.samples, "poly", POLY);
+console.log("ZLines:", N_TRACKS, "tracks,", data.nPoints, "points,", data.nSegs, "segments, samples", zl.samples,
+            "poly", POLY, "catmull", CATMULL, "wvar", WVAR, "hide", HIDE);
 
 // a reference cube so the outline pass has a solid object too
 const cube = new RC.Cube(20, new RC.Color(0.2, 0.2, 0.2));
@@ -105,32 +125,43 @@ scene.add(cube);
 
 // --- picking and outline ----------------------------------------------------
 
-let outlined = [];     // line indices
-window.pickedLine = null;
+let outlined = [];     // segment indices
+window.picked = null;
 
-function instancesOfLines(idcs) {
+// The segments of the visible strokes in the list.
+function segmentsOfStrokes(strokes) {
     const out = [];
-    for (const l of idcs) for (let i = lineStart[l]; i < lineStart[l + 1]; ++i) out.push(i);
+    for (const k of strokes) {
+        if (!data.strokeVisible(k)) continue;
+        for (let s = data.strokeFirstSeg(k), e = s + data.strokeCount(k); s < e; ++s) out.push(s);
+    }
     return out;
 }
 
+// Returns { seg, stroke } of the picked segment, or null.
 window.pickAt = function (x, y) {
     rqt.pick_begin(x, y);
     const state = rqt.pick(x, y, false);
+    window.picked = null;
     if (state.object === zl) {
         rqt.pick_instance_low_level(rqt.pqueue, state);
-        window.pickedLine = state.instance;
-        outlined = (state.instance !== null && state.instance !== undefined) ? [state.instance] : [];
-    } else {
-        window.pickedLine = null;
-        outlined = [];
+        if (state.instance !== null && state.instance !== undefined)
+            window.picked = { seg: state.instance, stroke: data.segStroke(state.instance) };
     }
+    outlined = window.picked ? segmentsOfStrokes([window.picked.stroke]) : [];
     rqt.pick_end();
-    console.log("pick at", x, y, "object", state.object ? state.object.type : null, "line", window.pickedLine);
-    return window.pickedLine;
+    console.log("pick at", x, y, "object", state.object ? state.object.type : null,
+                "picked", JSON.stringify(window.picked));
+    return window.picked;
 };
 
-window.outlineLines = function (idcs) { outlined = idcs.slice(); };
+window.outlineStrokes = function (strokes) { outlined = segmentsOfStrokes(strokes); };
+
+// Hide (or show) strokes through the tables.
+window.setStrokesVisible = function (strokes, on) {
+    for (const k of strokes) data.setStrokeVisible(k, on);
+    zl.tablesChanged();
+};
 
 function mousedown(event) {
     if (event.which !== 1) return;
@@ -150,6 +181,7 @@ function resize() {
 
 window.frames = 0;
 window.RC = RC; window.rqt = rqt; window.renderer = renderer; window.scene = scene; window.camera = camera; window.zl = zl;
+window.data = data;
 function render() {
     if (DIRECT) {
         renderer.render(scene, camera);
@@ -160,7 +192,7 @@ function render() {
     rqt.render_begin(true);
     if (outlined.length > 0) {
         rqt.RP_GBuffer.obj_list.push(zl);
-        zl.outlineMaterial.outline_instances_setup(instancesOfLines(outlined));
+        zl.outlineMaterial.outline_instances_setup(outlined);
         rqt.RP_Outline_mat.setUniform("edgeColor", [2, 2, 0, 1]);
         rqt.render_outline();
         rqt.RP_GBuffer.obj_list = [];

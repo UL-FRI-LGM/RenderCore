@@ -37,6 +37,8 @@ export class Texture {
 		R32F : 17.3,
 		R32I : 17.4,
 		R32UI : 17.5,
+		RGBA32I : 17.6,
+		RGBA_INTEGER : 17.7,
 	};
 	static WRAPPING = {
 		RepeatWrapping : 18,

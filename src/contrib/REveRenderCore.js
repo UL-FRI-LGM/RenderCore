@@ -141,7 +141,7 @@ export {ZSprite, ZLogo} from '../objects/ZSprite.js';
 export {ZShapeBasicMaterial} from '../materials/ZShapeBasicMaterial.js';
 export {ZShape} from '../objects/ZShape.js';
 export {ZLinesBasicMaterial} from '../materials/ZLinesBasicMaterial.js';
-export {ZLines} from '../objects/ZLines.js';
+export {ZLines, ZLinesData, ZLinesBuilder} from '../objects/ZLines.js';
 export {ZTextMaterial} from '../materials/ZTextMaterial.js';
 export {ZText, ZTextAxis} from '../objects/ZText.js';
 export {Z3DAxis} from '../objects/Z3DAxis.js';

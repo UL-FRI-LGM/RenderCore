@@ -74,7 +74,7 @@
         }
     },
     "basic_zlines": {
-        "description": "ZLines: lines as one instanced strip, cubic Hermite from a point texture; supports PICKING and OUTLINE modes.",
+        "description": "ZLines: lines as instanced strips, one instance per segment, cubic Hermite from a point texture and an integer stroke and segment table; supports PICKING and OUTLINE modes.",
         "shaders": {
             "vertex": "basic/basic_zlines_template.vert",
             "fragment": "basic/basic_zlines_template.frag"

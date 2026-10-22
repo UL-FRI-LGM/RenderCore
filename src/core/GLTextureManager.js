@@ -460,6 +460,12 @@ export class GLTextureManager {
 			case Texture.FORMAT.R32UI:
 				return this._gl.R32UI;
 				break;
+			case Texture.FORMAT.RGBA32I:
+				return this._gl.RGBA32I;
+				break;
+			case Texture.FORMAT.RGBA_INTEGER:
+				return this._gl.RGBA_INTEGER;
+				break;
 			default:
 				console.warn("Warning: Received unsupported texture format: [" + format + "]!");
 				return this._gl.RGBA;
