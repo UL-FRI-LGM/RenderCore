@@ -143,6 +143,7 @@ export {ZShape} from '../objects/ZShape.js';
 export {ZLinesBasicMaterial} from '../materials/ZLinesBasicMaterial.js';
 export {ZLines} from '../objects/ZLines.js';
 export {ZLinesData, ZLinesBuilder} from '../objects/ZLinesData.js';
+export {WasmArena} from '../wasm/WasmArena.js';
 export {ZTextMaterial} from '../materials/ZTextMaterial.js';
 export {ZText, ZTextAxis} from '../objects/ZText.js';
 export {Z3DAxis} from '../objects/Z3DAxis.js';

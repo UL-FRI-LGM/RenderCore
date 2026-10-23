@@ -9,9 +9,11 @@
 // stroke, ?world=1 gives the width in world units, ?width=3 line width,
 // ?direct=1 renders without RendeQuTor, ?lod=0 turns the level of detail off
 // (every segment drawn with `samples` quads, otherwise the ceiling), ?tol=0.25
-// the level-of-detail tolerance in pixels.
+// the level-of-detail tolerance in pixels, ?wasm=0 walks in JS instead of
+// wasm, ?arena=1 places the points and tables in the wasm arena, so the walk
+// reads them in place and a growth of the arena re-views the textures.
 // zl.lodStats() returns the last walk's segments per bucket, the culled count,
-// the walk's time in ms and the cumulative count of bucket changes.
+// which walk ran and its time in ms, and the cumulative count of bucket changes.
 
 import * as RC from "../../src/contrib/REveRenderCore.js";
 
@@ -28,6 +30,8 @@ const HIDE     = parseInt(q.get("hide") || "0");
 const DIRECT   = q.get("direct") === "1";   // plain renderer.render, no RendeQuTor
 const LOD      = q.get("lod") !== "0";
 const TOL      = parseFloat(q.get("tol") || "0.25");
+const WASM     = q.get("wasm") !== "0";
+const ARENA    = q.get("arena") === "1";
 
 const canvas = new RC.Canvas(document.body);
 const renderer = new RC.MeshRenderer(canvas, RC.WEBGL2);
@@ -115,13 +119,38 @@ for (let i = 0; i < N_TRACKS; ++i) {
 }
 const data = builder.build();
 
+// ?arena=1: the arrays become views on the arena. A growth of the arena
+// detaches every view, so the listener makes new ones and gives them to the
+// textures, whose version bumps and which upload again.
+let zlArena = null;
+if (ARENA) {
+    const A = RC.WasmArena.shared();
+    const pBytes = data.points.byteLength, tBytes = data.tables.byteLength;
+    const pp = A.alloc(pBytes), tp = A.alloc(tBytes);
+    A.view(pp, pBytes, Float32Array).set(data.points);
+    A.view(tp, tBytes, Int32Array).set(data.tables);
+    const place = () => {
+        data.points = A.view(pp, pBytes, Float32Array);
+        data.tables = A.view(tp, tBytes, Int32Array);
+        data.tablesF = A.view(tp, tBytes, Float32Array);
+        if (zlArena !== null) {
+            zlArena.pointsTexture.image = data.points;
+            zlArena.tablesTexture.image = data.tables;
+        }
+    };
+    place();
+    A.addGrowListener(place);
+}
+
 const zl = new RC.ZLines(null, { samples: POLY ? 1 : SAMPLES, lineWidth: WIDTH, screenWidth: !WORLD,
-                                  lodEnabled: LOD, lodTolerance: TOL });
+                                  lodEnabled: LOD, lodTolerance: TOL, wasm: WASM });
 zl.setData(data);
+if (ARENA) zlArena = zl;
 zl.pickable = true;
 scene.add(zl);
 console.log("ZLines:", N_TRACKS, "tracks,", data.nPoints, "points,", data.nSegs, "segments, samples", zl.samples,
-            "poly", POLY, "catmull", CATMULL, "wvar", WVAR, "hide", HIDE, "lod", LOD, "tol", TOL);
+            "poly", POLY, "catmull", CATMULL, "wvar", WVAR, "hide", HIDE, "lod", LOD, "tol", TOL,
+            "wasm", WASM, "arena", ARENA);
 
 // a reference cube so the outline pass has a solid object too
 const cube = new RC.Cube(20, new RC.Color(0.2, 0.2, 0.2));
