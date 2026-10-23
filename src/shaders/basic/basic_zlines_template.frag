@@ -7,9 +7,9 @@ precision highp isampler2D;
 //DEF
 //-----------------------------------------------------------------------------
 // ZLines fragment stage: the strip is drawn wider than the line, and the
-// fragment keeps |v_dist.x| <= v_halfWidth. The colour mode fades the alpha
-// over one pixel centred on the edge; the pick and outline modes discard
-// beyond the width, so their footprint is the true one.
+// fragment keeps |v_dist.x / v_dist.z| <= v_halfWidth. The colour mode fades
+// the alpha over one pixel centred on the edge; the pick and outline modes
+// discard beyond the width, so their footprint is the true one.
 
 struct Material {
     vec3 emissive;
@@ -28,7 +28,7 @@ uniform Material material;
 #fi
 
 in vec4  v_color;
-in vec2  v_dist;
+in vec3  v_dist;   // distances times q, and q; see the vertex shader
 in float v_halfWidth;
 in float v_s;
 flat in int v_seg;
@@ -74,7 +74,8 @@ void main() {
         if (clipped) discard;
     #fi
 
-    float d = abs(v_dist.x);
+    float dx = v_dist.x / v_dist.z;
+    float d  = abs(dx);
 
     #if (OUTLINE)
         if (d > v_halfWidth) discard;
@@ -91,7 +92,7 @@ void main() {
         objectID = u_PickInstance ? InstanceID : u_UINT_ID;
     #else
         // The size of a pixel in the units of v_dist: 1 in screen mode.
-        float px = length(vec2(dFdx(v_dist.x), dFdy(v_dist.x)));
+        float px = length(vec2(dFdx(dx), dFdy(dx)));
         float a  = 1.0 - smoothstep(v_halfWidth - 0.5 * px, v_halfWidth + 0.5 * px, d);
         if (a <= 0.0) discard;
         outColor = vec4(v_color.rgb + material.emissive, alpha * v_color.a * a);

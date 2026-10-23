@@ -6,7 +6,8 @@ import {Int32Attribute} from "../core/BufferAttribute.js";
 /**
  * Material of ZLines. The points and the stroke and segment tables are the two
  * instance data textures, see ZLinesData; the uniforms are the sample count per
- * segment, the half width, whether the width is in pixels or in world units,
+ * segment (the ceiling when the level of detail is on), the level-of-detail
+ * tolerance in pixels (0 turns the shader's clamp off), the half width, whether the width is in pixels or in world units,
  * the margin in pixels the strip is drawn beyond the width, the texel where the
  * segments start, and the instance offset and given-instances switch that
  * ZLines.draw() sets per sub-draw.
@@ -26,6 +27,7 @@ export class ZLinesBasicMaterial extends CustomShaderMaterial {
         this.programName = "basic_zlines";
 
         this.setUniform("u_Samples", args.samples !== undefined ? args.samples : 1);
+        this.setUniform("u_LodTol", args.lodTolerance !== undefined ? args.lodTolerance : 0.0);
         this.setUniform("u_HalfWidth", (args.lineWidth !== undefined ? args.lineWidth : 2.0) / 2.0);
         this.setUniform("u_ScreenWidth", args.screenWidth !== undefined ? args.screenWidth : true);
         this.setUniform("u_Margin", args.margin !== undefined ? args.margin : 1.0);
@@ -52,6 +54,10 @@ export class ZLinesBasicMaterial extends CustomShaderMaterial {
     get samples() { return this.getUniform("u_Samples"); }
     set samples(n) { this.setUniform("u_Samples", n); }
 
+    // The sagitta allowed per chord in pixels; 0 draws every segment with u_Samples quads.
+    get lodTolerance() { return this.getUniform("u_LodTol"); }
+    set lodTolerance(px) { this.setUniform("u_LodTol", px); }
+
     get lineWidth() { return 2.0 * this.getUniform("u_HalfWidth"); }
     set lineWidth(w) { this.setUniform("u_HalfWidth", w / 2.0); }
 
@@ -67,7 +73,8 @@ export class ZLinesBasicMaterial extends CustomShaderMaterial {
     _clone_base() {
         let o = new ZLinesBasicMaterial({
             samples: this.samples, lineWidth: this.lineWidth, screenWidth: this.screenWidth,
-            margin: this.margin, emissive: this.emissive, transparent: false
+            margin: this.margin, emissive: this.emissive, transparent: false,
+            lodTolerance: this.lodTolerance
         });
         o.segBase = this.segBase;
         o._instanceData = this._instanceData;

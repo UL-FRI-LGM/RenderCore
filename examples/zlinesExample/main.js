@@ -7,7 +7,11 @@
 // directions so the shader takes Catmull-Rom tangents from the neighbours,
 // ?wvar=1 makes the width grow along each track, ?hide=k hides every k-th
 // stroke, ?world=1 gives the width in world units, ?width=3 line width,
-// ?direct=1 renders without RendeQuTor.
+// ?direct=1 renders without RendeQuTor, ?lod=0 turns the level of detail off
+// (every segment drawn with `samples` quads, otherwise the ceiling), ?tol=0.25
+// the level-of-detail tolerance in pixels.
+// zl.lodStats() returns the last walk's segments per bucket, the culled count,
+// the walk's time in ms and the cumulative count of bucket changes.
 
 import * as RC from "../../src/contrib/REveRenderCore.js";
 
@@ -22,6 +26,8 @@ const CATMULL  = q.get("catmull") === "1";
 const WVAR     = q.get("wvar") === "1";
 const HIDE     = parseInt(q.get("hide") || "0");
 const DIRECT   = q.get("direct") === "1";   // plain renderer.render, no RendeQuTor
+const LOD      = q.get("lod") !== "0";
+const TOL      = parseFloat(q.get("tol") || "0.25");
 
 const canvas = new RC.Canvas(document.body);
 const renderer = new RC.MeshRenderer(canvas, RC.WEBGL2);
@@ -109,12 +115,13 @@ for (let i = 0; i < N_TRACKS; ++i) {
 }
 const data = builder.build();
 
-const zl = new RC.ZLines(null, { samples: POLY ? 1 : SAMPLES, lineWidth: WIDTH, screenWidth: !WORLD });
+const zl = new RC.ZLines(null, { samples: POLY ? 1 : SAMPLES, lineWidth: WIDTH, screenWidth: !WORLD,
+                                  lodEnabled: LOD, lodTolerance: TOL });
 zl.setData(data);
 zl.pickable = true;
 scene.add(zl);
 console.log("ZLines:", N_TRACKS, "tracks,", data.nPoints, "points,", data.nSegs, "segments, samples", zl.samples,
-            "poly", POLY, "catmull", CATMULL, "wvar", WVAR, "hide", HIDE);
+            "poly", POLY, "catmull", CATMULL, "wvar", WVAR, "hide", HIDE, "lod", LOD, "tol", TOL);
 
 // a reference cube so the outline pass has a solid object too
 const cube = new RC.Cube(20, new RC.Color(0.2, 0.2, 0.2));
