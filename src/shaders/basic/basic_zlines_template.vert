@@ -31,7 +31,9 @@ precision highp isampler2D;
 //   segment s  at u_SegBase + 2s      : (i0, i1, floatBitsToInt(L), stroke)
 //              at u_SegBase + 2s + 1  : (iPrev, iNext, flags, spare), -1 = none
 // Segment flags: bit 0 break (no join to the previous segment), bit 1 cap at
-// the start, bit 2 cap at the end.
+// the start, bit 2 cap at the end, bit 3 straight (the chord as both tangents,
+// whatever the directions and the neighbours, so the segment is a line).
+#define SEG_STRAIGHT 8
 
 struct Material {
     vec3 emissive;
@@ -116,12 +118,18 @@ void main()
     vec3 P  = p1 - p0;
     vec3 chord = (dot(P, P) > 0.0) ? normalize(P) : vec3(0.0);
 
-    // Tangents: the given directions, or the Catmull-Rom estimate from the
-    // neighbour points, or the chord where there is no neighbour. A break
-    // flag cuts the join to the previous segment.
-    int iPrev = ((sb.z & 1) != 0) ? -1 : sb.x;
-    int iNext = sb.y;
+    // Tangents: the chord for a straight segment; else the given directions,
+    // or the Catmull-Rom estimate from the neighbour points, or the chord
+    // where there is no neighbour. A break flag cuts the join to the previous
+    // segment.
+    bool straight = (sb.z & SEG_STRAIGHT) != 0;
+    int iPrev = (straight || (sb.z & 1) != 0) ? -1 : sb.x;
+    int iNext = straight ? -1 : sb.y;
     vec3 d0 = ds0.xyz, d1 = ds1.xyz;
+    if (straight) {
+        d0 = chord;
+        d1 = chord;
+    }
     if (dot(d0, d0) == 0.0) {
         vec3 e = (iPrev >= 0) ? p1 - fetch_point(3 * iPrev).xyz : P;
         d0 = (dot(e, e) > 0.0) ? normalize(e) : chord;
@@ -155,7 +163,8 @@ void main()
         vec2 s0 = h0.xy / h0.w * h, s1 = h1.xy / h1.w * h;
         vec2 s2 = h2.xy / h2.w * h, s3 = h3.xy / h3.w * h;
         float slen  = length(s1 - s0) + length(s2 - s1) + length(s3 - s2);
-        float theta = (dot(P, P) > 0.0)
+        // A straight segment does not turn, and takes one quad.
+        float theta = straight ? 0.0 : (dot(P, P) > 0.0)
             ? acos(clamp(dot(d0, chord), -1.0, 1.0)) + acos(clamp(dot(chord, d1), -1.0, 1.0))
             : 3.14159265;
         // Uniform t bunches the samples at the far end: the nearest chord is

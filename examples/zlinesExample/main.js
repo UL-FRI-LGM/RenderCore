@@ -11,7 +11,10 @@
 // (every segment drawn with `samples` quads, otherwise the ceiling), ?tol=0.25
 // the level-of-detail tolerance in pixels, ?wasm=0 walks in JS instead of
 // wasm, ?arena=1 places the points and tables in the wasm arena, so the walk
-// reads them in place and a growth of the arena re-views the textures.
+// reads them in place and a growth of the arena re-views the textures,
+// ?straight=1 sets the straight flag on every stroke, so each segment is the
+// chord between its points whatever their directions, for comparing a straight
+// polyline with the same points drawn as curves.
 // zl.lodStats() returns the last walk's segments per bucket, the culled count,
 // which walk ran and its time in ms, and the cumulative count of bucket changes.
 
@@ -32,6 +35,7 @@ const LOD      = q.get("lod") !== "0";
 const TOL      = parseFloat(q.get("tol") || "0.25");
 const WASM     = q.get("wasm") !== "0";
 const ARENA    = q.get("arena") === "1";
+const STRAIGHT = q.get("straight") === "1";
 
 const canvas = new RC.Canvas(document.body);
 const renderer = new RC.MeshRenderer(canvas, RC.WEBGL2);
@@ -112,7 +116,8 @@ for (let i = 0; i < N_TRACKS; ++i) {
         idx.push(builder.addPoint(p[0], p[1], p[2], d[0], d[1], d[2], W, S));
     }
     const visible = !(HIDE > 0 && i % HIDE === HIDE - 1);
-    builder.beginStroke(RC.ZLinesBuilder.rgba(col[0], col[1], col[2]), visible ? 1 : 0);
+    builder.beginStroke(RC.ZLinesBuilder.rgba(col[0], col[1], col[2]), visible ? 1 : 0,
+                        STRAIGHT ? RC.ZLinesData.SEG_STRAIGHT : 0);
     // Polylines take the chord as arc length; Hermite segments the helix arc.
     builder.addPolyline(idx, POLY ? undefined : l.lens.slice(0, n - 1));
     builder.endStroke();

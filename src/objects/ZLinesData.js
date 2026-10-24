@@ -13,7 +13,10 @@
  *                      segBase + 2s + 1 : iPrev, iNext, flags, spare   (-1 = no neighbour)
  *
  * Stroke flags: bit 0 visible. Segment flags: bit 0 break, no join to the
- * previous segment; bit 1 cap at the start; bit 2 cap at the end.
+ * previous segment; bit 1 cap at the start; bit 2 cap at the end; bit 3
+ * straight, the chord as both tangents whatever the directions and the
+ * neighbours, so that a polyline is drawn with straight segments and the level
+ * of detail gives the segment one quad.
  * segBase is 1 + nStrokes rounded up to an even number. The header makes the
  * texture self-describing: ZLines reads the counts from it.
  *
@@ -27,6 +30,7 @@ export class ZLinesData {
     static SEG_BREAK = 1;
     static SEG_CAP_START = 2;
     static SEG_CAP_END = 4;
+    static SEG_STRAIGHT = 8;
 
     constructor(nPoints, nSegs, nStrokes) {
         this.nPoints = nPoints; this.nSegs = nSegs; this.nStrokes = nStrokes;
@@ -105,6 +109,10 @@ export class ZLinesData {
  * Appends points, then strokes made of segments, and builds a ZLinesData.
  * A stroke's segments are appended between beginStroke() and endStroke(), so
  * they are contiguous by construction.
+ *
+ * Segment flags, such as ZLinesData.SEG_STRAIGHT, are given per segment to
+ * addSegment() and addPolyline(), or per stroke to beginStroke(), which ORs
+ * them into every segment of the stroke.
  */
 export class ZLinesBuilder {
     constructor() {
@@ -112,6 +120,7 @@ export class ZLinesBuilder {
         this._segs = [];     // 8 numbers per segment: i0, i1, L, stroke, iPrev, iNext, flags, spare
         this._strokes = [];  // 4 numbers per stroke
         this._open = -1;     // index of the open stroke
+        this._segFlags = 0;  // flags ORed into every segment of the open stroke
     }
 
     get nPoints()  { return this._points.length / 12; }
@@ -130,9 +139,11 @@ export class ZLinesBuilder {
         return this.nPoints - 1;
     }
 
-    beginStroke(rgba, flags = ZLinesData.STROKE_VISIBLE) {
+    /** segFlags are ORed into the flags of every segment of the stroke. */
+    beginStroke(rgba, flags = ZLinesData.STROKE_VISIBLE, segFlags = 0) {
         if (this._open >= 0) throw new Error("ZLinesBuilder: a stroke is already open");
         this._open = this.nStrokes;
+        this._segFlags = segFlags;
         this._strokes.push(this.nSegs, 0, rgba | 0, flags);
         return this._open;
     }
@@ -144,18 +155,18 @@ export class ZLinesBuilder {
             const p = this._points, a = 12 * i0, b = 12 * i1;
             L = Math.hypot(p[b] - p[a], p[b + 1] - p[a + 1], p[b + 2] - p[a + 2]);
         }
-        this._segs.push(i0, i1, L, this._open, iPrev, iNext, flags, 0);
+        this._segs.push(i0, i1, L, this._open, iPrev, iNext, flags | this._segFlags, 0);
         ++this._strokes[4 * this._open + 1];
         return this.nSegs - 1;
     }
 
     /** Segments through consecutive points of idx, with iPrev and iNext set;
      *  lens[i] is the arc length from idx[i] to idx[i + 1], the chord if not given. */
-    addPolyline(idx, lens = undefined) {
+    addPolyline(idx, lens = undefined, flags = 0) {
         const n = idx.length;
         for (let i = 0; i + 1 < n; ++i) {
             this.addSegment(idx[i], idx[i + 1], lens ? lens[i] : undefined,
-                            i > 0 ? idx[i - 1] : -1, i + 2 < n ? idx[i + 2] : -1);
+                            i > 0 ? idx[i - 1] : -1, i + 2 < n ? idx[i + 2] : -1, flags);
         }
     }
 
@@ -163,6 +174,7 @@ export class ZLinesBuilder {
     endStroke() {
         const k = this._open;
         this._open = -1;
+        this._segFlags = 0;
         return k;
     }
 

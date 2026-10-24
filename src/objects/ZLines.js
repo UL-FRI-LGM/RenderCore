@@ -6,6 +6,7 @@ import {Matrix4} from '../math/Matrix4.js';
 import {ZLinesBasicMaterial} from '../materials/ZLinesBasicMaterial.js';
 import {WasmArena} from '../wasm/WasmArena.js';
 import {ZLINES_WALK_WASM} from '../wasm/zlines_walk.wasm.js';
+import {ZLinesData} from './ZLinesData.js';
 
 // Level of detail: a segment leaves its bucket for a lower one only when its
 // need drops below 1 / 1.4 of the lower bucket's capacity. The walk compares
@@ -754,7 +755,10 @@ export class ZLines extends Mesh {
         const segBase = this.segBase;
         for (let s = 0, o = 4 * segBase; s < this.nSegs; ++s, o += 8) {
             const i0 = tb[o], i1 = tb[o + 1], L = tf[o + 2];
-            const iPrev = (tb[o + 6] & 1) ? -1 : tb[o + 4], iNext = tb[o + 5];
+            // A straight segment takes the chord as both tangents, which is
+            // the fallback below for a zero direction and no neighbour.
+            const straight = (tb[o + 6] & ZLinesData.SEG_STRAIGHT) !== 0;
+            const iPrev = (straight || (tb[o + 6] & 1)) ? -1 : tb[o + 4], iNext = straight ? -1 : tb[o + 5];
             const a = 12 * i0, b = 12 * i1, ca = 8 * i0, cb = 8 * i1;
 
             // World chord and the tangents, as the shader takes them.
@@ -764,7 +768,7 @@ export class ZLines extends Mesh {
 
             // d0 and its clip image; a zero direction is the Catmull-Rom estimate
             // p1 - pPrev, or the chord, normalized in world space.
-            let d0x = pts[a + 4], d0y = pts[a + 5], d0z = pts[a + 6];
+            let d0x = straight ? 0 : pts[a + 4], d0y = straight ? 0 : pts[a + 5], d0z = straight ? 0 : pts[a + 6];
             let q0x, q0y, q0z, q0w;
             if (d0x === 0 && d0y === 0 && d0z === 0) {
                 let ex = Px, ey = Py, ez = Pz, el = Pl, ic = -1;
@@ -790,7 +794,7 @@ export class ZLines extends Mesh {
                 q0x = C[ca + 4]; q0y = C[ca + 5]; q0z = C[ca + 6]; q0w = C[ca + 7];
             }
             // d1: p(iNext) - p0, or the chord.
-            let d1x = pts[b + 4], d1y = pts[b + 5], d1z = pts[b + 6];
+            let d1x = straight ? 0 : pts[b + 4], d1y = straight ? 0 : pts[b + 5], d1z = straight ? 0 : pts[b + 6];
             let q1x, q1y, q1z, q1w;
             if (d1x === 0 && d1y === 0 && d1z === 0) {
                 let ex = Px, ey = Py, ez = Pz, el = Pl, ic = -1;
@@ -855,7 +859,9 @@ export class ZLines extends Mesh {
                                  Math.sqrt((sx3 - sx2) * (sx3 - sx2) + (sy3 - sy2) * (sy3 - sy2));
                     // Turning: the angles of the two tangents to the chord; a zero chord is a loop.
                     let theta;
-                    if (Pl > 0) {
+                    if (straight) {
+                        theta = 0;
+                    } else if (Pl > 0) {
                         theta = angleUpper(d0x, d0y, d0z, cx, cy, cz) + angleUpper(d1x, d1y, d1z, cx, cy, cz);
                     } else {
                         theta = Math.PI;

@@ -33,6 +33,9 @@ typedef unsigned char u8;
 // The hysteresis of ZLines, 1.4, on the squares.
 #define LOD_HYSTERESIS2 1.96f
 #define PI_F 3.14159265358979f
+// The segment flags of ZLinesData: the break, and the straight segment.
+#define SEG_BREAK 1
+#define SEG_STRAIGHT 8
 #define MAX_CAPS 32
 
 #define SPLAT(v, i) wasm_i32x4_shuffle(v, v, i, i, i, i)
@@ -120,14 +123,20 @@ static inline v128_t est_dir(const float *pts, const float *clip, int from, int 
 typedef struct {
     v128_t h0, h3, q0, q1, chord, d0, d1;
     float L, Wmax;
+    int straight;
 } Gathered;
 
 static inline void gather(const float *pts, const float *clip, const int *seg, Gathered *g) {
     const v128_t A = wasm_v128_load(seg), B = wasm_v128_load(seg + 4);
     const int i0 = wasm_i32x4_extract_lane(A, 0), i1 = wasm_i32x4_extract_lane(A, 1);
     const float L = wasm_f32x4_extract_lane(A, 2);
-    const int iPrev = (wasm_i32x4_extract_lane(B, 2) & 1) ? -1 : wasm_i32x4_extract_lane(B, 0);
-    const int iNext = wasm_i32x4_extract_lane(B, 1);
+    // A straight segment takes the chord as both tangents, which is the
+    // fallback below for a zero direction and no neighbour.
+    const int flags = wasm_i32x4_extract_lane(B, 2);
+    const int straight = (flags & SEG_STRAIGHT) != 0;
+    const int iPrev = (straight || (flags & SEG_BREAK)) ? -1 : wasm_i32x4_extract_lane(B, 0);
+    const int iNext = straight ? -1 : wasm_i32x4_extract_lane(B, 1);
+    g->straight = straight;
     const float *pa = pts + 12 * i0, *pb = pts + 12 * i1;
 
     // World chord and the tangents, as the shader takes them.
@@ -141,7 +150,7 @@ static inline void gather(const float *pts, const float *clip, const int *seg, G
     // d0 and its clip image; a zero direction is the Catmull-Rom estimate
     // p1 - pPrev, or the chord. d1: p(iNext) - p0, or the chord.
     v128_t d0 = wasm_v128_load(pa + 4), d1 = wasm_v128_load(pb + 4);
-    const int z0 = zero3(d0), z1 = zero3(d1);
+    const int z0 = straight || zero3(d0), z1 = straight || zero3(d1);
     if (z0 | z1) {
         const float Pl = __builtin_sqrtf(dot3(chord, chord));
         g->q0 = z0 ? est_dir(pts, clip, iPrev >= 0 ? iPrev : i0, i1, i0, i1, chord, Pl, &d0)
@@ -247,6 +256,10 @@ int walk(const float *pts, int nPts, const int *tbl, int segBase, int nSegs,
             theta = angle_upper(Dx, Dy, Dz, Cx, Cy, Cz);
             TRANSPOSE(g[0].d1, g[1].d1, g[2].d1, g[3].d1, Dx, Dy, Dz, junk);
             theta = wasm_v128_bitselect(wasm_f32x4_add(theta, angle_upper(Dx, Dy, Dz, Cx, Cy, Cz)), F4(PI_F), chordOk);
+            // A straight segment does not turn, and takes one quad.
+            const v128_t straight = wasm_i32x4_ne(wasm_i32x4_make(g[0].straight, g[1].straight, g[2].straight, g[3].straight),
+                                                  wasm_i32x4_splat(0));
+            theta = wasm_v128_andnot(theta, straight);
             (void) junk;
         }
 
