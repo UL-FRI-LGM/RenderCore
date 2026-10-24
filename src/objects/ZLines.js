@@ -965,7 +965,6 @@ export class ZLines extends Mesh {
         return draws;
     }
 
-    /** The last walk's numbers: segments per bucket, culled, the walk's time in ms. */
     /**
      * The last walk's numbers: segments per bucket, culled, which walk ran
      * ("wasm" or "js"), its time in ms and the time of the copies into the
