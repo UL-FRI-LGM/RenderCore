@@ -14,7 +14,6 @@ import {Matrix4} from '../math/Matrix4.js';
 import {Vector3} from '../math/Vector3.js';
 import {Ray} from '../math/Ray.js';
 import {Sphere} from '../math/Sphere.js';
-import {Color} from "../math/Color.js";
 
 export class Mesh extends Object3D {
 
@@ -46,8 +45,7 @@ export class Mesh extends Object3D {
 
 		this.raycast = _raycast;
 
-		// PICKING IDs
-		this._RGB_ID = new Color(0.0, 0.0, 0.0); // stored as Color(r, g, b) 
+		// PICKING ID
 		this._UINT_ID = 0; // stored as Uint32
 
 		//OUTLINE
@@ -90,7 +88,6 @@ export class Mesh extends Object3D {
 	 * @returns Geometry of the mesh.
 	 */
 	get geometry() { return this._geometry; }
-	get RGB_ID() { return this._RGB_ID; }
 	get UINT_ID() { return this._UINT_ID; }
 	get drawOutline() { return this._drawOutline; }
 	get pickable() { return super.pickable; }
@@ -157,9 +154,6 @@ export class Mesh extends Object3D {
 		this._material.onChangeListener = listener;
 	}
 
-	set RGB_ID(RGB_ID) {
-		this._RGB_ID = RGB_ID;
-	}
 	set UINT_ID(UINT_ID) {
 		this._UINT_ID = UINT_ID;
 	}

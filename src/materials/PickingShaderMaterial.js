@@ -7,58 +7,18 @@ import {CustomShaderMaterial} from "./CustomShaderMaterial.js";
 import {MaterialProgramTemplate} from "../program_management/MaterialProgramTemplate.js";
 
 
+// The picker_<programName> shaders write the object's u_UINT_ID into an R32UI target,
+// which the pick passes clear to 0xFFFFFFFF. When u_PickInstance is set, picker_TRIANGLES
+// writes InstanceID instead: gl_InstanceID under INSTANCED, else gl_VertexID.
 export class PickingShaderMaterial extends CustomShaderMaterial {
-    static PICK_MODE = {
-        RGB: 0,
-        UINT: 1
-    };
-    static DEFAULT_PICK_MODE = PickingShaderMaterial.PICK_MODE.RGB;
 
-    
-    constructor(programName = "TRIANGLES", uniforms = {}, attributes = {}, args = {}) {
-        super("picker" + '_' + programName, uniforms, attributes, args);
+    constructor(programName = "TRIANGLES", uniforms = {}, attributes = {}) {
+        super("picker" + '_' + programName, uniforms, attributes);
 
         this.type = "PickingShaderMaterial";
 
-
-        // defaults
-        this._pickMode = null;
-
-
-        // set
-        this.pickMode = args.mode ? args.mode : PickingShaderMaterial.DEFAULT_PICK_MODE;
+        this.setUniform("u_PickInstance", false);
     }
-
-
-    get pickMode() { return this._pickMode; }
-    set pickMode(pickMode) {
-		if (pickMode !== this._pickMode) {
-			// Invalidate required program template
-			this.requiredProgramTemplate = null;
-
-			this._pickMode = pickMode;
-
-
-            if(pickMode === PickingShaderMaterial.PICK_MODE.RGB){
-                this.removeUniform("u_PickInstance");
-                this.rmSBFlag("PICK_MODE_UINT");
-                this.addSBFlag("PICK_MODE_RGB");
-            }else if(pickMode === PickingShaderMaterial.PICK_MODE.UINT){
-                this.rmSBFlag("PICK_MODE_RGB");
-                this.addSBFlag("PICK_MODE_UINT");
-                this.setUniform("u_PickInstance", false);
-            }else{
-                console.error("Unknown pick mode: [" + pickMode + "].");
-            }
-
-
-			// Notify onChange subscriber
-			if (this._onChangeListener) {
-				var update = {uuid: this._uuid, changes: {pickMode: this._pickMode}};
-				this._onChangeListener.materialUpdate(update)
-			}
-		}
-	}
 
 
     resetProgramFlagsAndValues(){

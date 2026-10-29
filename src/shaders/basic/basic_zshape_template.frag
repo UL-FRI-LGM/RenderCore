@@ -81,10 +81,7 @@ in vec4 fragVColor;
     in vec2 fragUV;
 #fi
 
-#if (PICK_MODE_RGB)
-    uniform vec3 u_RGB_ID;
-    layout(location = 0) out vec4 objectID;
-#else if (PICK_MODE_UINT)
+#if (PICK_MODE_UINT)
     uniform uint u_UINT_ID;
     #if (INSTANCED)
         uniform bool u_PickInstance;
@@ -216,8 +213,6 @@ void main() {
         #if (DEPTH)
             de_viewspace = vec4(gl_FragCoord.z, 0.0, 0.0, 1.0);
         #fi
-    #else if (PICK_MODE_RGB)
-        objectID = vec4(u_RGB_ID, 1.0);
     #else if (PICK_MODE_UINT)
         #if (INSTANCED)
             if (u_PickInstance) {

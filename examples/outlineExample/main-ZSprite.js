@@ -214,7 +214,6 @@ const CoreControl = {
 
         RC.GLManager.sCheckFrameBuffer = false;
         // Would require an additional render-queue and pass to render into Uin32 buffer.
-        // RC.PickingShaderMaterial.DEFAULT_PICK_MODE = RC.PickingShaderMaterial.PICK_MODE.UINT;
         // renderer.pickObject3D = true;
 
         return renderer;

@@ -1,18 +1,15 @@
 import { FX } from "./FX.js"
 import { RenderPass } from "./../RenderPass.js";
-import { Mesh, PickingShaderMaterial } from "../../RenderCore.js";
+import { Mesh } from "../../RenderCore.js";
 
 
 const predef_width = document.body.clientWidth;
 const predef_height = document.body.clientHeight;
 
 
+// Draws the pickable meshes of the scene with their picking materials into an R32UI texture
+// named by outputs.color, cleared to 0xFFFFFFFF; RenderQueue.pickUINT() reads it back.
 export class PickerFX extends FX {
-    static PICK_MODE = {
-        RGB: PickingShaderMaterial.PICK_MODE.RGB,
-        UINT: PickingShaderMaterial.PICK_MODE.UINT
-    };
-
 
     constructor(renderer, INPUTS = {}, args = {}, OUTPUTS = {}) {
         super(renderer, INPUTS, OUTPUTS);
@@ -21,8 +18,6 @@ export class PickerFX extends FX {
         this.inputs.camera = this.inputs.camera ? this.inputs.camera : undefined;
 
         this.outputs.color = this.outputs.color ? this.outputs.color : new FX.output("color_picker");
-
-        this._pickMode = null;
 
 
         const origiMats = new Map();
@@ -63,8 +58,6 @@ export class PickerFX extends FX {
                     }
 
                     object.material = pickingMats.get(object._uuid);
-                    // apply any changes
-                    object.material.pickMode = this._pickMode;
                 });
 
                 return { scene: INPUTS.scene, camera: INPUTS.camera };
@@ -100,34 +93,12 @@ export class PickerFX extends FX {
             "depth_color_picker",
 
             [
-                {id: OUTPUTS.color.name, textureConfig: RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG}
-                //{id: OUTPUTS.color.name, textureConfig: RenderPass.DEFAULT_R32UI_TEXTURE_CONFIG}
+                {id: OUTPUTS.color.name, textureConfig: RenderPass.DEFAULT_R32UI_TEXTURE_CONFIG,
+                 clearColorArray: new Uint32Array([0xFFFFFFFF, 0, 0, 0])}
             ]
         );
 
         this.pushRenderPass(this._renderPass_Picker);
-
-
-        this.pickMode = args.pickMode ? args.pickMode : PickerFX.PICK_MODE.RGB;
-    }
-
-
-    get pickMode() { return this._pickMode; }
-    set pickMode(pickMode){
-        this._pickMode = pickMode;
-
-
-        if(pickMode === PickerFX.PICK_MODE.RGB){
-            this._renderPass_Picker.outTextures = [
-                {id: this.outputs.color.name, textureConfig: RenderPass.DEFAULT_RGBA_TEXTURE_CONFIG}
-            ];
-        }else if(pickMode === PickerFX.PICK_MODE.UINT){
-            this._renderPass_Picker.outTextures = [
-                {id: this.outputs.color.name, textureConfig: RenderPass.DEFAULT_R32UI_TEXTURE_CONFIG}
-            ];
-        }else{
-            console.error("Unknown pick mode: [" + pickMode + "].");
-        }
     }
 };
 

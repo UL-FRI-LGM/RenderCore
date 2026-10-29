@@ -54,10 +54,7 @@ uniform vec3 ambient;
     uniform float u_GripGap;      // clearance between grip and frame, device px
 #fi
 
-#if (PICK_MODE_RGB)
-    uniform vec3 u_RGB_ID;
-    layout(location = 0) out vec4 objectID;
-#else if (PICK_MODE_UINT)
+#if (PICK_MODE_UINT)
     uniform uint u_UINT_ID;
     #if (INSTANCED)
         uniform bool u_PickInstance;
@@ -155,9 +152,7 @@ void main() {
             discard;
         }
     #else
-        #if (PICK_MODE_RGB)
-            objectID = vec4(u_RGB_ID, 1.0);
-        #else if (PICK_MODE_UINT)
+        #if (PICK_MODE_UINT)
             #if (INSTANCED)
                 if (u_PickInstance) {
                     objectID = InstanceID; // 0 is a valid result
