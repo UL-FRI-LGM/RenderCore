@@ -27,7 +27,7 @@ void main() {
     gl_Position = PMat * MVMat * MMat * vec4(VPos, 1.0);
     #fi
 
-    #if (INSTACED)
+    #if (INSTANCED)
         InstanceID = uint(gl_InstanceID);
     #else
         InstanceID = uint(gl_VertexID);
