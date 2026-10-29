@@ -26,14 +26,9 @@ export class ZShape extends Mesh {
         if (material === null) {
             material = new ZShapeBasicMaterial();
         }
-        // MT for Sebastien -- what would be the best way to clone material?
-        // ZShapeBasicMaterial.clone_for_outline() seems OK (but one needs to 
-        // take care with uniform / texture / instanceData updates).
-        let pmat = material.clone_for_picking();
-        let omat = material.clone_for_outline();
 
         //SUPER
-        super(geometry, material, pmat, omat);
+        super(geometry, material);
         this.type = "ZShape";
     }
 

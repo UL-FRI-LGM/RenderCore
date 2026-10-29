@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Shader compile check: builds every program in src/shaders/programs.json for a set of
-// ShaderBuilder flag combinations and compiles and links each in headless Chrome. The flag
-// combinations and ## values are chosen in shader-check.js. No npm dependencies.
+// ShaderBuilder flag combinations, and the programs of a set of materials in each of their pass
+// modes, and compiles and links each in headless Chrome. The flag combinations, the materials
+// and the ## values are chosen in shader-check.js. No npm dependencies.
 //
 //   node tools/shader-check/shader-check.mjs [--root DIR] [--only REGEX] [--manifest FILE]
 //        [--port 8871] [--tmp DIR] [--chrome /usr/bin/google-chrome] [--gpu] [--timeout 600]
@@ -214,9 +215,9 @@ try {
     if (r.error) throw new PageError("error in the page: " + r.error);
 
     console.log(`shader-check: ${ROOT}`);
-    console.log(`${r.programs} programs, ${r.variants} variants, ${r.compiles} shader compiles, ` +
-                `${r.links} links, ${r.failures.length} failures, ${r.knownFailing.length} known broken, ` +
-                `${r.seconds} s, ${r.renderer}`);
+    console.log(`${r.programs} programs, ${r.variants} variants, ${r.materialVariants} material variants, ` +
+                `${r.compiles} shader compiles, ${r.links} links, ${r.failures.length} failures, ` +
+                `${r.knownFailing.length} known broken, ${r.seconds} s, ${r.renderer}`);
     if (A.manifest) writeFileSync(A.manifest, r.manifest.join("\n") + "\n");
     for (const f of r.knownFailing)
         console.log(`known broken: ${f.program} [${f.flags.join(" ")}] ${f.stage}: ${f.why}`);
@@ -224,7 +225,8 @@ try {
         console.log(`NOTE: listed as known broken but compiles, remove it from KNOWN_BROKEN: ` +
                     `${f.program} [${f.flags.join(" ")}]`);
     for (const f of r.failures) {
-        console.log(`\nFAIL ${f.program} [${f.flags.join(" ")}] lights=${f.lights ?? "-"} ${f.stage}`);
+        console.log(`\nFAIL ${f.program}${f.setup ? " {" + f.setup + "}" : ""} [${f.flags.join(" ")}] ` +
+                    `lights=${f.lights ?? "-"} ${f.stage}`);
         console.log(f.log.trim());
         if (f.excerpt) console.log(f.excerpt);
     }

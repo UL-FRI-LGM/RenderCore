@@ -67,8 +67,8 @@ out vec3 fragVPos;
         flat out uint InstanceID;
     #fi
     #if (OUTLINE)
-        uniform bool u_OutlineGivenInstances;
-        in  int  a_OutlineInstances;
+        uniform bool u_GivenInstances;
+        in  int  a_Instances;
     #fi
 
 #fi
@@ -90,8 +90,8 @@ void main() {
     #if (INSTANCED)
         int iID = gl_InstanceID;
         #if (OUTLINE)
-            if (u_OutlineGivenInstances)
-                iID = a_OutlineInstances;
+            if (u_GivenInstances)
+                iID = a_Instances;
         #fi
         #if (MAT4_PER_INSTANCE)
             int pID = 4 * iID;

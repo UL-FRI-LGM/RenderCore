@@ -265,7 +265,7 @@ function render() {
     rqt.render_begin(true);
     if (outlined.length > 0) {
         rqt.RP_GBuffer.obj_list.push(zl);
-        zl.outlineMaterial.outline_instances_setup(outlined);
+        zl.outlineInstances = outlined;
         rqt.RP_Outline_mat.setUniform("edgeColor", [2, 2, 0, 1]);
         rqt.render_outline();
         rqt.RP_GBuffer.obj_list = [];

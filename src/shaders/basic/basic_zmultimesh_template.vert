@@ -107,8 +107,8 @@ out vec3 fragVPos;
     flat out uint InstanceID;
 #fi
 #if (OUTLINE)
-        uniform bool u_OutlineGivenInstances;
-        in  int  a_OutlineInstances;
+        uniform bool u_GivenInstances;
+        in  int  a_Instances;
 #fi
 
 #if (OUTLINE)

@@ -6,8 +6,6 @@ import {FRONT_SIDE, BACK_SIDE, FRONT_AND_BACK_SIDE} from '../constants.js';
 
 import {Material} from './Material.js';
 
-import {MaterialProgramTemplate} from '../program_management/MaterialProgramTemplate.js';
-
 export class CustomShaderMaterial  extends Material {
 
 	constructor(programName, uniforms = {}, attributes = {}) {
@@ -21,6 +19,8 @@ export class CustomShaderMaterial  extends Material {
 		 */
 		this._uniforms = uniforms;
 		this._attributes = attributes;
+		// Uniform values of one pass mode, by mode, over the values in _uniforms
+		this._modeUniforms = {};
 
 		// ShaderBuilder flags, values
 		this._flagsSB = [];
@@ -65,16 +65,32 @@ export class CustomShaderMaterial  extends Material {
 	}
 
 	// region UNIFORM/ATTRIBUTE MANAGEMENT
-	setUniform(name, value) {
-		this._uniforms[name] = value;
+	/**
+	 * Set a uniform for every pass, or with `mode` (Material.MODE) for the pass of that
+	 * mode only; the renderer sets the value of the mode over the value of every pass.
+	 */
+	setUniform(name, value, mode = undefined) {
+		if (mode === undefined) {
+			this._uniforms[name] = value;
+		} else {
+			if (this._modeUniforms[mode] === undefined) this._modeUniforms[mode] = {};
+			this._modeUniforms[mode][name] = value;
+		}
 	}
 
-	removeUniform(name) {
-		delete this._uniforms[name];
+	/**
+	 * Remove the value set for every pass, which leaves the values set for single modes, or
+	 * with `mode` the value of that mode only.
+	 */
+	removeUniform(name, mode = undefined) {
+		if (mode === undefined) delete this._uniforms[name];
+		else if (this._modeUniforms[mode] !== undefined) delete this._modeUniforms[mode][name];
 	}
 
-	getUniform(name) {
-		return this._uniforms[name];
+	/** The value the pass of `mode` takes, or without `mode` the value of every pass. */
+	getUniform(name, mode = undefined) {
+		const own = (mode !== undefined) ? this._modeUniforms[mode] : undefined;
+		return (own !== undefined && name in own) ? own[name] : this._uniforms[name];
 	}
 
 	setAttribute(name, value) {
@@ -90,8 +106,8 @@ export class CustomShaderMaterial  extends Material {
 	}
 	// endregion
 
-	resetProgramFlagsAndValues(){
-		super.resetProgramFlagsAndValues();
+	resetProgramFlagsAndValues(mode = Material.MODE.COLOR){
+		super.resetProgramFlagsAndValues(mode);
 
 		// Add user defined flags
 		for (let i = 0; i < this._flagsSB.length; i++) {
@@ -104,25 +120,5 @@ export class CustomShaderMaterial  extends Material {
 				this.values[name] = this._valuesSB[name];
 			}
 		}
-	}
-
-	requiredProgram(renderer = undefined, override = false) {
-		if(override){//TODO DELETE if statemenet
-			console.warn("THIS SEGMENT IS DEPRECATED");
-			//super.requiredProgram();
-			this.resetProgramFlagsAndValues();
-			return;
-		}
-
-
-		// If the template is already generate use it
-		if (this.requiredProgramTemplate !== null) {
-			return this.requiredProgramTemplate;
-		}
-
-		this.resetProgramFlagsAndValues();
-
-		this.requiredProgramTemplate = new MaterialProgramTemplate(this.programName2, this.flags, this.values, renderer);
-		return this.requiredProgramTemplate;
 	}
 }

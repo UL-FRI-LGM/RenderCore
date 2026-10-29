@@ -63,6 +63,7 @@ export class GLManager {
 		// render state bridge, set by renderer
 		this._currentProgram = null;
 		this._currentMaterial = null;
+		this._currentMode = null;   // the pass mode, Material.MODE
 
 		// region Clear values
 		this.autoClear = true;

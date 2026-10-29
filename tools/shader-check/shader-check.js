@@ -3,6 +3,7 @@
 // For every program in src/shaders/programs.json: reads the vertex and fragment templates,
 // collects the flags their #if and #else if lines test, builds both shaders with RenderCore's
 // ShaderBuilder for a set of flag combinations, then compiles and links each pair in WebGL2.
+// Then builds the programs of the materials in MATERIAL_SETUPS in each of their pass modes.
 // The result is left in window.__shaderCheck, and a summary is printed on the page.
 //
 // URL parameters: rc, the RenderCore root relative to this page (default ../..);
@@ -60,8 +61,73 @@ const KNOWN_BROKEN = [
       why: "SSAAx2 defines only the box kernel; SSAAFX sets KERNEL_BOX" },
 ];
 
-// The pass a Z-material clone is built for: the pick flags and OUTLINE exclude each other.
+// The flags of the pass modes, Material.MODE: the pick flags and OUTLINE exclude each other.
 const isModeFlag = (f) => f === "OUTLINE" || f.startsWith("PICK_MODE_");
+
+// Materials with pass modes, set up as REve and the examples set them up. Each is built in COLOR
+// and in every mode of its passModes, with the flags and values its requiredProgram() gives, so
+// the variants the pass modes produce are compiled as the renderer would build them. A map or an
+// instance data texture only counts here, so an empty object stands for it.
+const MATERIAL_SETUPS = [
+    ["ZShape, REve box set, scale per instance, transparent", (RC) => {
+        const m = new RC.ZShapeBasicMaterial();
+        m.addSBFlag("SCALE_PER_INSTANCE");
+        m.transparent = true; m.instanced = true; m.normalFlat = true;
+        m.addInstanceData({});
+        return m; }],
+    ["ZShape, REve box set, mat4 per instance", (RC) => {
+        const m = new RC.ZShapeBasicMaterial();
+        m.addSBFlag("MAT4_PER_INSTANCE");
+        m.instanced = true; m.normalFlat = true;
+        m.addInstanceData({});
+        return m; }],
+    ["ZShape, outlineExample", (RC) => {
+        const m = new RC.ZShapeBasicMaterial();
+        m.instanced = true;
+        m.addInstanceData({});
+        return m; }],
+    ["ZSprite, REve markers", (RC) => {
+        const m = new RC.ZSpriteBasicMaterial();
+        m.transparent = true; m.instanced = true;
+        m.addInstanceData({}); m.addMap({});
+        return m; }],
+    ["ZSprite, textured, not instanced", (RC) => {
+        const m = new RC.ZSpriteBasicMaterial();
+        m.transparent = true;
+        m.addMap({});
+        return m; }],
+    ["ZSprite, REve camera marker", (RC) => new RC.ZSpriteBasicMaterial()],
+    ["ZLogo", (RC) => {
+        const m = new RC.ZSpriteBasicMaterial();
+        m.transparent = true;
+        m.addSBFlag("SPRITE_FRAME");
+        m.addMap({});
+        return m; }],
+    ["ZMultiMesh, REve geo top node", (RC) => {
+        const m = new RC.ZMultiMeshBasicMaterial();
+        m.normalFlat = true;
+        return m; }],
+    ["ZMultiMesh, clipping planes", (RC) => {
+        const m = new RC.ZMultiMeshBasicMaterial();
+        m.normalFlat = true;
+        m.useClippingPlanes = true;
+        m.clippingPlanes = [{}, {}];
+        return m; }],
+    ["ZLines", (RC) => {
+        const m = new RC.ZLinesBasicMaterial();
+        m.addInstanceData({}); m.addInstanceData({});
+        return m; }],
+    ["ZText, transparent", (RC) => {
+        const m = new RC.ZTextMaterial();
+        m.transparent = true;
+        m.addMap({});
+        return m; }],
+    ["ZText, anchored, Z3DAxis", (RC) => {
+        const m = new RC.ZTextMaterial();
+        m.enableAnchor3D();
+        m.addMap({});
+        return m; }],
+];
 
 // The ## values, as the materials and the renderer fill them: Material.resetProgramFlagsAndValues
 // (NUM_CLIPPING_PLANES; NUM_TEX and NUM_CUBETEXTURES are the number of maps, here one more than
@@ -224,8 +290,36 @@ async function main() {
     };
 
     const pairCache = new Map();   // identical source pairs are compiled once
-    const res = { programs: 0, variants: 0, compiles: 0, links: 0, failures: [],
+    const res = { programs: 0, variants: 0, materialVariants: 0, compiles: 0, links: 0, failures: [],
                   knownFailing: [], knownPassing: [], manifest: [] };
+
+    // Compiles and links a built pair once; the result of a pair seen before is reused.
+    const compilePair = (vs, fs) => {
+        const key = vs + "\u0000" + fs;
+        let r = pairCache.get(key);
+        if (r) return r;
+        const v = compile(gl.VERTEX_SHADER, vs);
+        const f = compile(gl.FRAGMENT_SHADER, fs);
+        res.compiles += 2;
+        r = null;
+        if (!v.ok) r = { stage: "vertex", log: v.log, excerpt: excerpt(vs, v.log) };
+        else if (!f.ok) r = { stage: "fragment", log: f.log, excerpt: excerpt(fs, f.log) };
+        else {
+            const p = gl.createProgram();
+            gl.attachShader(p, v.sh);
+            gl.attachShader(p, f.sh);
+            gl.linkProgram(p);
+            res.links++;
+            if (!gl.getProgramParameter(p, gl.LINK_STATUS))
+                r = { stage: "link", log: gl.getProgramInfoLog(p) };
+            gl.deleteProgram(p);
+        }
+        gl.deleteShader(v.sh);
+        gl.deleteShader(f.sh);
+        r = r || { ok: true };
+        pairCache.set(key, r);
+        return r;
+    };
 
     for (const [name, def] of Object.entries(programs)) {
         if (only && !only.test(name)) continue;
@@ -284,32 +378,41 @@ async function main() {
                     continue;
                 }
                 res.manifest.push(`${name} [${combo.join(" ")}] ${s} ${hash(vs)} ${hash(fs)}`);
+                report(compilePair(vs, fs));
+            }
+        }
+    }
 
-                const key = vs + "\u0000" + fs;
-                let r = pairCache.get(key);
-                if (!r) {
-                    const v = compile(gl.VERTEX_SHADER, vs);
-                    const f = compile(gl.FRAGMENT_SHADER, fs);
-                    res.compiles += 2;
-                    r = null;
-                    if (!v.ok) r = { stage: "vertex", log: v.log, excerpt: excerpt(vs, v.log) };
-                    else if (!f.ok) r = { stage: "fragment", log: f.log, excerpt: excerpt(fs, f.log) };
-                    else {
-                        const p = gl.createProgram();
-                        gl.attachShader(p, v.sh);
-                        gl.attachShader(p, f.sh);
-                        gl.linkProgram(p);
-                        res.links++;
-                        if (!gl.getProgramParameter(p, gl.LINK_STATUS))
-                            r = { stage: "link", log: gl.getProgramInfoLog(p) };
-                        gl.deleteProgram(p);
-                    }
-                    gl.deleteShader(v.sh);
-                    gl.deleteShader(f.sh);
-                    r = r || { ok: true };
-                    pairCache.set(key, r);
+    // The pass-mode variants of the materials in MATERIAL_SETUPS.
+    const modeName = Object.fromEntries(Object.entries(RC.Material.MODE).map(([k, v]) => [v, k]));
+    for (const [label, make] of MATERIAL_SETUPS) {
+        const mat = make(RC);
+        for (const mode of [RC.Material.MODE.COLOR, ...mat.passModes]) {
+            const t = mat.requiredProgram(undefined, mode);
+            const name = t.name;
+            if (only && !only.test(name)) continue;
+            const vTree = builder._templatesCache[name + ":vertex"], fTree = builder._templatesCache[name + ":fragment"];
+            const flags = [...t.flags].sort();
+            if (!vTree || !fTree) {
+                res.failures.push({ program: name, setup: label, stage: "template", flags, log: "not built" });
+                continue;
+            }
+            for (const s of ["none", "lit"]) {
+                const L = LIGHT_SETUPS[s];
+                const values = { ...BASE_VALUES, ...t.values, ...L.values };
+                res.materialVariants++;
+                const rec = { program: name, setup: label + ", " + modeName[mode], flags, lights: s };
+                let vs, fs;
+                try {
+                    vs = vTree.tree.build([...flags, ...L.flags], values);
+                    fs = fTree.tree.build([...flags, ...L.flags], values);
+                } catch (e) {
+                    res.failures.push({ ...rec, stage: "build", log: String(e) });
+                    continue;
                 }
-                report(r);
+                res.manifest.push(`${name} {${rec.setup}} [${flags.join(" ")}] ${s} ${hash(vs)} ${hash(fs)}`);
+                const r = compilePair(vs, fs);
+                if (!r.ok) res.failures.push({ ...rec, ...r });
             }
         }
     }
@@ -317,13 +420,13 @@ async function main() {
     res.seconds = +((performance.now() - t0) / 1000).toFixed(1);
     const dri = gl.getExtension("WEBGL_debug_renderer_info");
     res.renderer = gl.getParameter(dri ? dri.UNMASKED_RENDERER_WEBGL : gl.RENDERER);
-    say(`${res.programs} programs, ${res.variants} variants, ${res.compiles} shader compiles, ` +
-        `${res.links} links, ${res.failures.length} failures, ${res.knownFailing.length} known broken, ` +
-        `${res.seconds} s`);
+    say(`${res.programs} programs, ${res.variants} variants, ${res.materialVariants} material variants, ` +
+        `${res.compiles} shader compiles, ${res.links} links, ${res.failures.length} failures, ` +
+        `${res.knownFailing.length} known broken, ${res.seconds} s`);
     for (const f of res.knownPassing)
         say(`KNOWN BROKEN BUT COMPILES ${f.program} [${f.flags.join(" ")}] lights=${f.lights}`);
     for (const f of res.failures)
-        say(`FAIL ${f.program} [${f.flags.join(" ")}] lights=${f.lights} ${f.stage}\n${f.log}`);
+        say(`FAIL ${f.program}${f.setup ? " {" + f.setup + "}" : ""} [${f.flags.join(" ")}] lights=${f.lights} ${f.stage}\n${f.log}`);
     Object.assign(window.__shaderCheck, res, { done: true });
 }
 

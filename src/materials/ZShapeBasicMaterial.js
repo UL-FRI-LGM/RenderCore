@@ -1,11 +1,12 @@
+import {Material} from './Material.js';
 import {CustomShaderMaterial} from './CustomShaderMaterial.js';
 import {Color} from "../math/Color.js";
 import {FRONT_AND_BACK_SIDE} from '../constants.js';
-import {Int32Attribute} from "../core/BufferAttribute.js";
 
 export class ZShapeBasicMaterial extends CustomShaderMaterial {
 
     /**
+     * Has the pick and outline modes, see Material.
      * WARNING:
      * - constructor does not pass arguments to parent class
      * - evades "custom" in shader name by setting programName after super
@@ -15,6 +16,7 @@ export class ZShapeBasicMaterial extends CustomShaderMaterial {
 
         this.type = "ZShapeBasicMaterial";
         this.programName = "basic_zshape";
+        this._passModes = [Material.MODE.PICK, Material.MODE.OUTLINE];
 
         // Uniforms aspect and viewport set by MeshRenderer based on actual viewport
         this.setUniform("ShapeSize", "ShapeSize" in args ? args.ShapeSize : [1.0, 1.0, 1.0]);
@@ -51,37 +53,6 @@ export class ZShapeBasicMaterial extends CustomShaderMaterial {
 	get specular() { return this._specular; }
 	get shininess() { return this._shininess; }
 
-    clone_for_picking() {
-        let o = new ZShapeBasicMaterial( {
-            ShapeSize: this.getUniform("ShapeSize"),
-            color: this.color, emissive: this.emissive, diffuse: this.diffuse,
-            side: this.side
-        } );
-        if (this.hasSBFlag("SCALE_PER_INSTANCE")) o.addSBFlag("SCALE_PER_INSTANCE");
-        if (this.hasSBFlag("MAT4_PER_INSTANCE")) o.addSBFlag("MAT4_PER_INSTANCE");
-        for (const m of this.maps) o.addMap(m);
-        o._instanceData = this._instanceData;
-        o.addSBFlag('PICK_MODE_UINT');
-        o.setUniform("u_PickInstance", false);
-        return o;
-    }
-
-    clone_for_outline() {
-        let o = new ZShapeBasicMaterial( {
-            ShapeSize: this.getUniform("ShapeSize"),
-            color: this.color, emissive: this.emissive, diffuse: this.diffuse,
-            side: this.side
-        } );
-        if (this.hasSBFlag("SCALE_PER_INSTANCE")) o.addSBFlag("SCALE_PER_INSTANCE");
-        if (this.hasSBFlag("MAT4_PER_INSTANCE")) o.addSBFlag("MAT4_PER_INSTANCE");
-        for (const m of this.maps) o.addMap(m);
-        o._instanceData = this._instanceData;
-        o.addSBFlag('OUTLINE');
-        o.setUniform("u_OutlineGivenInstances", false);
-        o.setAttribute("a_OutlineInstances", Int32Attribute([0], 1, 0x7fffffff));
-        return o;
-    }
-
     get color() { return this._color; }
     set color(val) {
         this._color = val;
@@ -113,26 +84,6 @@ export class ZShapeBasicMaterial extends CustomShaderMaterial {
             this._onChangeListener.materialUpdate(update)
         }
     }
-
-    // Outline - setup / reset for instance list outlining.
-    // To be called on outline version (with OUTLINE SB-flag).
-    outline_instances_setup(instance_list) {
-        this.setUniform("u_OutlineGivenInstances", true);
-        let buf_attr = this.getAttribute("a_OutlineInstances");
-        buf_attr.array = new Int32Array(instance_list);
-        buf_attr.divisor = 1;
-        // leaks buffers in gl-attrib-manager
-        // this.setAttribute("a_OutlineInstances", Int32Attribute(instance_list, 1, 1));
-    }
-    outline_instances_reset() {
-        this.setUniform("u_OutlineGivenInstances", false);
-        let buf_attr = this.getAttribute("a_OutlineInstances");
-        buf_attr.array = new Int32Array([0]);
-        buf_attr.divisor = 0x7fffffff;
-        // leaks buffers in gl-attrib-manager
-        // this.setAttribute("a_OutlineInstances", Int32Attribute([0], 1, 0x7fffffff));
-    }
-
 
     update(data) {
         super.update(data);

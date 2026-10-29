@@ -48,16 +48,8 @@ export class ZSprite extends Mesh {
             material = new ZSpriteBasicMaterial();
         }
 
-        // MT for Sebastien -- what would be the best way to clone material?
-        // ZSpriteBasicMaterial.clone_for_xyzz() seems OK but one needs to
-        // take care with uniform / texture / instanceData updates.
-        // Ideally, one could even have the same program built and compiled
-        // several times with different SB flags.
-        let pmat = material.clone_for_picking();
-        let omat = material.clone_for_outline();
-
         //SUPER
-        super(geometry, material, pmat, omat);
+        super(geometry, material);
         this.type = "ZSprite";
     }
 }
@@ -114,9 +106,7 @@ export class ZLogo extends ZSprite {
                                                emissive: new Color(0xffffff) });
         mat.transparent = true;
         // Frame/grip affordance lives in the fragment shader; the flag keeps it
-        // out of the ordinary and instanced ZSprite programs. Added before the
-        // picking/outline clones are taken in ZSprite, which build fresh
-        // materials and so correctly do not inherit it.
+        // out of the ordinary and instanced ZSprite programs.
         mat.addSBFlag("SPRITE_FRAME");
         super(null, mat);
 

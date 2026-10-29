@@ -1,7 +1,7 @@
+import {Material} from './Material.js';
 import {CustomShaderMaterial} from './CustomShaderMaterial.js';
 import {Color} from "../math/Color.js";
 import {FRONT_AND_BACK_SIDE} from '../constants.js';
-import {Int32Attribute} from "../core/BufferAttribute.js";
 
 /**
  * Material of ZLines. The points and the stroke and segment tables are the two
@@ -9,14 +9,13 @@ import {Int32Attribute} from "../core/BufferAttribute.js";
  * segment (the ceiling when the level of detail is on), the level-of-detail
  * tolerance in pixels (0 turns the shader's clamp off), the half width, whether the width is in pixels or in world units,
  * the margin in pixels the strip is drawn beyond the width, the texel where the
- * segments start, and the instance offset and given-instances switch that
- * ZLines.draw() sets per sub-draw.
- * Picking and outline use clones of this material with the mode flag set, as
- * ZShapeBasicMaterial does.
+ * segments start, and the instance offset that ZLines.draw() sets per sub-draw.
+ * Has the pick and outline modes, see Material; a pass can take its own line
+ * width, see setLineWidth().
  *
- * The drawing material is transparent by default: the edges are antialiased
- * through alpha, which needs blending, and RenderCore blends only the
- * transparent queue. depthWrite stays on.
+ * The material is transparent by default: the edges are antialiased through
+ * alpha, which needs blending, and RenderCore blends only the transparent
+ * queue. depthWrite stays on. The pick and outline modes draw opaque.
  */
 export class ZLinesBasicMaterial extends CustomShaderMaterial {
 
@@ -25,6 +24,7 @@ export class ZLinesBasicMaterial extends CustomShaderMaterial {
 
         this.type = "ZLinesBasicMaterial";
         this.programName = "basic_zlines";
+        this._passModes = [Material.MODE.PICK, Material.MODE.OUTLINE];
 
         this.setUniform("u_Samples", args.samples !== undefined ? args.samples : 1);
         this.setUniform("u_LodTol", args.lodTolerance !== undefined ? args.lodTolerance : 0.0);
@@ -33,8 +33,6 @@ export class ZLinesBasicMaterial extends CustomShaderMaterial {
         this.setUniform("u_Margin", args.margin !== undefined ? args.margin : 1.0);
         this.setUniform("u_SegBase", 0);
         this.setUniform("u_InstanceOffset", 0);
-        this.setUniform("u_GivenInstances", false);
-        this.setAttribute("a_Instances", Int32Attribute([0], 1, 0x7fffffff));
 
         this.transparent = args.transparent !== undefined ? args.transparent : true;
 
@@ -58,8 +56,23 @@ export class ZLinesBasicMaterial extends CustomShaderMaterial {
     get lodTolerance() { return this.getUniform("u_LodTol"); }
     set lodTolerance(px) { this.setUniform("u_LodTol", px); }
 
-    get lineWidth() { return 2.0 * this.getUniform("u_HalfWidth"); }
-    set lineWidth(w) { this.setUniform("u_HalfWidth", w / 2.0); }
+    /** The line width of every pass; setting it drops the widths set for one pass. */
+    get lineWidth() { return this.getLineWidth(); }
+    set lineWidth(w) { this.setLineWidth(w); }
+
+    /**
+     * Set the line width of the pass of `mode` (Material.MODE), over the width of
+     * every pass; without `mode` the width of every pass, which drops the widths
+     * set for one pass.
+     */
+    setLineWidth(w, mode = undefined) {
+        if (mode === undefined)
+            for (const m of Object.values(Material.MODE)) this.removeUniform("u_HalfWidth", m);
+        this.setUniform("u_HalfWidth", w / 2.0, mode);
+    }
+
+    /** The line width the pass of `mode` draws with; without `mode` the width of every pass. */
+    getLineWidth(mode = undefined) { return 2.0 * this.getUniform("u_HalfWidth", mode); }
 
     get screenWidth() { return this.getUniform("u_ScreenWidth"); }
     set screenWidth(b) { this.setUniform("u_ScreenWidth", b); }
@@ -69,45 +82,6 @@ export class ZLinesBasicMaterial extends CustomShaderMaterial {
 
     get segBase() { return this.getUniform("u_SegBase"); }
     set segBase(n) { this.setUniform("u_SegBase", n); }
-
-    _clone_base() {
-        let o = new ZLinesBasicMaterial({
-            samples: this.samples, lineWidth: this.lineWidth, screenWidth: this.screenWidth,
-            margin: this.margin, emissive: this.emissive, transparent: false,
-            lodTolerance: this.lodTolerance
-        });
-        o.segBase = this.segBase;
-        o._instanceData = this._instanceData;
-        return o;
-    }
-
-    clone_for_picking() {
-        let o = this._clone_base();
-        o.addSBFlag('PICK_MODE_UINT');
-        o.setUniform("u_PickInstance", false);
-        return o;
-    }
-
-    clone_for_outline() {
-        let o = this._clone_base();
-        o.addSBFlag('OUTLINE');
-        return o;
-    }
-
-    // Outline of a list of segments; to be called on the outline clone.
-    // ZLines.draw() takes the instance count from the attribute.
-    outline_instances_setup(instance_list) {
-        this.setUniform("u_GivenInstances", true);
-        let buf_attr = this.getAttribute("a_Instances");
-        buf_attr.array = new Int32Array(instance_list);
-        buf_attr.divisor = 1;
-    }
-    outline_instances_reset() {
-        this.setUniform("u_GivenInstances", false);
-        let buf_attr = this.getAttribute("a_Instances");
-        buf_attr.array = new Int32Array([0]);
-        buf_attr.divisor = 0x7fffffff;
-    }
 
     update(data) {
         super.update(data);
