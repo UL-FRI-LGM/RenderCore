@@ -121,4 +121,142 @@ highp ivec4 fetchAtIndex(highp isampler2D s, highp int idx) {
     }
 #fi
 `,
+
+    // Declares lightAttenuation(d, k) for k = (constant, linear, quadratic), and pointLightFalloff()
+    // and spotLightFalloff(), a light's attenuation at p, 0 beyond its range, times the cone of a spot
+    // light; highp, as the square of a distance of 256 or more overflows a 16-bit mediump float. Tests
+    // PLIGHTS and SLIGHTS.
+    light_falloff_decl: `
+#if (PLIGHTS || SLIGHTS)
+    float lightAttenuation(highp float d, highp vec3 k) {
+        return 1.0 / (k.x + k.y * d + k.z * (d * d));
+    }
+#fi
+#if (PLIGHTS)
+    float pointLightFalloff(highp vec3 lpos, float range, highp vec3 k, highp vec3 p) {
+        highp float d = length(lpos - p);
+        if (range > 0.0 && d > range) return 0.0;
+        return lightAttenuation(d, k);
+    }
+#fi
+#if (SLIGHTS)
+    float spotLightFalloff(highp vec3 lpos, vec3 dir, float cosInner, float cosOuter, float range,
+                           highp vec3 k, highp vec3 p) {
+        highp float d = length(lpos - p);
+        if (range > 0.0 && d > range) return 0.0;
+        float theta = dot(normalize(lpos - p), normalize(-dir));
+        if (theta <= cosOuter) return 0.0;
+        return clamp((theta - cosOuter) / (cosInner - cosOuter), 0.0, 1.0) * lightAttenuation(d, k);
+    }
+#fi
+`,
+
+    // Declares lightSpecular(), Blinn or Phong, and dirLightDS(), pointLightDS() and spotLightDS(),
+    // a light's diffuse and specular factors at p for the unit normal n and the unit direction v to
+    // the eye. Includes light_falloff_decl. Tests DLIGHTS, PLIGHTS and SLIGHTS.
+    light_shading_decl: `
+#include light_falloff_decl
+#if (DLIGHTS || PLIGHTS || SLIGHTS)
+    float lightSpecular(vec3 n, vec3 l, vec3 v, float shininess, bool blinn) {
+        if (blinn) return pow(max(dot(n, normalize(l + v)), 0.0), shininess);
+        return pow(max(dot(v, reflect(-l, n)), 0.0), shininess);
+    }
+#fi
+#if (DLIGHTS)
+    vec2 dirLightDS(vec3 dir, vec3 n, vec3 v, float shininess, bool blinn) {
+        vec3 l = normalize(-dir);
+        return vec2(max(dot(n, l), 0.0), lightSpecular(n, l, v, shininess, blinn));
+    }
+#fi
+#if (PLIGHTS)
+    vec2 pointLightDS(highp vec3 lpos, float range, vec3 k, highp vec3 p,
+                      vec3 n, vec3 v, float shininess, bool blinn) {
+        float a = pointLightFalloff(lpos, range, k, p);
+        if (a == 0.0) return vec2(0.0);
+        vec3 l = normalize(lpos - p);
+        return a * vec2(max(dot(n, l), 0.0), lightSpecular(n, l, v, shininess, blinn));
+    }
+#fi
+#if (SLIGHTS)
+    vec2 spotLightDS(highp vec3 lpos, vec3 dir, float cosInner, float cosOuter, float range, vec3 k,
+                     highp vec3 p, vec3 n, vec3 v, float shininess, bool blinn) {
+        float a = spotLightFalloff(lpos, dir, cosInner, cosOuter, range, k, p);
+        if (a == 0.0) return vec2(0.0);
+        vec3 l = normalize(lpos - p);
+        return a * vec2(max(dot(n, l), 0.0), lightSpecular(n, l, v, shininess, blinn));
+    }
+#fi
+`,
+
+    // Adds to vec3 combined each light's colour times its diffuse factor times kd plus its specular
+    // factor times ks, from the locals vec3 P, N, V (position, unit normal, unit direction to the
+    // eye), kd, ks, float shin and bool blinn, and dLights, pLights and sLights. Needs
+    // light_shading_decl. Tests DLIGHTS, PLIGHTS and SLIGHTS; uses ##NUM_DLIGHTS, ##NUM_PLIGHTS and
+    // ##NUM_SLIGHTS.
+    light_shading_stmt: `
+#if (DLIGHTS)
+    #for lightIdx in 0 to NUM_DLIGHTS
+    {
+        vec2 f = dirLightDS(dLights[##lightIdx].direction, N, V, shin, blinn);
+        combined += dLights[##lightIdx].color * f.x * kd + dLights[##lightIdx].color * f.y * ks;
+    }
+    #end
+#fi
+#if (PLIGHTS)
+    #for lightIdx in 0 to NUM_PLIGHTS
+    {
+        vec3 k = vec3(pLights[##lightIdx].constant, pLights[##lightIdx].linear,
+                      pLights[##lightIdx].quadratic);
+        vec2 f = pointLightDS(pLights[##lightIdx].position, pLights[##lightIdx].distance, k,
+                              P, N, V, shin, blinn);
+        combined += pLights[##lightIdx].color * f.x * kd + pLights[##lightIdx].color * f.y * ks;
+    }
+    #end
+#fi
+#if (SLIGHTS)
+    #for lightIdx in 0 to NUM_SLIGHTS
+    {
+        vec3 k = vec3(sLights[##lightIdx].constant, sLights[##lightIdx].linear,
+                      sLights[##lightIdx].quadratic);
+        vec2 f = spotLightDS(sLights[##lightIdx].position, sLights[##lightIdx].direction,
+                             sLights[##lightIdx].cutoff, sLights[##lightIdx].outerCutoff,
+                             sLights[##lightIdx].distance, k, P, N, V, shin, blinn);
+        combined += sLights[##lightIdx].color * f.x * kd + sLights[##lightIdx].color * f.y * ks;
+    }
+    #end
+#fi
+`,
+
+    // Adds to vec3 combined each light's colour times kd times its falloff, with no normal, from the
+    // locals vec3 P (position) and kd, and dLights, pLights and sLights. Needs light_falloff_decl.
+    // Tests DLIGHTS, PLIGHTS and SLIGHTS; uses ##NUM_DLIGHTS, ##NUM_PLIGHTS and ##NUM_SLIGHTS.
+    light_falloff_stmt: `
+#if (DLIGHTS)
+    #for lightIdx in 0 to NUM_DLIGHTS
+        combined += dLights[##lightIdx].color * kd;
+    #end
+#fi
+#if (PLIGHTS)
+    #for lightIdx in 0 to NUM_PLIGHTS
+    {
+        vec3 k = vec3(pLights[##lightIdx].constant, pLights[##lightIdx].linear,
+                      pLights[##lightIdx].quadratic);
+        combined += pLights[##lightIdx].color * kd *
+                    pointLightFalloff(pLights[##lightIdx].position, pLights[##lightIdx].distance, k, P);
+    }
+    #end
+#fi
+#if (SLIGHTS)
+    #for lightIdx in 0 to NUM_SLIGHTS
+    {
+        vec3 k = vec3(sLights[##lightIdx].constant, sLights[##lightIdx].linear,
+                      sLights[##lightIdx].quadratic);
+        combined += sLights[##lightIdx].color * kd *
+                    spotLightFalloff(sLights[##lightIdx].position, sLights[##lightIdx].direction,
+                                     sLights[##lightIdx].cutoff, sLights[##lightIdx].outerCutoff,
+                                     sLights[##lightIdx].distance, k, P);
+    }
+    #end
+#fi
+`,
 });

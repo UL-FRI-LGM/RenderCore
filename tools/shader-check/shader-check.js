@@ -161,6 +161,15 @@ const SNIPPET_PRECISIONS = {
     highp:   "precision highp float;\nprecision highp int;\nprecision highp sampler2D;\nprecision highp isampler2D;",
 };
 
+// The light arrays of the light loops, with the members the loops read.
+const LIGHT_ARRAYS = [
+    "#if (DLIGHTS)", "struct DLight { vec3 direction; vec3 color; };", "uniform DLight dLights[##NUM_DLIGHTS];", "#fi",
+    "#if (PLIGHTS)", "struct PLight { vec3 position; vec3 color; float distance; float constant; float linear; float quadratic; };",
+    "uniform PLight pLights[##NUM_PLIGHTS];", "#fi",
+    "#if (SLIGHTS)", "struct SLight { vec3 position; vec3 direction; vec3 color; float distance; float cutoff; float outerCutoff;",
+    "                 float constant; float linear; float quadratic; };", "uniform SLight sLights[##NUM_SLIGHTS];", "#fi",
+].join("\n");
+
 // What a snippet needs in its wrapper: `decls`, declaration snippets before it; `stmts`,
 // statement snippets at the start of main(); `glsl`, declarations after those; `main`,
 // statements after those, which can call what a declaration snippet declares. Every statement
@@ -173,6 +182,18 @@ const SNIPPET_SETUPS = {
                           main: "ivec2 a = texelAtIndex(data.points, 7) + texelAtIndex(tables, 7);\n" +
                                 "vec4 b = fetchAtIndex(data.points, 7);\nivec4 c = fetchAtIndex(tables, 7);" },
     clipping_decl:      { main: "#if (CLIPPING_PLANES)\nbool c = clippedByPlanes(vec3(1.0));\n#fi" },
+    light_falloff_decl: { main: "vec3 k = vec3(1.0, 0.01, 0.0001), p = vec3(0.0), l = vec3(1.0);\n" +
+                                "#if (PLIGHTS)\nfloat a = pointLightFalloff(l, 0.0, k, p);\n#fi\n" +
+                                "#if (SLIGHTS)\nfloat b = spotLightFalloff(l, -l, 0.7, 0.6, 0.0, k, p);\n#fi" },
+    light_shading_decl: { main: "vec3 k = vec3(1.0, 0.01, 0.0001), p = vec3(0.0), l = vec3(1.0), n = vec3(0.0, 0.0, 1.0);\n" +
+                                "#if (DLIGHTS)\nvec2 a = dirLightDS(-l, n, n, 16.0, true);\n#fi\n" +
+                                "#if (PLIGHTS)\nvec2 b = pointLightDS(l, 0.0, k, p, n, n, 16.0, false);\n#fi\n" +
+                                "#if (SLIGHTS)\nvec2 c = spotLightDS(l, -l, 0.7, 0.6, 0.0, k, p, n, n, 16.0, true);\n#fi" },
+    light_shading_stmt: { decls: ["light_shading_decl"], glsl: LIGHT_ARRAYS,
+                          main: "vec3 P = vec3(0.0, 0.0, -1.0), N = vec3(0.0, 0.0, 1.0), V = N, kd = vec3(0.5), ks = kd;\n" +
+                                "float shin = 16.0;\nbool blinn = true;\nvec3 combined = vec3(0.0);" },
+    light_falloff_stmt: { decls: ["light_falloff_decl"], glsl: LIGHT_ARRAYS,
+                          main: "vec3 P = vec3(0.0, 0.0, -1.0), kd = vec3(0.5), combined = vec3(0.0);" },
 };
 
 const out = document.getElementById("out");

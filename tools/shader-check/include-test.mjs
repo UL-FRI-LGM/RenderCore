@@ -108,7 +108,7 @@ for (const [name, src] of Object.entries(ShaderSnippets)) {
     let ok = true, detail = "";
     try {
         const t = parse("#include " + name);
-        const values = { NUM_CLIPPING_PLANES: 2 };
+        const values = { NUM_CLIPPING_PLANES: 2, NUM_DLIGHTS: 1, NUM_PLIGHTS: 2, NUM_SLIGHTS: 1 };
         const none = build(t, [], values), all = build(t, flags, values);
         ok = all.length > 0 && !/##/.test(all) && !/#(if|else|fi|for|end|include)\b/.test(none + all);
         detail = all;
