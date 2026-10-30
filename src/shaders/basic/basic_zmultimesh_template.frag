@@ -20,13 +20,6 @@ struct Material {
     #fi
 };
 
-#if (CLIPPING_PLANES)
-struct ClippingPlane {
-    vec3  normal;
-    float constant;
-};
-#fi
-
 #if (DLIGHTS)
 struct DLight {
     vec3 direction;
@@ -114,11 +107,12 @@ in vec3 fragVPos;
 uniform vec3 ambient; // QQQQQQ how does this work
 
 #if (CLIPPING_PLANES)
-    uniform ClippingPlane clippingPlanes[##NUM_CLIPPING_PLANES];
-    in      vec3          v_pos_for_clip;
+    in vec3 v_pos_for_clip;
 #fi
+#include clipping_decl
 
 #if (PICK_MODE_UINT)
+    // ZMultiMesh draws each node with a draw call of its own and sets the node index in u_InstanceID.
     uniform uint u_UINT_ID;
     uniform bool u_PickInstance;
     uniform uint u_InstanceID;
@@ -130,12 +124,7 @@ uniform vec3 ambient; // QQQQQQ how does this work
         in vec3 v_normal_viewspace;
     #fi
     in vec3 v_ViewDirection_viewspace;
-
-    layout (location = 0) out vec4 vn_viewspace;
-    layout (location = 1) out vec4 vd_viewspace;
-    #if (DEPTH)
-        layout (location = 2) out vec4 de_viewspace; // could be float
-    #fi
+    #include outline_frag_decl
 #else
     out vec4 outColor;
 #fi
@@ -243,11 +232,7 @@ vec3 calcSpotLight (SLight light, vec3 normal, vec3 viewDir)
 void main()
 {
     #if (CLIPPING_PLANES)
-        bool clipped = true;
-        for(int i = 0; i < ##NUM_CLIPPING_PLANES; i++) {
-            clipped = ( dot( v_pos_for_clip, clippingPlanes[i].normal ) > clippingPlanes[i].constant ) && clipped;
-        }
-        if (clipped) discard;
+        if (clippedByPlanes(v_pos_for_clip)) discard;
     #fi
 
     #if (OUTLINE)
@@ -263,9 +248,6 @@ void main()
             vn_viewspace = vec4(-v_normal_viewspace, 0.0);
         }
         vd_viewspace = vec4(v_ViewDirection_viewspace, 0.0);
-        #if (DEPTH)
-            de_viewspace = vec4(gl_FragCoord.z, 0.0, 0.0, 1.0);
-        #fi
 
     #else if (PICK_MODE_UINT)
 

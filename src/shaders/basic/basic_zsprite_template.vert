@@ -50,18 +50,16 @@ in vec3 VPos;       // Vertex position
 
 #if (INSTANCED)
     uniform Material material;
-    #if (PICK_MODE_UINT)
-        flat out uint InstanceID;
-    #fi
-    #if (OUTLINE)
-        uniform bool u_GivenInstances;
-        in  int  a_Instances;
-    #fi
+    #include pick_vert_decl
+    #include outline_instances_vert_decl
 #fi
 
-#if (OUTLINE)
-    out vec3 v_normal_viewspace;
-    out vec3 v_ViewDirection_viewspace;
+#include outline_vert_decl
+
+//FUNCTIONS
+//**********************************************************************************************************************
+#if (INSTANCED)
+    #include texel_index_decl
 #fi
 
 //MAIN
@@ -72,16 +70,12 @@ void main() {
 
     #if (INSTANCED)
         int iID = gl_InstanceID;
-        #if (OUTLINE)
-            if (u_GivenInstances)
-                iID = a_Instances;
-        #fi
-        int   tsx = textureSize(material.instanceData0, 0).x;
-        ivec2 tc  = ivec2(iID % tsx, iID / tsx);
-        vec4  pos = texelFetch(material.instanceData0, tc, 0);
-        // see also texelFetchOffset about how to get neigboring texels
+        #include outline_instances_vert_stmt
+        vec4 pos = fetchAtIndex(material.instanceData0, iID);
 
         VPos_viewspace = MVMat * vec4(pos.xyz, 1.0);
+
+        #include pick_vert_stmt
     #else
         VPos_viewspace = MVMat * vec4(0.0, 0.0, 0.0, 1.0);
     #fi
@@ -117,9 +111,5 @@ void main() {
 
         float dToCam = length(VPos_viewspace.xyz);
         v_ViewDirection_viewspace = -VPos_viewspace.xyz / dToCam;
-    #fi
-
-    #if (INSTANCED && PICK_MODE_UINT)
-        InstanceID = uint(iID);
     #fi
  }

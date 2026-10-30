@@ -35,40 +35,25 @@ flat in int v_seg;
 in vec3 fragVPos;
 
 #if (PICK_MODE_UINT)
-    uniform uint u_UINT_ID;
-    uniform bool u_PickInstance;
-    flat in uint InstanceID;
-    layout(location = 0) out uint objectID;
+    #include pick_frag_decl
 #else if (OUTLINE)
     in vec3 v_normal_viewspace;
     in vec3 v_ViewDirection_viewspace;
-    layout (location = 0) out vec4 vn_viewspace;
-    layout (location = 1) out vec4 vd_viewspace;
-    #if (DEPTH)
-        layout (location = 2) out vec4 de_viewspace;
-    #fi
+    #include outline_frag_decl
 #else
     out vec4 outColor;
 #fi
 
 #if (CLIPPING_PLANES)
-    struct ClippingPlane {
-        vec3 normal;
-        float constant;
-    };
-    uniform ClippingPlane clippingPlanes[##NUM_CLIPPING_PLANES];
     in vec3 vViewPosition;
 #fi
+#include clipping_decl
 
 //MAIN
 //-----------------------------------------------------------------------------
 void main() {
     #if (CLIPPING_PLANES)
-        bool clipped = true;
-        for (int i = 0; i < ##NUM_CLIPPING_PLANES; i++) {
-            clipped = (dot(vViewPosition, clippingPlanes[i].normal) > clippingPlanes[i].constant) && clipped;
-        }
-        if (clipped) discard;
+        if (clippedByPlanes(vViewPosition)) discard;
     #fi
 
     float dx = v_dist.x / v_dist.z;
@@ -78,12 +63,9 @@ void main() {
         if (d > v_halfWidth) discard;
         vn_viewspace = vec4(v_normal_viewspace, 0.0);
         vd_viewspace = vec4(v_ViewDirection_viewspace, 0.0);
-        #if (DEPTH)
-            de_viewspace = vec4(gl_FragCoord.z, 0.0, 0.0, 1.0);
-        #fi
     #else if (PICK_MODE_UINT)
         if (d > v_halfWidth) discard;
-        objectID = u_PickInstance ? InstanceID : u_UINT_ID;
+        #include pick_frag_stmt
     #else
         // The size of a pixel in the units of v_dist: 1 in screen mode.
         float px = length(vec2(dFdx(dx), dFdy(dx)));

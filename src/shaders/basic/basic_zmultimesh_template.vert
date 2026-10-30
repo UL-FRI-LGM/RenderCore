@@ -103,21 +103,14 @@ out vec3 fragVPos;
     out vec3 v_pos_for_clip;
 #fi
 
-#if (PICK_MODE_UINT)
-    flat out uint InstanceID;
-#fi
-#if (OUTLINE)
-        uniform bool u_GivenInstances;
-        in  int  a_Instances;
-#fi
-
-#if (OUTLINE)
-    #if (NORMAL_FLAT)
+#if (NORMAL_FLAT)
+    // The fragment stage takes the outline normal from the derivatives of v_position_viewspace.
+    #if (OUTLINE)
         out vec3 v_position_viewspace;
-    #else
-        out vec3 v_normal_viewspace;
+        out vec3 v_ViewDirection_viewspace;
     #fi
-    out vec3 v_ViewDirection_viewspace;
+#else
+    #include outline_vert_decl
 #fi
 
 
