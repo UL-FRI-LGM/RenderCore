@@ -25,7 +25,6 @@ struct Material {
 //**********************************************************************************************************************
 
 uniform Material material;
-uniform vec3 ambient;
 
 #if (TRANSPARENT)
     uniform float alpha;
@@ -89,7 +88,7 @@ void main() {
     #if (COLORS)
         surface *= fragVColor.rgb;
     #fi
-    vec4 color = vec4(ambient * surface + surface, alpha);
+    vec4 color = vec4(surface, alpha);
 
     #if (COLORS)
         color.a += fragVColor.a;
