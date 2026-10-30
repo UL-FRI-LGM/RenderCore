@@ -112,58 +112,7 @@ float alpha = 1.0;
 
 //FUNCTIONS
 //**********************************************************************************************************************
-#if (PLIGHTS || SLIGHTS)
-float calcAttenuation(float constant, float linear, float quadratic, float distance) {
-    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
-    //float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
-    
-    return 1.0 / (constant + linear * distance + quadratic * (distance * distance));
-}
-#fi
-
-#if (PLIGHTS)
-// Calculates the point light color contribution
-vec3 calcPointLight(vec3 fragVPos, PLight light) {
-
-    float distance = length(light.position - fragVPos);
-    if(light.distance > 0.0 && distance > light.distance) return vec3(0.0, 0.0, 0.0);
-
-    // Attenuation
-    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
-
-    // Combine results
-    vec3 diffuse = light.color * material.diffuse * attenuation;
-
-    return diffuse;
-}
-#fi
-
-#if (SLIGHTS)
-vec3 calcSpotLight(vec3 fragVPos, SLight light) {
-    
-    float distance = length(light.position - fragVPos);
-    if(light.distance > 0.0 && distance > light.distance) return vec3(0.0, 0.0, 0.0);
-
-
-    // spot
-    vec3 lightDir = normalize(light.position - fragVPos);
-    
-    float theta = dot(lightDir, normalize(-light.direction));
-    float epsilon = light.cutoff - light.outerCutoff;
-    float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);
-    //if(theta <= light.cutoff) return vec3(0.0, 0.0, 0.0);
-    if(theta <= light.outerCutoff) return vec3(0.0, 0.0, 0.0);
-
-
-    // Attenuation
-    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
-
-    // Combine results
-    vec3 diffuse = light.color * material.diffuse * attenuation;
-
-    return diffuse * intensity;
-}
-#fi
+#include light_falloff_decl
 
 
 //MAIN
@@ -184,23 +133,10 @@ void main() {
 
 
     // Calculate combined light contribution
+    vec3 P = VPos_viewspace.xyz;
+    vec3 kd = material.diffuse;
     vec3 combined = ambient + material.emissive;
-
-    #if (DLIGHTS)
-        #for lightIdx in 0 to NUM_DLIGHTS
-            combined += dLights[##lightIdx].color * material.diffuse;
-        #end
-    #fi
-    #if (PLIGHTS)
-        #for lightIdx in 0 to NUM_PLIGHTS
-            combined += calcPointLight(VPos_viewspace.xyz, pLights[##lightIdx]);
-        #end
-    #fi
-    #if (SLIGHTS)
-        #for lightIdx in 0 to NUM_SLIGHTS
-            combined += calcSpotLight(VPos_viewspace.xyz, sLights[##lightIdx]);
-        #end
-    #fi
+    #include light_falloff_stmt
 
     fragVColor = vec4(combined, alpha);
 

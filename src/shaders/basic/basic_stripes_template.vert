@@ -47,7 +47,7 @@ in vec2 uv;
 out vec2 fragUV;
 #fi
 
-#if (PLIGHTS)
+#if (PLIGHTS || SLIGHTS)
 out vec3 fragVPos;
 #fi
 out vec3 VCOL;
@@ -411,10 +411,10 @@ void main() {
     // }
 
 
-    #if (PLIGHTS || POINTS || CLIPPING_PLANES)
+    #if (PLIGHTS || SLIGHTS || POINTS || CLIPPING_PLANES)
     vec4 VPos4 = MVMat * vec4(VPos, 1.0);
     #fi
-    #if (PLIGHTS)
+    #if (PLIGHTS || SLIGHTS)
     // Pass vertex position to fragment shader
     fragVPos = vec3(VPos4) / VPos4.w;
     #fi

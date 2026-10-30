@@ -42,7 +42,7 @@ out vec2 deltaVPos;
     out vec2 fragUV;
 #fi
 
-#if (PLIGHTS)
+#if (PLIGHTS || SLIGHTS)
     out vec3 fragVPos;
 #fi
 
@@ -117,7 +117,7 @@ void main() {
     }
 
 
-    #if (PLIGHTS)
+    #if (PLIGHTS || SLIGHTS)
         // Pass vertex position to fragment shader
         fragVPos = vec3(VPos_viewspace) / VPos_viewspace.w;
     #fi

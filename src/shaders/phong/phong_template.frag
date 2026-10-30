@@ -196,290 +196,8 @@ in vec3 v_position_tangentspace;
 
 //FUNCTIONS
 //**********************************************************************************************************************
-#if (PLIGHTS || SLIGHTS)
-float calcAttenuation(float constant, float linear, float quadratic, float distance) {
-    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
-    //float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
-    
-    return 1.0 / (constant + linear * distance + quadratic * (distance * distance));
-}
-#fi
+#include light_shading_decl
 
-#if (DLIGHTS)
-vec3 calcDirectLight (DLight light, vec3 normal, vec3 viewDir) {
-
-    //vec3 lightDir = normalize(light.position);
-    vec3 lightDir = normalize(-light.direction);
-
-    // Difuse
-    float diffuseF = max(dot(normal, lightDir), 0.0f);
-
-    // Specular
-    //vec3 reflectDir = reflect(-lightDir, normal);
-    //float specularF = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
-    float specularF;
-    if(material.blinn)
-    {
-        vec3 halfwayDir = normalize(lightDir + viewDir);  
-        specularF = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
-    }
-    else
-    {
-        vec3 reflectDir = reflect(-lightDir, normal);
-        specularF = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    }
-
-    // Combine results
-    // vec3 diffuse  = light.color * diffuseF  * material.diffuse;
-    // vec3 specular = light.color * specularF * material.specular;
-    #if (COLORS)
-        vec3 diffuse  = light.color * diffuseF  * (fragVColor.rgb + material.diffuse);
-    #else
-        vec3 diffuse  = light.color * diffuseF  * material.diffuse;
-    #fi
-    vec3 specular = light.color * specularF * material.specular;
-
-    return (diffuse + specular);
-}
-vec3 calcDirectLight_tangentspace (DLight light, vec3 lightDirection, vec3 viewDir, vec3 normal, vec2 texCoords) {
-
-    //vec3 lightDir = normalize(light.position);
-    vec3 lightDir = normalize(-lightDirection);
-
-    // Difuse
-    float diffuseF = max(dot(normal, lightDir), 0.0f);
-
-    // Specular
-    //vec3 reflectDir = reflect(-lightDir, normal);
-    //float specularF = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
-    float specularF;
-    if(material.blinn)
-    {
-        vec3 halfwayDir = normalize(lightDir + viewDir);  
-        specularF = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
-    }
-    else
-    {
-        vec3 reflectDir = reflect(-lightDir, normal);
-        specularF = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    }
-
-    // Combine results
-    // vec3 diffuse  = light.color * diffuseF  * material.diffuse;
-    // vec3 specular = light.color * specularF * material.specular;
-    #if (!DIFFUSE_MAP)
-        vec3 diffuse  = light.color * diffuseF  * material.diffuse;
-    #else
-        vec3 diffuseMap = texture(material.diffuseMap, texCoords).rgb;
-        vec3 diffuse  = light.color * diffuseF  * material.diffuse * diffuseMap;
-    #fi
-    #if (!SPECULAR_MAP)
-        vec3 specular = light.color * specularF * material.specular;
-    #else
-        vec3 specularMap = texture(material.specularMap, texCoords).rgb;
-        vec3 specular = light.color * specularF * material.specular * specularMap;
-    #fi
-
-    return (diffuse + specular);
-}
-#fi
-
-#if (PLIGHTS)
-// Calculates the point light color contribution
-vec3 calcPointLight (PLight light, vec3 normal, vec3 viewDir) {
-
-    float distance = length(light.position - fragVPos);
-    if(light.distance > 0.0 && distance > light.distance) return vec3(0.0, 0.0, 0.0);
-
-    vec3 lightDir = normalize(light.position - fragVPos);
-
-    // Difuse
-    float diffuseF = max(dot(lightDir, normal), 0.0f);
-
-    // Specular
-    //vec3 reflectDir = reflect(-lightDir, normal);
-    //float specularF = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
-    float specularF;
-    if(material.blinn)
-    {
-        vec3 halfwayDir = normalize(lightDir + viewDir);  
-        specularF = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
-    }
-    else
-    {
-        vec3 reflectDir = reflect(-lightDir, normal);
-        specularF = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    }
-
-    // Attenuation
-    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
-
-    // Combine results
-    // vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
-    // vec3 specular = light.color * specularF * material.specular * attenuation;
-    #if (COLORS)
-        vec3 diffuse  = light.color * diffuseF  * (fragVColor.rgb + material.diffuse) * attenuation;
-    #else
-        vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
-    #fi
-    vec3 specular = light.color * specularF * material.specular * attenuation;
-
-    return (diffuse + specular);
-}
-vec3 calcPointLight_tangentspace (PLight light, vec3 lightPosition, vec3 viewDir, vec3 position, vec3 normal, vec2 texCoords) {
-
-    float distance = length(lightPosition - position);
-    if(light.distance > 0.0 && distance > light.distance) return vec3(0.0, 0.0, 0.0);
-
-    vec3 lightDir = normalize(lightPosition - position);
-
-    // Difuse
-    float diffuseF = max(dot(lightDir, normal), 0.0f);
-
-    // Specular
-    //vec3 reflectDir = reflect(-lightDir, normal);
-    //float specularF = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
-    float specularF;
-    if(material.blinn)
-    {
-        vec3 halfwayDir = normalize(lightDir + viewDir);  
-        specularF = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
-    }
-    else
-    {
-        vec3 reflectDir = reflect(-lightDir, normal);
-        specularF = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    }
-
-    // Attenuation
-    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
-
-    // Combine results
-    //vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
-    //vec3 specular = light.color * specularF * material.specular * attenuation;
-    #if (!DIFFUSE_MAP)
-        vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
-    #else
-        vec3 diffuseMap = texture(material.diffuseMap, texCoords).rgb;
-        vec3 diffuse  = light.color * diffuseF  * material.diffuse * diffuseMap * attenuation;
-    #fi
-    #if (!SPECULAR_MAP)
-        vec3 specular = light.color * specularF * material.specular * attenuation;
-    #else
-        vec3 specularMap = texture(material.specularMap, texCoords).rgb;
-        vec3 specular = light.color * specularF * material.specular * specularMap * attenuation;
-    #fi
-
-    return (diffuse + specular);
-}
-#fi
-
-#if (SLIGHTS)
-vec3 calcSpotLight (SLight light, vec3 normal, vec3 viewDir) {
-
-    float distance = length(light.position - fragVPos);
-    if(light.distance > 0.0 && distance > light.distance) return vec3(0.0, 0.0, 0.0);
-
-    vec3 lightDir = normalize(light.position - fragVPos);
-
-
-    // spot
-    float theta = dot(lightDir, normalize(-light.direction));
-    float epsilon = light.cutoff - light.outerCutoff;
-    float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);
-    //if(theta <= light.cutoff) return vec3(0.0, 0.0, 0.0);
-    if(theta <= light.outerCutoff) return vec3(0.0, 0.0, 0.0);
-
-
-    // Difuse
-    float diffuseF = max(dot(lightDir, normal), 0.0f);
-
-    // Specular
-    //vec3 reflectDir = reflect(-lightDir, normal);
-    //float specularF = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
-    float specularF;
-    if(material.blinn)
-    {
-        vec3 halfwayDir = normalize(lightDir + viewDir);  
-        specularF = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
-    }
-    else
-    {
-        vec3 reflectDir = reflect(-lightDir, normal);
-        specularF = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    }
-
-    // Attenuation
-    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
-
-    // Combine results
-    // vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
-    // vec3 specular = light.color * specularF * material.specular * attenuation;
-    #if (COLORS)
-        vec3 diffuse  = light.color * diffuseF  * (fragVColor.rgb + material.diffuse) * attenuation;
-    #else
-        vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
-    #fi
-    vec3 specular = light.color * specularF * material.specular * attenuation;
-
-    return (diffuse + specular) * intensity;
-}
-vec3 calcSpotLight_tangentspace (SLight light, vec3 lightPosition, vec3 lightDirection, vec3 viewDir, vec3 position, vec3 normal, vec2 texCoords) {
-
-    float distance = length(lightPosition - position);
-    if(light.distance > 0.0 && distance > light.distance) return vec3(0.0, 0.0, 0.0);
-
-    vec3 lightDir = normalize(lightPosition - position);
-
-
-    // spot
-    float theta = dot(lightDir, normalize(-lightDirection));
-    float epsilon = light.cutoff - light.outerCutoff;
-    float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);
-    //if(theta <= light.cutoff) return vec3(0.0, 0.0, 0.0);
-    if(theta <= light.outerCutoff) return vec3(0.0, 0.0, 0.0);
-
-
-    // Difuse
-    float diffuseF = max(dot(lightDir, normal), 0.0f);
-
-    // Specular
-    //vec3 reflectDir = reflect(-lightDir, normal);
-    //float specularF = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
-    float specularF;
-    if(material.blinn)
-    {
-        vec3 halfwayDir = normalize(lightDir + viewDir);  
-        specularF = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
-    }
-    else
-    {
-        vec3 reflectDir = reflect(-lightDir, normal);
-        specularF = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    }
-
-    // Attenuation
-    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
-
-    // Combine results
-    //vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
-    //vec3 specular = light.color * specularF * material.specular * attenuation;
-    #if (!DIFFUSE_MAP)
-        vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
-    #else
-        vec3 diffuseMap = texture(material.diffuseMap, texCoords).rgb;
-        vec3 diffuse  = light.color * diffuseF  * material.diffuse * diffuseMap * attenuation;
-    #fi
-    #if (!SPECULAR_MAP)
-        vec3 specular = light.color * specularF * material.specular * attenuation;
-    #else
-        vec3 specularMap = texture(material.specularMap, texCoords).rgb;
-        vec3 specular = light.color * specularF * material.specular * specularMap * attenuation;
-    #fi
-
-    return (diffuse + specular) * intensity;
-}
-#fi
 #if (DLIGHTS)
 float calcDirectShadow(vec4 fragPos_light_clipspace, DLight light, vec3 normal) {
     vec3 lightDir = normalize(-light.direction);
@@ -772,56 +490,93 @@ void main() {
         vec3 combined = ambient * texture(material.diffuseMap, texCoords).rgb;
     #fi
 
+    #if (!NORMAL_MAP)
+        #if (COLORS)
+            vec3 kd = fragVColor.rgb + material.diffuse;
+        #else
+            vec3 kd = material.diffuse;
+        #fi
+        vec3 ks = material.specular;
+    #else
+        // In tangent space the maps modulate the lights and the vertex colour does not.
+        vec3 kd = material.diffuse;
+        vec3 ks = material.specular;
+        #if (DIFFUSE_MAP)
+            kd *= texture(material.diffuseMap, texCoords).rgb;
+        #fi
+        #if (SPECULAR_MAP)
+            ks *= texture(material.specularMap, texCoords).rgb;
+        #fi
+    #fi
+
+    // The loops of light_shading_stmt, with each light times one minus its shadow.
     #if (DLIGHTS)
-        vec3 dLight;
         float dShadow = 0.0;
 
         #for lightIdx in 0 to NUM_DLIGHTS
+        {
             #if (!NORMAL_MAP)
-            dLight = calcDirectLight(dLights[##lightIdx], normal, viewDir);
+            vec2 f = dirLightDS(dLights[##lightIdx].direction, normal, viewDir,
+                                material.shininess, material.blinn);
             #else
-            dLight = calcDirectLight_tangentspace(dLights[##lightIdx], v_dLightDirection_tangentspace[##lightIdx], viewDir, normal, texCoords);
+            vec2 f = dirLightDS(v_dLightDirection_tangentspace[##lightIdx], normal, viewDir,
+                                material.shininess, material.blinn);
             #fi
 
             if(dLights[##lightIdx].castShadows && material.receiveShadows)
                 dShadow = calcDirectShadow(fragVPos_dlightspace[##lightIdx], dLights[##lightIdx], normal);
-        
-            combined += dLight * (1.0 - dShadow);
+
+            combined += (dLights[##lightIdx].color * f.x * kd + dLights[##lightIdx].color * f.y * ks) *
+                        (1.0 - dShadow);
+        }
         #end
     #fi
     #if (PLIGHTS)
-        vec3 pLight;
         float pShadow = 0.0;
 
-
         #for lightIdx in 0 to NUM_PLIGHTS
+        {
+            vec3 k = vec3(pLights[##lightIdx].constant, pLights[##lightIdx].linear,
+                          pLights[##lightIdx].quadratic);
             #if (!NORMAL_MAP)
-            pLight = calcPointLight(pLights[##lightIdx], normal, viewDir);
+            vec2 f = pointLightDS(pLights[##lightIdx].position, pLights[##lightIdx].distance, k, fragVPos,
+                                  normal, viewDir, material.shininess, material.blinn);
             #else
-            pLight = calcPointLight_tangentspace(pLights[##lightIdx], v_pLightPosition_tangentspace[##lightIdx], viewDir, v_position_tangentspace, normal, texCoords);
+            vec2 f = pointLightDS(v_pLightPosition_tangentspace[##lightIdx], pLights[##lightIdx].distance, k,
+                                  v_position_tangentspace, normal, viewDir, material.shininess, material.blinn);
             #fi
 
             if(pLights[##lightIdx].castShadows && material.receiveShadows)
                 pShadow = calcPointShadow(fragVPos_plightspace[##lightIdx], pLights[##lightIdx], normal);
 
-            combined += pLight * (1.0 - pShadow); 
+            combined += (pLights[##lightIdx].color * f.x * kd + pLights[##lightIdx].color * f.y * ks) *
+                        (1.0 - pShadow);
+        }
         #end
     #fi
     #if (SLIGHTS)
-        vec3 sLight;
         float sShadow = 0.0;
 
         #for lightIdx in 0 to NUM_SLIGHTS
+        {
+            vec3 k = vec3(sLights[##lightIdx].constant, sLights[##lightIdx].linear,
+                          sLights[##lightIdx].quadratic);
             #if (!NORMAL_MAP)
-            sLight = calcSpotLight(sLights[##lightIdx], normal, viewDir);
+            vec2 f = spotLightDS(sLights[##lightIdx].position, sLights[##lightIdx].direction,
+                                 sLights[##lightIdx].cutoff, sLights[##lightIdx].outerCutoff, sLights[##lightIdx].distance,
+                                 k, fragVPos, normal, viewDir, material.shininess, material.blinn);
             #else
-            sLight = calcSpotLight_tangentspace(sLights[##lightIdx], v_sLightPosition_tangentspace[##lightIdx], v_sLightDirection_tangentspace[##lightIdx], viewDir, v_position_tangentspace, normal, texCoords);
+            vec2 f = spotLightDS(v_sLightPosition_tangentspace[##lightIdx], v_sLightDirection_tangentspace[##lightIdx],
+                                 sLights[##lightIdx].cutoff, sLights[##lightIdx].outerCutoff, sLights[##lightIdx].distance,
+                                 k, v_position_tangentspace, normal, viewDir, material.shininess, material.blinn);
             #fi
 
             if(sLights[##lightIdx].castShadows && material.receiveShadows)
                 sShadow = calcSpotShadow(fragVPos_slightspace[##lightIdx], sLights[##lightIdx], normal);
-        
-            combined += sLight * (1.0 - sShadow);
+
+            combined += (sLights[##lightIdx].color * f.x * kd + sLights[##lightIdx].color * f.y * ks) *
+                        (1.0 - sShadow);
+        }
         #end
     #fi
 

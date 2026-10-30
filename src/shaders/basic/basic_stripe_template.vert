@@ -26,7 +26,7 @@ in vec2 uv;
 out vec2 fragUV;
 #fi
 
-#if (PLIGHTS)
+#if (PLIGHTS || SLIGHTS)
 out vec3 fragVPos;
 #fi
 
@@ -92,7 +92,7 @@ void main() {
 
 
     vec4 VPos4 = MVMat * vec4(VPos, 1.0);
-    #if (PLIGHTS)
+    #if (PLIGHTS || SLIGHTS)
     // Pass vertex position to fragment shader
     fragVPos = vec3(VPos4) / VPos4.w;
     #fi

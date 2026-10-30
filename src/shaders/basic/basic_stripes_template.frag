@@ -24,6 +24,20 @@ struct PLight {
     float quadratic;
 };
 #fi
+#if (SLIGHTS)
+struct SLight {
+    vec3 position;
+    vec3 color;
+    float distance;
+    float cutoff;
+    float outerCutoff;
+    vec3 direction;
+
+    float constant;
+    float linear;
+    float quadratic;
+};
+#fi
 
 struct Material {
     vec3 diffuse;
@@ -52,9 +66,12 @@ uniform DLight dLights[##NUM_DLIGHTS];
 #if (PLIGHTS)
 uniform PLight pLights[##NUM_PLIGHTS];
 #fi
+#if (SLIGHTS)
+uniform SLight sLights[##NUM_SLIGHTS];
+#fi
 uniform vec3 ambient;
 
-#if (PLIGHTS)
+#if (PLIGHTS || SLIGHTS)
 in vec3 fragVPos;
 #fi
 
@@ -84,31 +101,7 @@ in vec3 VCOL;
 
 //FUNCTIONS
 //**********************************************************************************************************************
-#if (PLIGHTS || SLIGHTS)
-float calcAttenuation(float constant, float linear, float quadratic, float distance) {
-    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
-    //float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
-    
-    return 1.0 / (constant + linear * distance + quadratic * (distance * distance));
-}
-#fi
-
-#if (PLIGHTS)
-    // Calculates the point light color contribution
-    vec3 calcPointLight(PLight light) {
-
-        float distance = length(light.position - fragVPos);
-        if(light.distance > 0.0 && distance > light.distance) return vec3(0.0, 0.0, 0.0);
-
-        // Attenuation
-        float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
-
-        // Combine results
-        vec3 diffuse = light.color * material.diffuse * attenuation;
-
-        return diffuse;
-    }
-#fi
+#include light_falloff_decl
 
 
 //MAIN
@@ -125,18 +118,13 @@ void main() {
 
 
     // Calculate combined light contribution
-    vec3 combined = ambient + material.emissive;
-
-    #if (LIGHTS && DLIGHTS)
-        #for lightIdx in 0 to NUM_DLIGHTS
-            combined += dLights[##lightIdx].color * material.diffuse;
-        #end
+    #if (PLIGHTS || SLIGHTS)
+        vec3 P = fragVPos;
     #fi
-
-    #if (LIGHTS && PLIGHTS)
-        #for lightIdx in 0 to NUM_PLIGHTS
-            combined += calcPointLight(pLights[##lightIdx]);
-        #end
+    vec3 kd = material.diffuse;
+    vec3 combined = ambient + material.emissive;
+    #if (LIGHTS)
+        #include light_falloff_stmt
     #fi
 
     color = vec4(combined, alpha);
