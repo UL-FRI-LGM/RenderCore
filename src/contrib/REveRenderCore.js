@@ -153,6 +153,7 @@ export {MaterialProgramTemplate} from '../program_management/MaterialProgramTemp
 export {GLProgramManager} from '../program_management/GLProgramManager.js';
 export {GLProgram} from '../program_management/GLProgram.js';
 export {ShaderBuilder} from '../program_management/ShaderBuilder.js';
+export {ShaderSnippets} from '../program_management/ShaderSnippets.js';
 
 // Renderers
 export {Renderer} from '../renderers/Renderer.js';

@@ -4,10 +4,11 @@
 // collects the flags their #if and #else if lines test, builds both shaders with RenderCore's
 // ShaderBuilder for a set of flag combinations, then compiles and links each pair in WebGL2.
 // Then builds the programs of the materials in MATERIAL_SETUPS in each of their pass modes.
+// Then compiles each snippet of ShaderSnippets on its own, see SNIPPET_SETUPS.
 // The result is left in window.__shaderCheck, and a summary is printed on the page.
 //
 // URL parameters: rc, the RenderCore root relative to this page (default ../..);
-// only, a regular expression on program names.
+// only, a regular expression on program names, and on "snippet:" followed by a snippet name.
 
 // Flags the renderer derives from the scene's lights; they come from LIGHT_SETUPS, not from
 // the combinations.
@@ -148,6 +149,32 @@ const LIGHT_SETUPS = {
     lit:  { flags: ["DLIGHTS", "PLIGHTS", "SLIGHTS"], values: { NUM_DLIGHTS: 1, NUM_PLIGHTS: 2, NUM_SLIGHTS: 1 } },
 };
 
+// Each snippet of ShaderSnippets is compiled in a shader of its own, built with ShaderBuilder
+// from a wrapper template: #version, the precision lines, the declaration snippets it needs,
+// then a declaration snippet at global scope or a statement snippet at the end of main(). It is
+// built for every combination of the flags tested by it and by what it needs, with at most one
+// pass mode flag and one flag of each exclusive group, with BASE_VALUES and the lit light counts,
+// in the stage named in it (_vert or _frag) or else in both, under each of SNIPPET_PRECISIONS.
+// The precision lines: those of basic_zshape, the fewest, and those of basic_zlines, the most.
+const SNIPPET_PRECISIONS = {
+    mediump: "precision mediump float;",
+    highp:   "precision highp float;\nprecision highp int;\nprecision highp sampler2D;\nprecision highp isampler2D;",
+};
+
+// What a snippet needs in its wrapper: `decls`, declaration snippets before it; `stmts`,
+// statement snippets at the start of main(); `glsl`, declarations after those; `main`,
+// statements after those, which can call what a declaration snippet declares. Every statement
+// snippet has an entry.
+const SNIPPET_SETUPS = {
+    outline_instances_vert_stmt: { decls: ["outline_instances_vert_decl"], main: "int iID = gl_InstanceID;" },
+    pick_vert_stmt:     { decls: ["pick_vert_decl"], main: "int iID = gl_InstanceID;" },
+    pick_frag_stmt:     { decls: ["pick_frag_decl"] },
+    texel_index_decl:   { glsl: "struct Data { sampler2D points; };\nuniform Data data;\nuniform highp isampler2D tables;",
+                          main: "ivec2 a = texelAtIndex(data.points, 7) + texelAtIndex(tables, 7);\n" +
+                                "vec4 b = fetchAtIndex(data.points, 7);\nivec4 c = fetchAtIndex(tables, 7);" },
+    clipping_decl:      { main: "#if (CLIPPING_PLANES)\nbool c = clippedByPlanes(vec3(1.0));\n#fi" },
+};
+
 const out = document.getElementById("out");
 const say = (s) => { out.textContent += s + "\n"; };
 
@@ -272,13 +299,15 @@ async function main() {
         return srcCache.get(path);
     };
 
-    // A template the builder cannot parse: buildTemplateTree only logs the reason.
+    // A template the builder cannot parse: buildTemplateTree logs the reason and returns false.
     const buildTree = (name, src) => {
         const errs = [];
         const ce = console.error;
         console.error = (...a) => errs.push(a.join(" "));
         let ok;
-        try { ok = builder.buildTemplateTree(name, src); } finally { console.error = ce; }
+        try { ok = builder.buildTemplateTree(name, src); }
+        catch (e) { ok = false; errs.push(String(e)); }
+        finally { console.error = ce; }
         return ok === false ? errs.join("\n") || "buildTemplateTree failed" : null;
     };
 
@@ -292,7 +321,8 @@ async function main() {
 
     const pairCache = new Map();   // identical source pairs are compiled once
     const res = { programs: 0, variants: 0, materialVariants: 0, compiles: 0, links: 0, failures: [],
-                  knownFailing: [], knownPassing: [], manifest: [] };
+                  knownFailing: [], knownPassing: [], manifest: [],
+                  snippets: 0, snippetVariants: 0, snippetCompiles: 0 };
 
     // Compiles and links a built pair once; the result of a pair seen before is reused.
     const compilePair = (vs, fs) => {
@@ -418,12 +448,78 @@ async function main() {
         }
     }
 
+    // The snippets, each in a wrapper shader of its own; compiled, not linked.
+    const snippetNames = Object.keys(RC.ShaderSnippets);
+    // The flags tested by a snippet and by the snippets it includes.
+    const snippetFlags = (name, seen = new Set()) => {
+        const src = RC.ShaderBuilder.snippet(name) || "";
+        const flags = testedFlags(src);
+        seen.add(name);
+        for (const m of src.matchAll(/^\s*#include\s+(\w+)/gm))
+            if (!seen.has(m[1])) for (const f of snippetFlags(m[1], seen)) flags.add(f);
+        return flags;
+    };
+    const shaderCache = new Map();
+    for (const name of snippetNames) {
+        if (only && !only.test("snippet:" + name)) continue;
+        res.snippets++;
+        const kind = /_decl$/.test(name) ? "decl" : /_stmt$/.test(name) ? "stmt" : null;
+        const setup = SNIPPET_SETUPS[name];
+        const rec = { program: "snippet " + name, flags: [] };
+        if (!kind) { res.failures.push({ ...rec, stage: "name", log: "the name ends in neither _decl nor _stmt" }); continue; }
+        if (kind === "stmt" && !setup) { res.failures.push({ ...rec, stage: "setup", log: "no entry in SNIPPET_SETUPS" }); continue; }
+        const S = { decls: [], stmts: [], glsl: "", main: "", ...setup };
+
+        const flagSet = snippetFlags(name);
+        for (const n of [...S.decls, ...S.stmts]) for (const f of snippetFlags(n)) flagSet.add(f);
+        for (const f of [...testedFlags(S.glsl), ...testedFlags(S.main)]) flagSet.add(f);
+        const flags = [...flagSet].sort();
+        const sets = [];
+        for (let bits = 0; bits < (1 << flags.length); bits++) {
+            const set = flags.filter((f, i) => bits & (1 << i));
+            if (set.filter(isModeFlag).length > 1) continue;
+            if (EXCLUSIVE_GROUPS.some((g) => set.filter((f) => g.includes(f)).length > 1)) continue;
+            sets.push(set);
+        }
+
+        const stages = /_vert_/.test(name) ? ["vertex"] : /_frag_/.test(name) ? ["fragment"] : ["vertex", "fragment"];
+        const inc = (n) => "#include " + n;
+        for (const stage of stages) {
+            for (const [prec, lines] of Object.entries(SNIPPET_PRECISIONS)) {
+                const wrapper = ["#version 300 es", lines, ...S.decls.map(inc), S.glsl,
+                                 kind === "decl" ? inc(name) : "",
+                                 "void main() {", ...S.stmts.map(inc), S.main,
+                                 kind === "stmt" ? inc(name) : "", "}"].join("\n");
+                const tName = `snippet:${name}:${stage}:${prec}`;
+                const treeErr = buildTree(tName, wrapper);
+                if (treeErr) { res.failures.push({ ...rec, setup: stage + ", " + prec, stage: "template", log: treeErr }); continue; }
+                for (const set of sets) {
+                    res.snippetVariants++;
+                    const r = { ...rec, setup: stage + ", " + prec, flags: set };
+                    let src;
+                    try { src = builder._templatesCache[tName].tree.build(set.slice(), { ...BASE_VALUES, ...LIGHT_SETUPS.lit.values }); }
+                    catch (e) { res.failures.push({ ...r, stage: "build", log: String(e) }); continue; }
+                    let c = shaderCache.get(stage + "\u0000" + src);
+                    if (!c) {
+                        const sh = compile(stage === "vertex" ? gl.VERTEX_SHADER : gl.FRAGMENT_SHADER, src);
+                        gl.deleteShader(sh.sh);
+                        res.snippetCompiles++;
+                        c = { ok: sh.ok, log: sh.log, excerpt: sh.ok ? "" : excerpt(src, sh.log) };
+                        shaderCache.set(stage + "\u0000" + src, c);
+                    }
+                    if (!c.ok) res.failures.push({ ...r, stage, log: c.log, excerpt: c.excerpt });
+                }
+            }
+        }
+    }
+
     res.seconds = +((performance.now() - t0) / 1000).toFixed(1);
     const dri = gl.getExtension("WEBGL_debug_renderer_info");
     res.renderer = gl.getParameter(dri ? dri.UNMASKED_RENDERER_WEBGL : gl.RENDERER);
     say(`${res.programs} programs, ${res.variants} variants, ${res.materialVariants} material variants, ` +
-        `${res.compiles} shader compiles, ${res.links} links, ${res.failures.length} failures, ` +
-        `${res.knownFailing.length} known broken, ${res.seconds} s`);
+        `${res.compiles} shader compiles, ${res.links} links, ${res.snippets} snippets, ` +
+        `${res.snippetVariants} snippet variants, ${res.snippetCompiles} snippet compiles, ` +
+        `${res.failures.length} failures, ${res.knownFailing.length} known broken, ${res.seconds} s`);
     for (const f of res.knownPassing)
         say(`KNOWN BROKEN BUT COMPILES ${f.program} [${f.flags.join(" ")}] lights=${f.lights}`);
     for (const f of res.failures)

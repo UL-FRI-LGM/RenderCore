@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 // Shader compile check: builds every program in src/shaders/programs.json for a set of
 // ShaderBuilder flag combinations, and the programs of a set of materials in each of their pass
-// modes, and compiles and links each in headless Chrome. The flag combinations, the materials
-// and the ## values are chosen in shader-check.js. No npm dependencies.
+// modes, and compiles and links each in headless Chrome; then compiles each snippet of
+// ShaderSnippets in a shader of its own. The flag combinations, the materials, the ## values and
+// the snippet wrappers are chosen in shader-check.js. No npm dependencies.
 //
 //   node tools/shader-check/shader-check.mjs [--root DIR] [--only REGEX] [--manifest FILE]
 //        [--port 8871] [--tmp DIR] [--chrome /usr/bin/google-chrome] [--gpu] [--timeout 600]
 //
 // --root      the RenderCore tree to check; default the one holding this script.
-// --only      check only the programs whose name matches.
+// --only      check only the programs whose name matches, and the snippets whose name after
+//             "snippet:" matches.
 // --manifest  write one line per variant: program, flags, light setup and a hash of the built
 //             vertex and fragment source; diff two of them to see which built sources changed.
 // --port      port of the static server this script runs on 127.0.0.1.
@@ -216,8 +218,9 @@ try {
 
     console.log(`shader-check: ${ROOT}`);
     console.log(`${r.programs} programs, ${r.variants} variants, ${r.materialVariants} material variants, ` +
-                `${r.compiles} shader compiles, ${r.links} links, ${r.failures.length} failures, ` +
-                `${r.knownFailing.length} known broken, ${r.seconds} s, ${r.renderer}`);
+                `${r.compiles} shader compiles, ${r.links} links, ${r.snippets} snippets, ` +
+                `${r.snippetVariants} snippet variants, ${r.snippetCompiles} snippet compiles, ` +
+                `${r.failures.length} failures, ${r.knownFailing.length} known broken, ${r.seconds} s, ${r.renderer}`);
     if (A.manifest) writeFileSync(A.manifest, r.manifest.join("\n") + "\n");
     for (const f of r.knownFailing)
         console.log(`known broken: ${f.program} [${f.flags.join(" ")}] ${f.stage}: ${f.why}`);
