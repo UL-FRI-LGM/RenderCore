@@ -477,9 +477,10 @@ ShaderBuilder.ConditionNode = class extends ShaderBuilder.Node {
 				}
 			}
 
-			// Order is important
-			condition = condition.replace(new RegExp(falseFlagsStr, 'gi'), "false");
-			condition = condition.replace(new RegExp(trueFlagsStr, 'gi'), "true");
+			// Order is important. A flag matches only as a whole name, so INSTANCED does not
+			// match inside INSTANCED_TRANSLATION.
+			condition = condition.replace(new RegExp("(?:" + falseFlagsStr + ")\\b", 'gi'), "false");
+			condition = condition.replace(new RegExp("\\b(?:" + trueFlagsStr + ")\\b", 'gi'), "true");
 		}
 
 		// SET REMAINING FLAGS TO FALSE

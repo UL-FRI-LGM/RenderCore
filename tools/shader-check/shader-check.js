@@ -35,9 +35,8 @@ const IMPLIED_FLAGS = {
     SPECULAR_TEXTURE: "TEXTURE",
 };
 
-// Combinations that do not compile on cb59e2f, the base of the shader-modes branch. Each one is
-// built, expected to fail and reported apart from the failures; its first flag is left out of
-// the all-together set of the program.
+// Combinations that do not compile. Each one is built, expected to fail and reported apart from
+// the failures; its first flag is left out of the all-together set of the program.
 const KNOWN_BROKEN = [
     { program: "phong", flags: ["HEIGHT_MAP"],
       why: "texCoords is declared only with TEXTURE, DIFFUSE_MAP, SPECULAR_MAP or NORMAL_MAP" },
@@ -51,6 +50,8 @@ const KNOWN_BROKEN = [
       why: "texture0 is declared as a plain global sampler2D, outside the Material struct" },
     { program: "basic", flags: ["CUBETEXTURES", "INSTANCED"],
       why: "MMat is declared twice, as the instance attribute and as the cube-map uniform" },
+    { program: "basic_sprite", flags: ["INSTANCED_TRANSLATION", "INSTANCED"],
+      why: "VPos_viewspace is declared under INSTANCED and again under INSTANCED_TRANSLATION" },
     { program: "basic_zshape", flags: ["HEIGHT_MAP"],
       why: "main() assigns texCoords, which the template never declares" },
     { program: "custom_SSAA", flags: ["KERNEL_GAUSS"],
