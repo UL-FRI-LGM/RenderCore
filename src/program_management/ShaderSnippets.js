@@ -122,6 +122,14 @@ highp ivec4 fetchAtIndex(highp isampler2D s, highp int idx) {
 #fi
 `,
 
+    // Declares isOrthographic(proj), true for an orthographic projection matrix proj, whose [3][3] is
+    // 1, and false for a perspective one, whose [3][3] is 0. Tests no flag.
+    projection_decl: `
+bool isOrthographic(mat4 proj) {
+    return proj[3][3] == 1.0;
+}
+`,
+
     // Declares lightAttenuation(d, k) for k = (constant, linear, quadratic), and pointLightFalloff()
     // and spotLightFalloff(), a light's attenuation at p, 0 beyond its range, times the cone of a spot
     // light; highp, as the square of a distance of 256 or more overflows a 16-bit mediump float. Tests

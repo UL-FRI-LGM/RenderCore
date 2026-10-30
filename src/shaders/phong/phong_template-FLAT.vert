@@ -115,6 +115,7 @@ uniform float alpha;
 //FUNCTIONS
 //**********************************************************************************************************************
 #include light_shading_decl
+#include projection_decl
 
 
 //MAIN
@@ -144,6 +145,9 @@ void main() {
         kd *= VColor.rgb;
     #fi
     vec3 ks = material.specular;
+    // No specular under an orthographic projection: with the same view direction everywhere, the
+    // highlight would depend on the normal alone and tint all faces of one orientation alike.
+    if (isOrthographic(PMat)) ks = vec3(0.0);
     float shin = material.shininess;
     // Phong reflection only: this Material has no blinn.
     bool blinn = false;

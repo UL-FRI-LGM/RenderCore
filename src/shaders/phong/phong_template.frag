@@ -124,6 +124,7 @@ uniform SLight sLights[##NUM_SLIGHTS];
 
 uniform vec3 ambient;
 uniform Material material;
+uniform mat4 PMat;
 #if (TRANSPARENT)
 uniform float alpha;
 #else
@@ -197,6 +198,7 @@ in vec3 v_position_tangentspace;
 //FUNCTIONS
 //**********************************************************************************************************************
 #include light_shading_decl
+#include projection_decl
 
 #if (DLIGHTS)
 float calcDirectShadow(vec4 fragPos_light_clipspace, DLight light, vec3 normal) {
@@ -500,6 +502,10 @@ void main() {
             ks *= texture(material.specularMap, texCoords).rgb;
         #fi
     #fi
+
+    // No specular under an orthographic projection: with the same view direction everywhere, the
+    // highlight would depend on the normal alone and tint all faces of one orientation alike.
+    if (isOrthographic(PMat)) ks = vec3(0.0);
 
     // Calculate combined light contribution
     #if (DIFFUSE_MAP && !NORMAL_MAP)

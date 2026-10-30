@@ -106,6 +106,7 @@ in vec3 fragVPos;
 #fi
 
 uniform vec3 ambient; // QQQQQQ how does this work
+uniform mat4 PMat;
 
 #if (CLIPPING_PLANES)
     in vec3 v_pos_for_clip;
@@ -134,6 +135,7 @@ uniform vec3 ambient; // QQQQQQ how does this work
 //FUNCTIONS
 //**********************************************************************************************************************
 #include light_shading_decl
+#include projection_decl
 
 
 //MAIN
@@ -188,6 +190,9 @@ void main()
         kd *= fragVColor.rgb;
     #fi
     vec3 ks = material.specular;
+    // No specular under an orthographic projection: with the same view direction everywhere, the
+    // highlight would depend on the normal alone and tint all faces of one orientation alike.
+    if (isOrthographic(PMat)) ks = vec3(0.0);
     float shin = material.shininess;
     bool blinn = material.blinn;
     vec3 combined = ambient * kd;

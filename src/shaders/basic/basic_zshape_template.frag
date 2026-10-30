@@ -87,6 +87,7 @@ uniform Material material;
     uniform SLight sLights[##NUM_SLIGHTS];
 #fi
 uniform vec3 ambient;
+uniform mat4 PMat;
 
 in vec3 fragVPos;
 
@@ -125,6 +126,7 @@ in vec4 fragVColor;
 //FUNCTIONS
 //**********************************************************************************************************************
 #include light_shading_decl
+#include projection_decl
 
 
 //MAIN
@@ -166,6 +168,9 @@ void main() {
     vec3 P = fragVPos;
     vec3 kd = fragVColor.rgb;
     vec3 ks = material.specular;
+    // No specular under an orthographic projection: with the same view direction everywhere, the
+    // highlight would depend on the normal alone and tint all faces of one orientation alike.
+    if (isOrthographic(PMat)) ks = vec3(0.0);
     float shin = material.shininess;
     bool blinn = material.blinn;
     vec3 combined = ambient * kd + material.emissive;

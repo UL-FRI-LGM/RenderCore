@@ -182,6 +182,7 @@ const SNIPPET_SETUPS = {
                           main: "ivec2 a = texelAtIndex(data.points, 7) + texelAtIndex(tables, 7);\n" +
                                 "vec4 b = fetchAtIndex(data.points, 7);\nivec4 c = fetchAtIndex(tables, 7);" },
     clipping_decl:      { main: "#if (CLIPPING_PLANES)\nbool c = clippedByPlanes(vec3(1.0));\n#fi" },
+    projection_decl:    { glsl: "uniform mat4 PMat;", main: "bool o = isOrthographic(PMat);" },
     light_falloff_decl: { main: "vec3 k = vec3(1.0, 0.01, 0.0001), p = vec3(0.0), l = vec3(1.0);\n" +
                                 "#if (PLIGHTS)\nfloat a = pointLightFalloff(l, 0.0, k, p);\n#fi\n" +
                                 "#if (SLIGHTS)\nfloat b = spotLightFalloff(l, -l, 0.7, 0.6, 0.0, k, p);\n#fi" },
