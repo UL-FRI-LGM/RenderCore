@@ -27,7 +27,7 @@ export class ZShapeBasicMaterial extends CustomShaderMaterial {
 
         this.side = args.side ? args.side : FRONT_AND_BACK_SIDE;
 	//	this._specular = new Color(Math.random() * 0xffffff);
-		this._specular = new Color(0.5 * 0xffffff);
+		this._specular = new Color(0x7f7f7f);
 		this._shininess = 64;
     }
 

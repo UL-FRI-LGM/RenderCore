@@ -27,7 +27,7 @@ export class ZMultiMeshBasicMaterial extends CustomShaderMaterial {
         this.normalFlat = args.normalFlat ? args.normalFlat : false;
 
 	    //	this._specular = new Color(Math.random() * 0xffffff);
-		this._specular = new Color(0.5 * 0xffffff);
+		this._specular = new Color(0x7f7f7f);
 		this._shininess = 64;
 
         // this._clippingPlanes = [ { normal: new Vector3(0, 0.7, 0.7), constant: 0 } ];
