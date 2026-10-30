@@ -26,9 +26,6 @@ in vec2 uv;
 out vec2 fragUV;
 #fi
 
-#if (PLIGHTS || SLIGHTS)
-out vec3 fragVPos;
-#fi
 
 #if (POINTS)
 uniform float pointSize;
@@ -92,10 +89,6 @@ void main() {
 
 
     vec4 VPos4 = MVMat * vec4(VPos, 1.0);
-    #if (PLIGHTS || SLIGHTS)
-    // Pass vertex position to fragment shader
-    fragVPos = vec3(VPos4) / VPos4.w;
-    #fi
 
     #if (COLORS)
     // Pass vertex color to fragment shader

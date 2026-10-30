@@ -4,41 +4,6 @@ precision mediump float;
 
 //STRUCT
 //**********************************************************************************************************************
-#if (DLIGHTS)
-struct DLight {
-    //bool directional;
-    //vec3 position;
-    vec3 color;
-};
-#fi
-#if (PLIGHTS)
-struct PLight {
-    //bool directional;
-    vec3 position;
-    vec3 color;
-    float distance;
-    //float decay;
-
-    float constant;
-    float linear;
-    float quadratic;
-};
-#fi
-#if (SLIGHTS)
-struct SLight {
-    vec3 position;
-    vec3 color;
-    float distance;
-    float cutoff;
-    float outerCutoff;
-    vec3 direction;
-
-    float constant;
-    float linear;
-    float quadratic;
-};
-#fi
-
 struct Material {
     vec3 diffuse;
     vec3 emissive;
@@ -57,22 +22,6 @@ uniform Material material;
 uniform float alpha;
 #else
 float alpha = 1.0;
-#fi
-
-
-#if (DLIGHTS)
-uniform DLight dLights[##NUM_DLIGHTS];
-#fi
-#if (PLIGHTS)
-uniform PLight pLights[##NUM_PLIGHTS];
-#fi
-#if (SLIGHTS)
-uniform SLight sLights[##NUM_SLIGHTS];
-#fi
-uniform vec3 ambient;
-
-#if (PLIGHTS || SLIGHTS)
-in vec3 fragVPos;
 #fi
 
 
@@ -99,11 +48,6 @@ out vec4 color;
 in vec3 VCOL;
 
 
-//FUNCTIONS
-//**********************************************************************************************************************
-#include light_falloff_decl
-
-
 //MAIN
 //**********************************************************************************************************************
 void main() {
@@ -117,28 +61,15 @@ void main() {
     #fi
 
 
-    // Calculate combined light contribution
-    #if (PLIGHTS || SLIGHTS)
-        vec3 P = fragVPos;
-    #fi
-    vec3 kd = material.diffuse;
-    #if (COLORS)
-        kd *= fragVColor.rgb;
-    #fi
-    vec3 combined = ambient * kd + material.emissive;
-    #if (LIGHTS)
-        #include light_falloff_stmt
-    #fi
-
-    color = vec4(combined, alpha);
-
+    // Unlit: the diffuse colour times the vertex colour and the textures, plus the emissive colour.
+    color = vec4(material.diffuse, alpha);
 
     #if (COLORS)
+        color.rgb *= fragVColor.rgb;
         color.a += fragVColor.a;
     #fi
     //debug color
     //color = vec4(VCOL, 1.0);
-    //color = vec4(vec3(fragVPos/10.0), 1.0);
 
 
     #if (TEXTURE)
@@ -147,4 +78,6 @@ void main() {
             color *= texture(material.texture##I_TEX, fragUV);
         #end
     #fi
+
+    color.rgb += material.emissive;
 }

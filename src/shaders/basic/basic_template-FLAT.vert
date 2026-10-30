@@ -4,43 +4,6 @@ precision mediump float;
 
 //STRUCT
 //**********************************************************************************************************************
-#if (DLIGHTS)
-struct DLight {
-    //bool directional;
-    vec3 position;
-    vec3 color;
-};
-#fi
-#if (PLIGHTS)
-struct PLight {
-    //bool directional;
-    vec3 position;
-    vec3 color;
-    float distance;
-    float decay;
-
-    float constant;
-    float linear;
-    float quadratic;
-};
-#fi
-#if (SLIGHTS)
-struct SLight {
-    //bool directional;
-    vec3 position;
-    vec3 color;
-    float distance;
-    float decay;
-    float cutoff;
-    float outerCutoff;
-    vec3 direction;
-
-    float constant;
-    float linear;
-    float quadratic;
-};
-#fi
-
 struct Material {
     vec3 emissive;
     vec3 diffuse;
@@ -49,17 +12,6 @@ struct Material {
 
 //UIO
 //**********************************************************************************************************************
-#if (DLIGHTS)
-uniform DLight dLights[##NUM_DLIGHTS];
-#fi
-#if (PLIGHTS)
-uniform PLight pLights[##NUM_PLIGHTS];
-#fi
-#if (SLIGHTS)
-uniform SLight sLights[##NUM_SLIGHTS];
-#fi
-uniform vec3 ambient;
-
 
 #if (INSTANCED)
 //uniform mat4 VMat;
@@ -110,11 +62,6 @@ float alpha = 1.0;
 #fi
 
 
-//FUNCTIONS
-//**********************************************************************************************************************
-#include light_falloff_decl
-
-
 //MAIN
 //**********************************************************************************************************************
 void main() {
@@ -132,21 +79,15 @@ void main() {
     gl_Position = PMat * VPos_viewspace;
 
 
-    // Calculate combined light contribution
-    vec3 P = VPos_viewspace.xyz;
-    vec3 kd = material.diffuse;
-    #if (COLORS)
-        kd *= VColor.rgb;
-    #fi
-    vec3 combined = ambient * kd + material.emissive;
-    #include light_falloff_stmt
-
-    fragVColor = vec4(combined, alpha);
-
+    // Unlit: the diffuse colour times the vertex colour, plus the emissive colour.
+    fragVColor = vec4(material.diffuse, alpha);
 
     #if (COLORS)
+        fragVColor.rgb *= VColor.rgb;
         fragVColor.a += VColor.a;
     #fi
+
+    fragVColor.rgb += material.emissive;
 
 
     #if (TEXTURE)

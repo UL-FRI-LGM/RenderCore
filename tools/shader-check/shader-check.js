@@ -193,8 +193,6 @@ const SNIPPET_SETUPS = {
     light_shading_stmt: { decls: ["light_shading_decl"], glsl: LIGHT_ARRAYS,
                           main: "vec3 P = vec3(0.0, 0.0, -1.0), N = vec3(0.0, 0.0, 1.0), V = N, kd = vec3(0.5), ks = kd;\n" +
                                 "float shin = 16.0;\nbool blinn = true;\nvec3 combined = vec3(0.0);" },
-    light_falloff_stmt: { decls: ["light_falloff_decl"], glsl: LIGHT_ARRAYS,
-                          main: "vec3 P = vec3(0.0, 0.0, -1.0), kd = vec3(0.5), combined = vec3(0.0);" },
 };
 
 const out = document.getElementById("out");

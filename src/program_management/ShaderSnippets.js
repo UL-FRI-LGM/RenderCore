@@ -234,37 +234,4 @@ bool isOrthographic(mat4 proj) {
     #end
 #fi
 `,
-
-    // Adds to vec3 combined each light's colour times kd times its falloff, with no normal, from the
-    // locals vec3 P (position) and kd, and dLights, pLights and sLights. Needs light_falloff_decl.
-    // Tests DLIGHTS, PLIGHTS and SLIGHTS; uses ##NUM_DLIGHTS, ##NUM_PLIGHTS and ##NUM_SLIGHTS.
-    light_falloff_stmt: `
-#if (DLIGHTS)
-    #for lightIdx in 0 to NUM_DLIGHTS
-        combined += dLights[##lightIdx].color * kd;
-    #end
-#fi
-#if (PLIGHTS)
-    #for lightIdx in 0 to NUM_PLIGHTS
-    {
-        vec3 k = vec3(pLights[##lightIdx].constant, pLights[##lightIdx].linear,
-                      pLights[##lightIdx].quadratic);
-        combined += pLights[##lightIdx].color * kd *
-                    pointLightFalloff(pLights[##lightIdx].position, pLights[##lightIdx].distance, k, P);
-    }
-    #end
-#fi
-#if (SLIGHTS)
-    #for lightIdx in 0 to NUM_SLIGHTS
-    {
-        vec3 k = vec3(sLights[##lightIdx].constant, sLights[##lightIdx].linear,
-                      sLights[##lightIdx].quadratic);
-        combined += sLights[##lightIdx].color * kd *
-                    spotLightFalloff(sLights[##lightIdx].position, sLights[##lightIdx].direction,
-                                     sLights[##lightIdx].cutoff, sLights[##lightIdx].outerCutoff,
-                                     sLights[##lightIdx].distance, k, P);
-    }
-    #end
-#fi
-`,
 });

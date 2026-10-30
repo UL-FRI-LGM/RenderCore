@@ -34,9 +34,6 @@ in vec3 VPos;       // Vertex position
     out vec2 fragUV;
 #fi
 
-#if (PLIGHTS || SLIGHTS)
-    out vec3 fragVPos;
-#fi
 
 #if (POINTS)
     uniform float pointSize;
@@ -81,10 +78,6 @@ void main() {
     // Projected position
     gl_Position = PMat * VPos4;
 
-    #if (PLIGHTS || SLIGHTS)
-        // Pass vertex position to fragment shader
-        fragVPos = vec3(VPos4) / VPos4.w;
-    #fi
 
     #if (COLORS)
         // Pass vertex color to fragment shader
