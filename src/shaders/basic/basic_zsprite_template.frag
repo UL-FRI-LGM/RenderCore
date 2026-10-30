@@ -84,10 +84,15 @@ void main() {
         if (clippedByPlanes(vViewPosition)) discard;
     #fi
 
-    vec4 color = vec4(ambient + material.emissive, alpha);
+    // The sprite is unlit: its surface colour is the emissive colour, times the vertex colour.
+    vec3 surface = material.emissive;
+    #if (COLORS)
+        surface *= fragVColor.rgb;
+    #fi
+    vec4 color = vec4(ambient * surface + surface, alpha);
 
     #if (COLORS)
-        color += fragVColor;
+        color.a += fragVColor.a;
     #fi
 
     #if (TEXTURE)

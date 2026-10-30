@@ -145,14 +145,17 @@ void main() {
         vec3 P = fragVPos;
     #fi
     vec3 kd = material.diffuse;
-    vec3 combined = ambient + material.emissive;
+    #if (COLORS)
+        kd *= fragVColor.rgb;
+    #fi
+    vec3 combined = ambient * kd + material.emissive;
     #include light_falloff_stmt
 
     color = vec4(combined, alpha);
 
 
     #if (COLORS)
-        color += fragVColor;
+        color.a += fragVColor.a;
     #fi
 
 

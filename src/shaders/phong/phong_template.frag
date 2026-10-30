@@ -483,18 +483,10 @@ void main() {
  
 
 
-    // Calculate combined light contribution
-    #if (!DIFFUSE_MAP)
-        vec3 combined = ambient;
-    #else
-        vec3 combined = ambient * texture(material.diffuseMap, texCoords).rgb;
-    #fi
-
     #if (!NORMAL_MAP)
+        vec3 kd = material.diffuse;
         #if (COLORS)
-            vec3 kd = fragVColor.rgb + material.diffuse;
-        #else
-            vec3 kd = material.diffuse;
+            kd *= fragVColor.rgb;
         #fi
         vec3 ks = material.specular;
     #else
@@ -507,6 +499,14 @@ void main() {
         #if (SPECULAR_MAP)
             ks *= texture(material.specularMap, texCoords).rgb;
         #fi
+    #fi
+
+    // Calculate combined light contribution
+    #if (DIFFUSE_MAP && !NORMAL_MAP)
+        // Without a normal map kd leaves out the diffuse map, which modulates the ambient term only.
+        vec3 combined = ambient * kd * texture(material.diffuseMap, texCoords).rgb;
+    #else
+        vec3 combined = ambient * kd;
     #fi
 
     // The loops of light_shading_stmt, with each light times one minus its shadow.

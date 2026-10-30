@@ -135,15 +135,17 @@ void main() {
     // Calculate combined light contribution
     vec3 P = VPos_viewspace.xyz;
     vec3 kd = material.diffuse;
-    vec3 combined = ambient + material.emissive;
+    #if (COLORS)
+        kd *= VColor.rgb;
+    #fi
+    vec3 combined = ambient * kd + material.emissive;
     #include light_falloff_stmt
 
     fragVColor = vec4(combined, alpha);
 
 
     #if (COLORS)
-        // Pass vertex color to fragment shader
-        fragVColor += VColor;
+        fragVColor.a += VColor.a;
     #fi
 
 

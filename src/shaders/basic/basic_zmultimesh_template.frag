@@ -183,15 +183,14 @@ void main()
     vec3 V = normalize(-fragVPos);
 
     vec3 P = fragVPos;
+    vec3 kd = material.diffuse;
     #if (COLORS)
-        vec3 kd = fragVColor.rgb + material.diffuse;
-    #else
-        vec3 kd = material.diffuse;
+        kd *= fragVColor.rgb;
     #fi
     vec3 ks = material.specular;
     float shin = material.shininess;
     bool blinn = material.blinn;
-    vec3 combined = ambient;
+    vec3 combined = ambient * kd;
     #include light_shading_stmt
 
     outColor = vec4(combined, alpha);

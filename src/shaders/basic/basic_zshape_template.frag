@@ -168,7 +168,7 @@ void main() {
     vec3 ks = material.specular;
     float shin = material.shininess;
     bool blinn = material.blinn;
-    vec3 combined = ambient + material.emissive;
+    vec3 combined = ambient * kd + material.emissive;
     #include light_shading_stmt
 
     outColor = vec4(combined, material.alpha);

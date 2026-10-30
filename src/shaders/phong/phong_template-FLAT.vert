@@ -140,18 +140,21 @@ void main() {
 
     // Calculate combined light contribution
     vec3 kd = material.diffuse;
+    #if (COLORS)
+        kd *= VColor.rgb;
+    #fi
     vec3 ks = material.specular;
     float shin = material.shininess;
     // Phong reflection only: this Material has no blinn.
     bool blinn = false;
-    vec3 combined = ambient;
+    vec3 combined = ambient * kd;
     #include light_shading_stmt
 
     fragVColor = vec4(combined, alpha);
 
 
     #if (COLORS)
-        fragVColor += VColor;
+        fragVColor.a += VColor.a;
     #fi
 
     #if (TEXTURE)

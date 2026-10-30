@@ -84,7 +84,7 @@ void main() {
    vec3 ks = vec3(0.0);
    float shin = 1.0;
    bool blinn = false;
-   vec3 combined = ambient + material.emissive;
+   vec3 combined = ambient * kd + material.emissive;
    #include light_shading_stmt
 
    color = vec4(combined, material.alpha);
