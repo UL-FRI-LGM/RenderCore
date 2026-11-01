@@ -19,6 +19,7 @@ import {SpotLight} from '../lights/SpotLight.js';
 import {RenderArrayManager} from './RenderArrayManager.js';
 import {Vector4} from '../math/Vector4.js';
 import {Material} from '../materials/Material.js';
+import {Scene} from '../core/Scene.js';
 
 
 export class MeshRenderer extends Renderer {
@@ -401,8 +402,7 @@ export class MeshRenderer extends Renderer {
 		// Only render top-levels
 		for (let i = 0; i < list.length; i++) {
 			const object = list[i];
-			// The model-view matrix is only current for objects drawn in this pass.
-			if (!this._isDrawn(object, scene)) continue;
+			if (!this._isOutlined(object, scene)) continue;
 
 			const mat = object.passMaterial(Material.MODE.OUTLINE) ||
 						  (object.material.normalFlat ? this._defaultOutlineMatFlat : this._defaultOutlineMat);
@@ -419,6 +419,18 @@ export class MeshRenderer extends Renderer {
 
 			this._cleanupPerObjectState();
 		}
+	}
+	/**
+	 * Whether the outline pass draws `object`, which it was handed in the outline list. The
+	 * model-view matrix is only current for objects drawn in this pass: an object under `scene`
+	 * is outlined when _isDrawn(). An object under no scene, made for the outline with the
+	 * matrices of a drawn object, is outlined unless it or an ancestor is invisible, a Group
+	 * hides it or it is outside the frustum; an object of another scene is not outlined.
+	 */
+	_isOutlined(object, scene) {
+		let root = object;
+		while (root.parent !== null) root = root.parent;
+		return this._isDrawn(object, (root instanceof Scene) ? scene : root);
 	}
 	/**
 	 * Use the program of `material` in the pass of `mode` and set its uniforms and attributes
