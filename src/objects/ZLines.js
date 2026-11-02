@@ -120,8 +120,43 @@ function angleUpper(ax, ay, az, bx, by, bz) {
 }
 
 /**
- * A set of lines drawn with instanced draw calls, one instance per segment.
- * A segment is a cubic Hermite between two points, evaluated in the vertex
+ * In short, for a reader new to the renderer. A ZLines is one drawable object
+ * that holds many curves at once, such as every track of an event. Each curve
+ * is a stroke: a chain of points with a position and a direction at each, the
+ * way a track has a position and a momentum direction at every measured point.
+ * The piece of curve between two consecutive points is a segment, a cubic
+ * Hermite polynomial through the two positions with the two directions as
+ * tangents, scaled by the arc length between the points. The GPU evaluates
+ * the polynomial: a segment is drawn as a strip of n quads along the curve,
+ * and the whole set in one instanced draw call, one instance per segment, so
+ * a hundred thousand segments cost one call rather than one call each. The
+ * points and the bookkeeping of strokes and segments live in two textures,
+ * the GPU memory a vertex shader can read by index in WebGL2.
+ *
+ * The words used below:
+ *  - the need of a segment: the number of quads that keeps its straight pieces
+ *    within lodTolerance pixels of the curve, seen from the current camera; a
+ *    long, strongly bent segment near the camera needs many, a short or a far
+ *    one needs one;
+ *  - a bucket: one rung of the short ladder of quad counts a segment can be
+ *    drawn with, 1, 2, 4, ... up to `samples`; the need is rounded up to the
+ *    next rung, and every segment on one rung is drawn in one call;
+ *  - the walk: the pass over every segment, on the CPU, that computes the
+ *    needs and the buckets for the current camera and marks the segments
+ *    outside the view as culled; it runs again when the camera or the data
+ *    changes, in WebAssembly when the kernel is loaded, else in JavaScript;
+ *  - the plan: the grouping of the visible segments into draw calls, either
+ *    runs of consecutive visible strokes or one instance list per bucket;
+ *  - the arena: one block of WebAssembly memory that the kernel and the data
+ *    it reads share, so the walk copies nothing;
+ *  - the straight flag: a segment marked to be drawn as its chord, one quad,
+ *    whatever the camera.
+ * The picture never depends on the rung a segment landed on: the vertex shader
+ * computes the same need per instance and folds the quads it does not need
+ * onto the segment's end point.
+ *
+ * In detail. A set of lines drawn with instanced draw calls, one instance per
+ * segment. A segment is a cubic Hermite between two points, evaluated in the vertex
  * shader from the points' positions and directions and the segment's arc
  * length; a zero direction is replaced by the Catmull-Rom estimate from the
  * neighbour points. The data layout is described in ZLinesData.js, which
