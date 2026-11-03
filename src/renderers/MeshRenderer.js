@@ -137,6 +137,18 @@ export class MeshRenderer extends Renderer {
 				console.log("--------------------------------------");
 			}
 			this.used = false;
+			// A one-shot pass asked for this render must not outlive it: left set, the
+			// next render would run it into its own target, and a pick into the colour
+			// target is an integer clear, draw and read-back on a float attachment.
+			// Drop the request and report no pick, so the caller sees a miss rather
+			// than the previous pick's object.
+			this._outlineEnabled = false;
+			if (this._pickEnabled || this._pickSecondaryEnabled) {
+				this._pickEnabled = false;
+				this._pickSecondaryEnabled = false;
+				this._pickedObject3D = null;
+				this._pickedID = null;
+			}
 			return;
 		}
 		if(!this.used) {
