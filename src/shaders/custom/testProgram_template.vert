@@ -1,5 +1,5 @@
 #version 300 es
-precision mediump float;
+precision highp float;
 
 uniform mat4 MVMat; // Model View Matrix
 uniform mat4 PMat;  // Projection Matrix
