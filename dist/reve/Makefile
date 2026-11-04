@@ -29,10 +29,12 @@ dist:
 	${MAKE} clean
 	${MAKE} tarball
 
-tarball: REveRenderCore-min.mjs shaders
+# The tarball holds the license and the minified bundle, which carries the shaders as a
+# library; see reve-entry.js and pack-shaders.js.
+tarball: REveRenderCore-min.mjs
 	@test -n "${VERSION}" || { echo "Could not read revision from ${SRC_DIR}/constants.js"; exit 1; }
 	tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-	    -cf RenderCore-${VERSION}.tar ../../LICENSE REveRenderCore-min.mjs shaders/
+	    -cf RenderCore-${VERSION}.tar ../../LICENSE REveRenderCore-min.mjs
 	gzip -9nf RenderCore-${VERSION}.tar
 	sha256sum -b ${TARBALL}
 	@echo Now move the tarball to ROOT source and put the checksum into ROOT source tree
@@ -43,11 +45,13 @@ tarball: REveRenderCore-min.mjs shaders
 	@echo "  " ROOT-SRC/builtins/rendercore/CMakeLists.txt
 
 clean:
-	rm -rf REveRenderCore.mjs REveRenderCore-min.mjs programs.json shaders RenderCore-*.tar.gz
+	rm -rf REveRenderCore.mjs REveRenderCore-min.mjs shader-library.js RenderCore-*.tar.gz
 
 # ------------------------------------------------------
 
-REveRenderCore.mjs: ${CONTRIB_DIR}/REveRenderCore.js
+# rollup starts from reve-entry.js, which re-exports the source entry and registers the
+# generated shader library with the ShaderLoader.
+REveRenderCore.mjs: reve-entry.js ${CONTRIB_DIR}/REveRenderCore.js shader-library.js
 	${NPM_DIR}/rollup $< --format es --file REveRenderCore.mjs
 
 REveRenderCore-min.mjs: REveRenderCore.mjs
@@ -61,5 +65,7 @@ endef
 program_names.json:
 	$(error ${prog_name_help})
 
-shaders: program_names.json
+# The shader sources of the programs in program_names.json, with the program table, as one
+# ES module.
+shader-library.js: program_names.json
 	./pack-shaders.js

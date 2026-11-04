@@ -234,9 +234,12 @@ export class Renderer {
 		for (let [key, program] of this._requiredPrograms) {
 			// Check is the required program template is already downloaded
 			if (!this._glProgramManager.isTemplateDownloaded(program.name)) {
-				everythingLoaded = false;
-
 				this._downloadProgram(program);
+			}
+
+			// A program from the shader library is downloaded within _downloadProgram()
+			if (!this._glProgramManager.isTemplateDownloaded(program.name)) {
+				everythingLoaded = false;
 			}
 			else {
 				// TODO: Put this somewhere else? here?

@@ -1,6 +1,5 @@
 node_modules/
 REveRenderCore.mjs
 REveRenderCore-min.mjs
-programs.json
-shaders/
+shader-library.js
 RenderCore-*.tar.gz
