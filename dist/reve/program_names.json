@@ -11,6 +11,7 @@
   "basic_zsprite",
   "basic_zshape",
   "basic_zmultimesh",
+  "basic_zlines",
   "basic_stripes",
   "custom_GBufferMini_stripes",
   "custom_GBuffer_stripes",

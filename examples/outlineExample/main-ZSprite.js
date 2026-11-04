@@ -177,23 +177,6 @@ const CoreControl = {
             2,
             2
         );
-
-        // Testing index array for ZLine prototype (using points from insta points)
-        let la = new Int32Array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
-        this.tex_line_test = new RC.Texture(
-            la, 
-            RC.Texture.WRAPPING.ClampToEdgeWrapping,
-            RC.Texture.WRAPPING.ClampToEdgeWrapping,
-            RC.Texture.FILTER.NearestFilter,
-            RC.Texture.FILTER.NearestFilter,
-            RC.Texture.FORMAT.R32I,
-            RC.Texture.FORMAT.RED_INTEGER,
-            RC.Texture.TYPE.INT,
-            8,
-            2
-        );
-        this.tex_line_test.flipy = false;
-        this.tex_line_num = 16;
     },
 
     /** INIT CORE */
@@ -404,27 +387,6 @@ const CoreControl = {
         scene.add(zshape);
         // AMT end
 
-
-        let lm1 = new RC.ZSpriteBasicMaterial( { SpriteMode: RC.SPRITE_SPACE_WORLD,
-                                                 SpriteSize: [8, 8],
-                                                 color: new RC.Color(1, 0, 0),
-                                                 emissive: new RC.Color(0.2, 0, 0.2),
-                                                 diffuse: new RC.Color(0, 0, 1) } );
-        lm1.addInstanceData(this.tex_insta_pos);
-        lm1.addInstanceData(this.tex_line_test);
-        lm1.programName = "basic_zline";
-        // lm1.side: RC.FRONT_AND_BACK_SIDE;
-        // lm1.transparent = true;
-        lm1.setUniform("u_OffsetSegs", 3);
-        // lm1.setUniform("u_OffsetLineInfo", 999); // not used
-        let xy0 = new RC.Vector2(0,  0.5);
-        let xy1 = new RC.Vector2(1, -0.5);
-        let line1 = new RC.ZSprite(RC.Quad.makeGeometry(xy0, xy1, false, false, false), lm1);
-        line1.frustumCulled = false; // need a way to speciy bounding box/sphere !!!
-        line1.instanced = true;
-        line1.instanceCount = this.tex_line_num;
-        line1.position.set(0, 0, -12.8);
-        scene.add(line1);
 
         //outlined objects
         const cube_outlined = new RC.Cube(2, new RC.Color().setColorName("purple"));
