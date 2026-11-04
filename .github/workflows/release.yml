@@ -1,0 +1,39 @@
+# Builds the REve tarball on a version tag and attaches it to the GitHub release of
+# that tag, so the asset ROOT vendors is produced by the repository and its SHA256
+# can be checked by anyone. The tag must equal `revision` in src/constants.js.
+name: release
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+'
+permissions:
+  contents: write
+jobs:
+  dist:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dist/reve
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dist/reve/package-lock.json
+      - run: npm ci
+      - name: The tag must be the revision in src/constants.js
+        run: |
+          rev=$(sed -n 's/.*revision *= *"\([0-9.]*\)".*/\1/p' ../../src/constants.js)
+          test "$rev" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME, but src/constants.js says revision $rev"; exit 1; }
+      - run: make dist
+      - name: Release with the tarball attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          f=RenderCore-$GITHUB_REF_NAME.tar.gz
+          sha=$(sha256sum "$f" | cut -d' ' -f1)
+          echo "$f SHA256 $sha" >> "$GITHUB_STEP_SUMMARY"
+          gh release create "$GITHUB_REF_NAME" "$f" --title "RenderCore $GITHUB_REF_NAME" \
+            --notes "$f, SHA256 $sha. Built by the release workflow from tag $GITHUB_REF_NAME."
