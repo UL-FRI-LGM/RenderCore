@@ -9,6 +9,31 @@ export class ShaderLoader {
 
 	static sAllPrograms = new Set();
 
+	// The shader library, programs whose sources are held in memory rather than fetched,
+	// registered with addLibrary(). Every ShaderLoader takes these programs into its table
+	// ahead of the ones from its urls. sLibraryVersion counts the calls, so that a loader
+	// made before a call picks up its programs on its next use.
+	static sLibraryPrograms = {};
+	static sLibrarySources = {};
+	static sLibraryVersion = 0;
+
+	/**
+	 * Registers a shader library with every ShaderLoader, those made before the call too.
+	 * A program of the library is loaded from memory, with no request, and its sources are
+	 * available within the loadProgramSources() call that asks for it.
+	 * @param programs Program table in the shape of shaders/programs.json:
+	 *        name -> {description, shaders: {vertex: path, fragment: path}}
+	 * @param sources Map from those paths to the shader sources
+	 */
+	static addLibrary(programs, sources) {
+		Object.assign(ShaderLoader.sLibrarySources, sources);
+		for (const name in programs) {
+			if (ShaderLoader.sLibraryPrograms[name] === undefined)
+				ShaderLoader.sLibraryPrograms[name] = programs[name];
+		}
+		ShaderLoader.sLibraryVersion++;
+	}
+
 	/**
 	 * Creates new ShaderLoader object with the given LoadingManager. If the LoadingManager is not defined..
 	 * Default manager is used.
@@ -22,6 +47,11 @@ export class ShaderLoader {
 		this._pending_urls = [];
 		this._programs = {};
 		this._executor = this.executor;
+
+		// Names of the programs in this._programs that came from the shader library
+		this._libraryNames = new Set();
+		this._libraryVersion = -1;
+		this._mergeLibrary();
 
 
 		// Queue for execution scheduling
@@ -46,6 +76,25 @@ export class ShaderLoader {
 
 		this._pending_urls = [...new Set([].concat(this._pending_urls, urls))];
 	};
+
+
+	/**
+	 * Takes the programs of the shader library that are not in the table yet into it, if
+	 * addLibrary() was called since the last merge. A program already in the table, from
+	 * the library or from a url, keeps its entry.
+	 */
+	_mergeLibrary() {
+		if (this._libraryVersion === ShaderLoader.sLibraryVersion)
+			return;
+		this._libraryVersion = ShaderLoader.sLibraryVersion;
+
+		for (const name in ShaderLoader.sLibraryPrograms) {
+			if (this._programs[name] === undefined) {
+				this._programs[name] = structuredClone(ShaderLoader.sLibraryPrograms[name]);
+				this._libraryNames.add(name);
+			}
+		}
+	}
 
 
 	/**
@@ -151,8 +200,11 @@ export class ShaderLoader {
 	}
 
 	/**
-	 * Asynchronously loads the shader sources for the requested program template. If there are any urls pending
-	 * for the program list fetch, it quietly tries to fetch the lists.
+	 * Loads the shader sources for the requested program template. A program of the shader library is
+	 * loaded from memory, and the callbacks are called before this function returns unless an earlier
+	 * load is still in progress. Any other program is loaded asynchronously from its url. If the program
+	 * is not in the table and there are urls pending for the program list fetch, it quietly tries to
+	 * fetch the lists first.
 	 * @param {string} program Name of the program template.
 	 * @param {function} [onLoad] Called when all of the shader sources finish loading. Loaded program sources are passed as argument.
 	 * @param {function} [onProgress] Called for every loaded shader source, indicates the progress status
@@ -160,8 +212,10 @@ export class ShaderLoader {
 	 */
 	loadProgramSources (program, onLoad, onProgress, onError) {
 
-		// Update program lists if there are any pending urls
-		if (this._pending_urls.length > 0) {
+		this._mergeLibrary();
+
+		// Update program lists if the program is not known and there are any pending urls
+		if (this._programs[program] === undefined && this._pending_urls.length > 0) {
 			this.loadProgramList();
 		}
 
@@ -191,6 +245,37 @@ export class ShaderLoader {
 			var programTemplate = {};
 			programTemplate.sources = {};
 
+			// A program of the shader library, with every source in memory
+			if (scope._libraryNames.has(program) &&
+				shaderTypes.every(type => ShaderLoader.sLibrarySources[shaders[type]] !== undefined)) {
+				ShaderLoader.sAllPrograms.add(program);
+
+				programTemplate.id = program;
+				for (const shaderType of shaderTypes) {
+					programTemplate.sources[shaderType] = ShaderLoader.sLibrarySources[shaders[shaderType]];
+				}
+
+				if (onProgress !== undefined) {
+					var progressEvent = new ProgressEvent("ShaderSourceLoaded", {lengthComputable: true, loaded: numShaders, total: numShaders});
+					onProgress(progressEvent);
+				}
+				if (onLoad !== undefined) {
+					onLoad(programTemplate);
+				}
+
+				// Notify executor
+				doneCallback();
+				return;
+			}
+
+			// A library program with a source missing, and no url to fall back on
+			if (progTemplate.urls === undefined) {
+				if (onError !== undefined) {
+					onError();
+				}
+				doneCallback();
+				return;
+			}
 
 			for (var i = 0; i < shaderTypes.length; i++) {
 				const shaderType = shaderTypes[i];
@@ -322,7 +407,7 @@ export class ShaderLoader {
 	/**
 	 * Returns names of available programs
 	 */
-	get programList() { return Object.keys(this._programs); }
+	get programList() { this._mergeLibrary(); return Object.keys(this._programs); }
 
 	/**
 	 * Resolve an iterable list of program names and return a list of copies
@@ -331,6 +416,7 @@ export class ShaderLoader {
 	 * One might want to delete urls property of each element.
 	*/
 	resolvePrograms (name_list, delete_urls=true) {
+		this._mergeLibrary();
 		let prog_list = {};
 		for (let name of name_list) {
 			let details = structuredClone(this._programs[name]);
