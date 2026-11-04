@@ -50,7 +50,6 @@ export class Z3DAxis extends ZText {
         this._atten  = args.atten !== undefined ? args.atten : Z3DAxis.ATTEN_FIXED;
         this.material.setUniform("atten", this._atten);
         this.material.setUniform("w_ref", 1.0);
-        if (this.pickingMaterial) this.pickingMaterial.setUniform("atten", this._atten);
     }
 
     /**
@@ -75,7 +74,6 @@ export class Z3DAxis extends ZText {
     setAttenuation(k) {
         this._atten = k;
         this.material.setUniform("atten", k);
-        if (this.pickingMaterial) this.pickingMaterial.setUniform("atten", k);
     }
 
     getAttenuation() { return this._atten; }
@@ -102,7 +100,6 @@ export class Z3DAxis extends ZText {
     setReferenceW(w) {
         const v = (w > 1e-6) ? w : 1.0;
         this.material.setUniform("w_ref", v);
-        if (this.pickingMaterial) this.pickingMaterial.setUniform("w_ref", v);
     }
 
     /// Width of a single-line string in text units, without laying it out.
@@ -204,13 +201,11 @@ export class Z3DAxis extends ZText {
         // reaches anything else through material._attributes.
         const anchor_attr = new BufferAttribute(anchors, 3);
         this.material.setAttribute("anchor", anchor_attr);
-        if (this.pickingMaterial) this.pickingMaterial.setAttribute("anchor", anchor_attr);
 
         this.material.setUniform("scale", fm.cap_scale);
         this.material.setUniform("sdf_oo_N_pix_in_char", font.iy / font.cap_height);
         this.material.setUniform("sdf_text_size", this._fontSize);
         this.material.setUniform("offset", [0.0, 0.0]);   // anchors are absolute
-        this.syncPickingUniforms();
     }
 
     /**

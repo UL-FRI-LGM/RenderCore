@@ -388,10 +388,6 @@ export class RenderQueue {
 		}
 		return this._renderer.readTexturePixels(reference, out);
 	}
-	pickRGB(name, pickX, pickY){
-		const reference = this._textureMap[name];
-		return this._renderer.pickRGB(reference, pickX, pickY, this);
-	}
 	pickUINT(name, pickX, pickY){
 		const reference = this._textureMap[name];
 		return this._renderer.pickUINT(reference, pickX, pickY, this);

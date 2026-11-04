@@ -7,7 +7,7 @@ precision highp float;
 #if (DLIGHTS)
 struct DLight {
     //bool directional;
-    vec3 position;
+    vec3 direction;
     vec3 color;
 };
 #fi
@@ -114,96 +114,8 @@ uniform float alpha;
 
 //FUNCTIONS
 //**********************************************************************************************************************
-#if (PLIGHTS || SLIGHTS)
-float calcAttenuation(float constant, float linear, float quadratic, float distance) {
-    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
-    //float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
-    
-    return 1.0 / (constant + linear * distance + quadratic * (distance * distance));
-}
-#fi
-
-#if (DLIGHTS)
-vec3 calcDirectLight (DLight light, vec3 normal, vec3 viewDir) {
-
-    vec3 lightDir = normalize(light.position);
-
-    // Difuse
-    float diffuseF = max(dot(normal, lightDir), 0.0f);
-
-    // Specular
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float specularF = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
-
-    // Combine results
-    vec3 diffuse  = light.color  * diffuseF * material.diffuse;
-    vec3 specular = light.color * specularF * material.specular;
-
-    return (diffuse + specular);
-}
-#fi
-
-#if (PLIGHTS)
-// Calculates the point light color contribution
-vec3 calcPointLight (vec3 fragVPos, PLight light, vec3 normal, vec3 viewDir) {
-
-    float distance = length(light.position - fragVPos);
-    if(light.distance > 0.0 && distance > light.distance) return vec3(0.0, 0.0, 0.0);
-    
-    vec3 lightDir = normalize(light.position - fragVPos);
-
-    // Difuse
-    float diffuseF = max(dot(lightDir, normal), 0.0f);
-
-    // Specular
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float specularF = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
-
-    // Attenuation
-    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
-
-    // Combine results
-    vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
-    vec3 specular = light.color * specularF * material.specular * attenuation;
-
-    return (diffuse + specular);
-}
-#fi
-
-#if (SLIGHTS)
-vec3 calcSpotLight (vec3 fragVPos, SLight light, vec3 normal, vec3 viewDir) {
-
-    float distance = length(light.position - fragVPos);
-    if(light.distance > 0.0 && distance > light.distance) return vec3(0.0, 0.0, 0.0);
-    
-    vec3 lightDir = normalize(light.position - fragVPos);
-
-
-    // spot
-    float theta = dot(lightDir, normalize(-light.direction));
-    float epsilon = light.cutoff - light.outerCutoff;
-    float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);
-    //if(theta <= light.cutoff) return vec3(0.0, 0.0, 0.0);
-    if(theta <= light.outerCutoff) return vec3(0.0, 0.0, 0.0);
-
-
-    // Difuse
-    float diffuseF = max(dot(lightDir, normal), 0.0f);
-
-    // Specular
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float specularF = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
-
-    // Attenuation
-    float attenuation = calcAttenuation(light.constant, light.linear, light.quadratic, distance);
-
-    // Combine results
-    vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
-    vec3 specular = light.color * specularF * material.specular * attenuation;
-
-    return (diffuse + specular) * intensity;
-}
-#fi
+#include light_shading_decl
+#include projection_decl
 
 
 //MAIN
@@ -223,33 +135,30 @@ void main() {
     gl_Position = PMat * VPos_viewspace;
 
 
-    vec3 normal = normalize(NMat * VNorm);
-    vec3 viewDir = normalize(-VPos_viewspace.xyz);
+    vec3 P = VPos_viewspace.xyz;
+    vec3 N = normalize(NMat * VNorm);
+    vec3 V = normalize(-VPos_viewspace.xyz);
 
     // Calculate combined light contribution
-    vec3 combined = ambient;
-
-    #if (DLIGHTS)
-        #for lightIdx in 0 to NUM_DLIGHTS
-            combined += calcDirectLight(dLights[##lightIdx], normal, viewDir);
-        #end
+    vec3 kd = material.diffuse;
+    #if (COLORS)
+        kd *= VColor.rgb;
     #fi
-    #if (PLIGHTS)
-        #for lightIdx in 0 to NUM_PLIGHTS
-            combined += calcPointLight(VPos_viewspace.xyz, pLights[##lightIdx], normal, viewDir);
-        #end
-    #fi
-    #if (SLIGHTS)
-        #for lightIdx in 0 to NUM_SLIGHTS
-            combined += calcSpotLight(VPos_viewspace.xyz, sLights[##lightIdx], normal, viewDir);
-        #end
-    #fi
+    vec3 ks = material.specular;
+    // No specular under an orthographic projection: with the same view direction everywhere, the
+    // highlight would depend on the normal alone and tint all faces of one orientation alike.
+    if (isOrthographic(PMat)) ks = vec3(0.0);
+    float shin = material.shininess;
+    // Phong reflection only: this Material has no blinn.
+    bool blinn = false;
+    vec3 combined = ambient * kd;
+    #include light_shading_stmt
 
     fragVColor = vec4(combined, alpha);
 
 
     #if (COLORS)
-        fragVColor += VColor;
+        fragVColor.a += VColor.a;
     #fi
 
     #if (TEXTURE)

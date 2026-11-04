@@ -207,6 +207,18 @@ export class GLProgramManager {
 			attributeSetter[info.name]['free'] = function () {
 				self._gl.disableVertexAttribArray(location);
 			};
+
+			// A constant value instead of an array, of the attribute's base type: a draw fails
+			// when the type of the constant does not match the attribute's.
+			attributeSetter[info.name]['setValue'] = function (x = 0, y = 0, z = 0, w = 0) {
+				self._gl.disableVertexAttribArray(location);
+				if (type == self._gl.INT)
+					self._gl.vertexAttribI4i(location, x, y, z, w);
+				else if (type == self._gl.UNSIGNED_INT)
+					self._gl.vertexAttribI4ui(location, x, y, z, w);
+				else
+					self._gl.vertexAttrib4f(location, x, y, z, w);
+			};
 		}
 
 		return attributeSetter;

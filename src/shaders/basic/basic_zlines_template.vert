@@ -56,6 +56,7 @@ uniform int   u_InstanceOffset; // added to gl_InstanceID when drawing a run
 uniform float u_HalfWidth;      // pixels when u_ScreenWidth, world units otherwise
 uniform bool  u_ScreenWidth;
 uniform float u_Margin;         // pixels the strip is drawn beyond the width
+// Declared in every pass, unlike outline_instances_vert_decl: ZLines.draw() can draw a list in any pass.
 uniform bool  u_GivenInstances;
 in int a_Instances;
 
@@ -68,25 +69,13 @@ out float v_s;          // arc length at this t, from the segment start (t * L)
 flat out int v_seg;
 out vec3 fragVPos;
 
-#if (PICK_MODE_UINT)
-    flat out uint InstanceID;
-#fi
-#if (OUTLINE)
-    out vec3 v_normal_viewspace;
-    out vec3 v_ViewDirection_viewspace;
-#fi
+#include pick_vert_decl
+#include outline_vert_decl
 #if (CLIPPING_PLANES)
     out vec3 vViewPosition;
 #fi
 
-vec4 fetch_point(int idx) {
-    int tsx = textureSize(material.instanceData0, 0).x;
-    return texelFetch(material.instanceData0, ivec2(idx % tsx, idx / tsx), 0);
-}
-ivec4 fetch_table(int idx) {
-    int tsx = textureSize(material.instanceData1, 0).x;
-    return texelFetch(material.instanceData1, ivec2(idx % tsx, idx / tsx), 0);
-}
+#include texel_index_decl
 
 //MAIN
 //-----------------------------------------------------------------------------
@@ -98,22 +87,23 @@ void main()
     int   k    = gl_VertexID >> 1;
     float side = ((gl_VertexID & 1) == 0) ? -1.0 : 1.0;
 
-    ivec4 sa = fetch_table(u_SegBase + 2 * seg);
-    ivec4 sb = fetch_table(u_SegBase + 2 * seg + 1);
+    ivec4 sa = fetchAtIndex(material.instanceData1, u_SegBase + 2 * seg);
+    ivec4 sb = fetchAtIndex(material.instanceData1, u_SegBase + 2 * seg + 1);
     int   i0 = sa.x, i1 = sa.y;
     float L  = intBitsToFloat(sa.z);
-    ivec4 st = fetch_table(1 + sa.w);
+    ivec4 st = fetchAtIndex(material.instanceData1, 1 + sa.w);
 
     uint c = uint(st.z);
     v_color = vec4(float((c >> 24) & 0xffu), float((c >> 16) & 0xffu),
                    float((c >>  8) & 0xffu), float(c & 0xffu)) / 255.0;
 
+    // As pick_vert_stmt, with the segment index seg for iID.
     #if (PICK_MODE_UINT)
         InstanceID = uint(seg);
     #fi
 
-    vec4 pw0 = fetch_point(3 * i0), ds0 = fetch_point(3 * i0 + 1);
-    vec4 pw1 = fetch_point(3 * i1), ds1 = fetch_point(3 * i1 + 1);
+    vec4 pw0 = fetchAtIndex(material.instanceData0, 3 * i0), ds0 = fetchAtIndex(material.instanceData0, 3 * i0 + 1);
+    vec4 pw1 = fetchAtIndex(material.instanceData0, 3 * i1), ds1 = fetchAtIndex(material.instanceData0, 3 * i1 + 1);
     vec3 p0 = pw0.xyz, p1 = pw1.xyz;
     vec3 P  = p1 - p0;
     vec3 chord = (dot(P, P) > 0.0) ? normalize(P) : vec3(0.0);
@@ -131,11 +121,11 @@ void main()
         d1 = chord;
     }
     if (dot(d0, d0) == 0.0) {
-        vec3 e = (iPrev >= 0) ? p1 - fetch_point(3 * iPrev).xyz : P;
+        vec3 e = (iPrev >= 0) ? p1 - fetchAtIndex(material.instanceData0, 3 * iPrev).xyz : P;
         d0 = (dot(e, e) > 0.0) ? normalize(e) : chord;
     }
     if (dot(d1, d1) == 0.0) {
-        vec3 e = (iNext >= 0) ? fetch_point(3 * iNext).xyz - p0 : P;
+        vec3 e = (iNext >= 0) ? fetchAtIndex(material.instanceData0, 3 * iNext).xyz - p0 : P;
         d1 = (dot(e, e) > 0.0) ? normalize(e) : chord;
     }
 

@@ -214,7 +214,6 @@ const CoreControl = {
 
         RC.GLManager.sCheckFrameBuffer = false;
         // Would require an additional render-queue and pass to render into Uin32 buffer.
-        // RC.PickingShaderMaterial.DEFAULT_PICK_MODE = RC.PickingShaderMaterial.PICK_MODE.UINT;
         // renderer.pickObject3D = true;
 
         return renderer;
@@ -330,7 +329,7 @@ const CoreControl = {
         sprite.instanceCount = this.tex_insta_num;
         sprite.drawOutline = true;
         // outline only 100-th and first 10 odd ones, skipping instance 0.
-        sprite.outlineMaterial.outline_instances_setup([100, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
+        sprite.outlineInstances = [100, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
         scene.add(sprite);
 
         let sm2 = new RC.ZSpriteBasicMaterial( { SpriteMode: RC.SPRITE_SPACE_WORLD, SpriteSize: [8, 8],
@@ -383,7 +382,7 @@ const CoreControl = {
         zshape.instanced = true;
         zshape.instanceCount = this.tex_insta_num_shape;
         zshape.drawOutline = true;
-        zshape.outlineMaterial.outline_instances_setup([ 4, 6]);
+        zshape.outlineInstances = [ 4, 6];
         scene.add(zshape);
         // AMT end
 
@@ -532,37 +531,16 @@ function iterateSceneR(object, callback) {
 
 
 
-const OriginalMats = [];
-const MultiMats = [];
-const InstaCountMap = new Map();
 const RenderPass_MainShader = new RC.RenderPass(
     // Rendering pass type
     RC.RenderPass.BASIC,
 
     // Initialize function
     function (textureMap, additionalData) {
-        iterateSceneR(CoreControl.scene, function(object){
-            if(object.drawOutline) {
-                OriginalMats.push(object.material);
-            }
-        });
     },
 
     // Preprocess function
     function (textureMap, additionalData) {
-        let m_index = 0;
-
-        iterateSceneR(CoreControl.scene, function(object){
-            if(object.drawOutline) {
-                object.material = OriginalMats[m_index];
-                m_index++;
-
-                object.visible = true;
-            }else{
-                object.visible = true;
-            }
-        });
-
         return { scene: CoreControl.scene, camera: CoreControl.camera };
     },
 
@@ -586,49 +564,37 @@ const RenderPass_MainShader = new RC.RenderPass(
 const multi = new RC.CustomShaderMaterial("GBufferMini");
 multi.lights = false;
 multi.side = RC.FRONT_AND_BACK_SIDE;
+// The renderer's outline pass, as RendeQuTor runs it: the objects with drawOutline, each with
+// its material in the outline mode, or with `multi` when the material has no outline mode.
 const RenderPass_MainMulti = new RC.RenderPass(
     // Rendering pass type
     RC.RenderPass.BASIC,
 
     // Initialize function
     function (textureMap, additionalData) {
-        iterateSceneR(CoreControl.scene, function(object){
-            if(object.drawOutline) {
-                if (object._outlineMaterial)
-                    MultiMats.push(object._outlineMaterial);
-                else
-                    MultiMats.push(multi);
-                if (object._instanced && object._outlineMaterial.getUniform("u_OutlineGivenInstances"))
-                    InstaCountMap.set(object, object._instanceCount);
-            }
-        });
     },
 
     // Preprocess function
     function (textureMap, additionalData) {
-        let m_index = 0;
-
+        const outlined = [];
         iterateSceneR(CoreControl.scene, function(object){
-            if(object.drawOutline) {
-                object.material = MultiMats[m_index];
-                m_index++;
-                if (object._instanced && object._outlineMaterial.getUniform("u_OutlineGivenInstances"))
-                    object._instanceCount = object._outlineMaterial.getAttribute("a_OutlineInstances").count();
-                object.visible = true;
-            }else if (object instanceof RC.Scene || object instanceof RC.Group){
-                object.visible = true;
-            }else{
-                object.visible = false;
-            }
+            if (object.drawOutline) outlined.push(object);
         });
+
+        const renderer = CoreControl.renderer;
+        renderer._outlineEnabled = true;
+        renderer._outlineArray = outlined;
+        renderer._defaultOutlineMat = multi;
+        renderer._defaultOutlineMatFlat = multi;
+        renderer._fillRequiredPrograms(multi.requiredProgram(renderer));
 
         return { scene: CoreControl.scene, camera: CoreControl.camera };
     },
 
     function(textureMap, additionalData) {
-        for (const [key, value] of InstaCountMap) {
-            key._instanceCount = value;
-        }
+        // Still set when the programs were not loaded yet.
+        CoreControl.renderer._outlineEnabled = false;
+        CoreControl.renderer._outlineArray = null;
     },
 
     // Target

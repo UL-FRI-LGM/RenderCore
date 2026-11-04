@@ -18,6 +18,8 @@ import {PointLight} from '../lights/PointLight.js';
 import {SpotLight} from '../lights/SpotLight.js';
 import {RenderArrayManager} from './RenderArrayManager.js';
 import {Vector4} from '../math/Vector4.js';
+import {Material} from '../materials/Material.js';
+import {Scene} from '../core/Scene.js';
 
 
 export class MeshRenderer extends Renderer {
@@ -64,6 +66,7 @@ export class MeshRenderer extends Renderer {
 
 		// Set the selected renderer
 		this._selectedRenderer = this._meshRender;
+		this._renderMode = MeshRenderer.MODE.COLOR;
 
 		this.notinit = true;
 
@@ -89,6 +92,13 @@ export class MeshRenderer extends Renderer {
 
 	//SET GET
 	set selectedRenderer(selectedRenderer) { this._selectedRenderer = selectedRenderer; }
+	/**
+	 * What render() draws: in COLOR every object with its material, in PICK every pickable
+	 * object with its pick pass material into the current target, with no read-back. A pick
+	 * at one pixel with read-back is pick_setup().
+	 */
+	get renderMode() { return this._renderMode; }
+	set renderMode(renderMode) { this._renderMode = renderMode; }
 	set pickObject3D   (po3d) { this._pickObject3D = po3d; }
 	get pickedID() { return this._pickedID; }
 	get pickedObject3D() { return this._pickedObject3D; }
@@ -185,6 +195,11 @@ export class MeshRenderer extends Renderer {
 			this._pickSecondaryEnabled = false;
 			if (this._pickedObject3D)
 				this.pick_instance(this._pickedObject3D, camera);
+			return;
+		}
+		if (this._renderMode === MeshRenderer.MODE.PICK) {
+			this._renderPickableObjects(this._renderArrayManager.opaqueObjects, camera);
+			this._renderPickableObjects(this._renderArrayManager.transparentObjects, camera);
 			return;
 		}
 
@@ -312,8 +327,6 @@ export class MeshRenderer extends Renderer {
 				selectedMaterial = object._PSM;
 			}else if(this._renderMode == MeshRenderer.MODE.GEOMETRY){
 				selectedMaterial = object.GBufferMaterial;
-			}else if(this._renderMode == MeshRenderer.MODE.PICK){
-				selectedMaterial = object._PM;
 			}else{
 				selectedMaterial = object.material
 			}
@@ -375,14 +388,17 @@ export class MeshRenderer extends Renderer {
 
 			if(!object.pickable) continue;
 
-			if (this._pickObject3D) {
+			const mat = object.passMaterial(Material.MODE.PICK);
+			if (!mat) continue;
+
+			// Set up by _renderPickingObjects() when the pick resolves the Object3D.
+			if (this._pickLUA) {
 				object.UINT_ID = this._pickLUA.length;
 				this._pickLUA.push(object);
 			}
 
-			const mat = object.pickingMaterial;
-
-			this._setupProgram(object, camera, mat);
+			this._setupProgram(object, camera, mat, Material.MODE.PICK);
+			this._setup_pick_instance(false);
 			if (dbg) drain("setupProgram");
 
 			this._setup_material_side(mat.side);
@@ -398,38 +414,85 @@ export class MeshRenderer extends Renderer {
 		// Only render top-levels
 		for (let i = 0; i < list.length; i++) {
 			const object = list[i];
-			// The model-view matrix is only current for objects drawn in this pass.
-			if (!this._isDrawn(object, scene)) continue;
+			if (!this._isOutlined(object, scene)) continue;
 
-			const mat = object.outlineMaterial ? object.outlineMaterial :
+			const mat = object.passMaterial(Material.MODE.OUTLINE) ||
 						  (object.material.normalFlat ? this._defaultOutlineMatFlat : this._defaultOutlineMat);
 
-			this._setupProgram(object, camera, mat);
+			// An empty instance list outlines nothing.
+			if (object.outlineInstances && object.outlineInstances.length === 0) continue;
+
+			const instance_count = this._setupProgram(object, camera, mat, Material.MODE.OUTLINE);
 
 			this._setup_material_side(mat.side);
 			this._setup_material_depth(true, mat.depthFunc, true);
 
-			let instance_count = 0;
-			if (mat.getUniform("u_OutlineGivenInstances"))
-				instance_count = mat.getAttribute("a_OutlineInstances").count();
 			this._drawObject(object, instance_count);
 
 			this._cleanupPerObjectState();
 		}
 	}
-	_setupProgram(object, camera, material){
-		let programID = material.requiredProgram(this).programID
-		let program = this._compiledPrograms.get(programID);
+	/**
+	 * Whether the outline pass draws `object`, which it was handed in the outline list. The
+	 * model-view matrix is only current for objects drawn in this pass: an object under `scene`
+	 * is outlined when _isDrawn(). An object under no scene, made for the outline with the
+	 * matrices of a drawn object, is outlined unless it or an ancestor is invisible, a Group
+	 * hides it or it is outside the frustum; an object of another scene is not outlined.
+	 */
+	_isOutlined(object, scene) {
+		let root = object;
+		while (root.parent !== null) root = root.parent;
+		return this._isDrawn(object, (root instanceof Scene) ? scene : root);
+	}
+	/**
+	 * Use the program of `material` in the pass of `mode` and set its uniforms and attributes
+	 * for `object`. Returns the instance count of the object's instance list when the pass
+	 * draws one, see _setup_instances(), else 0.
+	 */
+	_setupProgram(object, camera, material, mode = Material.MODE.COLOR){
+		const programID = material.requiredProgram(this, mode).programID;
+		const program = this._compiledPrograms.get(programID);
 		program.use();
 		this._glManager._currentProgram = program;
 		this._glManager._currentMaterial = material;
+		this._glManager._currentMode = mode;
 
-		this._setup_uniforms(program, object, camera, material);
+		this._setup_uniforms(program, object, camera, material, mode);
 		this._setup_attributes(program, object, material);
+		return this._setup_instances(program, object, mode);
+	}
+	/**
+	 * The instance list of a program that declares a_Instances. In the outline pass an object
+	 * with outlineInstances has the list bound there and u_GivenInstances set to true; otherwise
+	 * u_GivenInstances is false and a_Instances is a constant 0. Returns the length of the bound
+	 * list, else 0.
+	 */
+	_setup_instances(program, object, mode) {
+		const setter = program.attributeSetter.a_Instances;
+		if (setter === undefined) return 0;
+
+		const list = (mode === Material.MODE.OUTLINE && object.outlineInstancesAttribute) || null;
+		if (list !== null) setter.set(list, 1, true, 1);
+		else setter.setValue(0);
+
+		const given = program.uniformSetter.u_GivenInstances;
+		if (given !== undefined) given.set(list !== null);
+
+		return (list !== null) ? list.count() : 0;
+	}
+	/**
+	 * Set u_PickInstance of the current program when it declares it: true writes the index of
+	 * the instance drawn, false the object's u_UINT_ID. Set on every pick draw, after the
+	 * material's uniforms, as objects share programs and a program keeps the last value it got.
+	 */
+	_setup_pick_instance(on) {
+		const setter = this._glManager._currentProgram.uniformSetter.u_PickInstance;
+		if (setter !== undefined) setter.set(on);
 	}
 	_cleanupPerObjectState(){
 		this._glManager._currentProgram = null;
 		this._glManager._currentMaterial = null;
+		this._glManager._currentMode = null;
 	}
 	_drawObject(object, instance_count=0){
 		if (typeof object.draw !== "function") console.warn("Object " + object.type + " has no draw function");
@@ -521,6 +584,9 @@ export class MeshRenderer extends Renderer {
 				case "gl_VertexID":
 					// For some reason gl_InstanceID and gl_VertexID are considered attributes. Ignore.
 					break;
+				case "a_Instances":
+					// Set by _setup_instances().
+					break;
 				default:
 					let found = false;
 
@@ -556,10 +622,11 @@ export class MeshRenderer extends Renderer {
 	 * @param object Object with uniform values.
 	 * @param camera Camera observing the scene.
 	 * @param material Material to use (std / picking / outline)
+	 * @param mode The pass mode, Material.MODE.
 	 * @param globalClippingPlanes Global clipping planes.
 	 */
 	//GLOBAL UNIFORMS (common for all objects/mats in renderer)
-	_setup_uniforms(program, object, camera, material, globalClippingPlanes = undefined) {
+	_setup_uniforms(program, object, camera, material, mode = Material.MODE.COLOR, globalClippingPlanes = undefined) {
 		let uniformSetter = program.uniformSetter;
 
 		// Reset the uniform validation
@@ -602,9 +669,6 @@ export class MeshRenderer extends Renderer {
 		if (globalClippingPlanes !== undefined && uniformSetter["globalClippingPlanes"] !== undefined) {
 			uniformSetter["globalClippingPlanes"].set(globalClippingPlanes.elements);
 		}
-		if (uniformSetter["u_RGB_ID"] !== undefined) {
-			uniformSetter["u_RGB_ID"].set(object.RGB_ID.toArray());
-		}
 		if (uniformSetter["u_UINT_ID"] !== undefined) {
 			uniformSetter["u_UINT_ID"].set(object.UINT_ID >>> 0);
 		}
@@ -627,7 +691,7 @@ export class MeshRenderer extends Renderer {
 
 		this._setup_light_uniforms(uniformSetter);
 
-		this._setup_material_uniforms(material, uniformSetter, object);
+		this._setup_material_uniforms(material, uniformSetter, object, mode);
 
 		// Check if all of the uniforms have been set
 		let notSet = uniformSetter.__validation.validate();
@@ -654,27 +718,33 @@ export class MeshRenderer extends Renderer {
 	 *
 	 * @param material The material to set material uniform values for.
 	 * @param uniformSetter Used to set the values.
+	 * @param object The object drawn.
+	 * @param mode The pass mode, Material.MODE.
 	 */
 	//"LOCAL" UNIFORMS (for specific mat)
 	// TODO: Better naming of the uniforms is needed in order to avoid string usage.
-	_setup_material_uniforms(material, uniformSetter, object) {//TODO: Move to object specific - same as draw (Sebastien)
-
-		const customUniforms = material._uniforms;
+	_setup_material_uniforms(material, uniformSetter, object, mode = Material.MODE.COLOR) {//TODO: Move to object specific - same as draw (Sebastien)
 
 		// Set all of the custom uniforms if they are defined within the shader
-		for (let name in customUniforms) {
-			if (customUniforms.hasOwnProperty(name)) {
-				if (uniformSetter[name] !== undefined) {
-					const uniform = customUniforms[name];
+		const setCustomUniforms = (customUniforms) => {
+			for (let name in customUniforms) {
+				if (customUniforms.hasOwnProperty(name)) {
+					if (uniformSetter[name] !== undefined) {
+						const uniform = customUniforms[name];
 
-					if((uniform instanceof Function)){
-						uniformSetter[name].set(uniform());
-					}else{
-						uniformSetter[name].set(uniform);
+						if((uniform instanceof Function)){
+							uniformSetter[name].set(uniform());
+						}else{
+							uniformSetter[name].set(uniform);
+						}
 					}
 				}
 			}
-		}
+		};
+		setCustomUniforms(material._uniforms);
+		// The values of the pass's mode, over those of every pass.
+		if (material._modeUniforms !== undefined)
+			setCustomUniforms(material._modeUniforms[mode]);
 
 
 		if (uniformSetter["material.emissive"] !== undefined) {
@@ -819,7 +889,8 @@ export class MeshRenderer extends Renderer {
 				}
 			}
 		}
-		if (material.transparent === true) {
+		// The pick and outline passes do not blend.
+		if (material.transparent === true && mode === Material.MODE.COLOR) {
 			if (uniformSetter["alpha"] !== undefined) {
 				uniformSetter["alpha"].set(material.opacity);
 			}
@@ -1393,13 +1464,13 @@ export class MeshRenderer extends Renderer {
 		this._gl.clearBufferuiv(this._gl.COLOR, 0, new Uint32Array([0xFFFFFFFF, 0, 0, 0]));
 		this._gl.clearBufferfi(this._gl.DEPTH_STENCIL, 0, 1.0, 0);
 
-		object.pickingMaterial.setUniform("u_PickInstance", true);
-		this._setupProgram(object, camera, object.pickingMaterial);
+		const mat = object.passMaterial(Material.MODE.PICK);
+		this._setupProgram(object, camera, mat, Material.MODE.PICK);
+		this._setup_pick_instance(true);
 		this._setup_material_side(object.material.side);
 		this._setup_material_depth(true, object.material.depthFunc, true);
 		this._drawObject(object);
 		this._cleanupPerObjectState();
-		object.pickingMaterial.setUniform("u_PickInstance", false);
 
 		let r = new Uint32Array(4);
 		this._gl.readBuffer(this._gl.COLOR_ATTACHMENT0);

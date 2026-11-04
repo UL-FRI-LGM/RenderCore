@@ -4,8 +4,10 @@
 import {BACK_SIDE, FRONT_AND_BACK_SIDE} from '../constants.js';
 
 import {Object3D} from '../core/Object3D.js';
+import {BufferAttribute} from '../core/BufferAttribute.js';
 import {Geometry} from './Geometry.js';
 
+import {Material} from '../materials/Material.js';
 import {CustomShaderMaterial} from '../materials/CustomShaderMaterial.js';
 import {MeshBasicMaterial} from '../materials/MeshBasicMaterial.js';
 import {PickingShaderMaterial} from "../materials/PickingShaderMaterial.js";
@@ -14,8 +16,14 @@ import {Matrix4} from '../math/Matrix4.js';
 import {Vector3} from '../math/Vector3.js';
 import {Ray} from '../math/Ray.js';
 import {Sphere} from '../math/Sphere.js';
-import {Color} from "../math/Color.js";
 
+/**
+ * A geometry drawn with a material. The pick and outline passes draw the mesh with its own
+ * material in the pass's mode when the material has the mode, see Material.passModes;
+ * otherwise with pickingMaterial, made on the first `pickable = true`, and with
+ * outlineMaterial, or the renderer's default outline material when there is none.
+ * outlineInstances restricts the outline pass to a list of instances.
+ */
 export class Mesh extends Object3D {
 
 	static sDefaultPickable = false;
@@ -35,19 +43,23 @@ export class Mesh extends Object3D {
 		this._geometry = geometry !== undefined ? geometry : new Geometry();
 		this._material = material !== undefined ? material : new MeshBasicMaterial( { color: Math.random() * 0xffffff } );
 
-		// If undefined it gets default constructed when set pickable is called.
+		// The pick pass material when the material has no pick mode. If undefined it gets
+		// default constructed when set pickable is called.
 		this._pickingMaterial = pickingMaterial;
 
-		// Shared version used by RenderPass / MeshRenderer; set it here if vert shader transforms
-		// vertices or if frag shader does not write all the fragments. See ZSprite for example.
+		// The outline pass material when the material has no outline mode; set it if the
+		// vertex shader places the vertices itself, else the renderer's default is used.
 		this._outlineMaterial = outlineMaterial;
+		// The instances the outline pass draws, see outlineInstances.
+		this._outlineInstances = null;
+		this._outlineInstancesSource = null;
+		this._outlineInstancesAttr = null;
 		// If not set, the default CustomShaderMaterial("multi") is instantiated in get method.
 		this.GBufferMaterial = args.GBufferMaterial;
 
 		this.raycast = _raycast;
 
-		// PICKING IDs
-		this._RGB_ID = new Color(0.0, 0.0, 0.0); // stored as Color(r, g, b) 
+		// PICKING ID
 		this._UINT_ID = 0; // stored as Uint32
 
 		//OUTLINE
@@ -90,7 +102,6 @@ export class Mesh extends Object3D {
 	 * @returns Geometry of the mesh.
 	 */
 	get geometry() { return this._geometry; }
-	get RGB_ID() { return this._RGB_ID; }
 	get UINT_ID() { return this._UINT_ID; }
 	get drawOutline() { return this._drawOutline; }
 	get pickable() { return super.pickable; }
@@ -98,6 +109,47 @@ export class Mesh extends Object3D {
 	get instanced() { return this._instanced; }
 	get instancedTranslation() { return this._instancedTranslation; }
 	get instanceCount() { return this._instanceCount; }
+
+	/**
+	 * The instances the outline pass draws, an Int32Array of instance indices, or null for the
+	 * whole object; set from an array or an Int32Array. In an outline program that declares
+	 * a_Instances the renderer binds the list there, sets u_GivenInstances to true and draws as
+	 * many instances as the list holds; an empty list outlines nothing. ZMultiMesh and ZLines
+	 * read the list in their draw(). The other passes draw every instance. Assigning the last
+	 * assigned array again does nothing, so a list assigned on every frame is converted and
+	 * uploaded once; to change the list, assign a new array.
+	 */
+	get outlineInstances() { return this._outlineInstances; }
+	set outlineInstances(list) {
+		if (list === null || list === undefined) {
+			this._outlineInstances = null;
+			this._outlineInstancesSource = null;
+			return;
+		}
+		if (list === this._outlineInstancesSource) return;
+		const array = (list instanceof Int32Array) ? list : Int32Array.from(list);
+		this._outlineInstances = array;
+		this._outlineInstancesSource = list;
+		// One attribute per mesh; a new array replaces its contents.
+		if (this._outlineInstancesAttr === null) this._outlineInstancesAttr = new BufferAttribute(array, 1, 1);
+		else this._outlineInstancesAttr.array = array;
+	}
+	/** outlineInstances as the attribute the renderer binds, or null without a list. */
+	get outlineInstancesAttribute() {
+		return (this._outlineInstances !== null) ? this._outlineInstancesAttr : null;
+	}
+
+	/**
+	 * The material the pass of `mode` (Material.MODE) draws the mesh with: the mesh's material
+	 * when it has the mode, else pickingMaterial for PICK and outlineMaterial for OUTLINE, either
+	 * of which can be undefined.
+	 */
+	passMaterial(mode) {
+		if (this._material.hasMode(mode)) return this._material;
+		if (mode === Material.MODE.PICK) return this._pickingMaterial;
+		if (mode === Material.MODE.OUTLINE) return this._outlineMaterial;
+		return this._material;
+	}
 	// endregion
 
 	// region SETTERS
@@ -157,9 +209,6 @@ export class Mesh extends Object3D {
 		this._material.onChangeListener = listener;
 	}
 
-	set RGB_ID(RGB_ID) {
-		this._RGB_ID = RGB_ID;
-	}
 	set UINT_ID(UINT_ID) {
 		this._UINT_ID = UINT_ID;
 	}
@@ -170,7 +219,7 @@ export class Mesh extends Object3D {
 	}
 	set pickable(pickable) {
 		super.pickable = pickable;
-		if (pickable && ! this._pickingMaterial) {
+		if (pickable && ! this._pickingMaterial && ! this._material.hasMode(Material.MODE.PICK)) {
 			this.pickingMaterial = new PickingShaderMaterial("TRIANGLES");
 			this.pickingMaterial.side = this.material.side;
 		}
@@ -251,8 +300,10 @@ export class Mesh extends Object3D {
 	}
 	getRequiredPrograms(renderer){
 		let r = [ this._material.requiredProgram(renderer) ];
-		if (this._pickingMaterial && this.pickable) r.push( this._pickingMaterial.requiredProgram(renderer) );
-		if (this._outlineMaterial && this.drawOutline) r.push( this._outlineMaterial.requiredProgram(renderer) );
+		const pickPass = this.pickable ? this.passMaterial(Material.MODE.PICK) : undefined;
+		if (pickPass) r.push( pickPass.requiredProgram(renderer, Material.MODE.PICK) );
+		const outlinePass = this.drawOutline ? this.passMaterial(Material.MODE.OUTLINE) : undefined;
+		if (outlinePass) r.push( outlinePass.requiredProgram(renderer, Material.MODE.OUTLINE) );
 		if (renderer._renderMode == 3) // 3 = MeshRenderer.MODE.GEOMETRY; to be improved
 			r.push(this.GBufferMaterial.requiredProgram(renderer));
 

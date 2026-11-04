@@ -2,7 +2,30 @@
  * Created by Primoz on 9. 11. 2016.
  */
 
+import {ShaderSnippets} from './ShaderSnippets.js';
 
+// The snippets given to ShaderBuilder.registerSnippet(), by name.
+const userSnippets = new Map();
+// Set by the first buildTemplateTree() of any ShaderBuilder; registerSnippet() throws after that.
+let templateParsed = false;
+
+/**
+ * Builds shader sources from templates. A template is GLSL with builder commands on lines of
+ * their own: #if (COND), #else if (COND), #else and #fi keep or drop blocks by the flags, #for i
+ * in A to B and #end repeat a block with ##i replaced by the index, and ##NAME is replaced by the
+ * value NAME. buildTemplateTree() parses a template into a tree once; fetchShader() builds the
+ * tree for a set of flags and values and caches the source under the template name, the flags
+ * and the values.
+ *
+ * A line `#include name` is replaced, when the template is parsed, by the lines of the snippet
+ * called name, from ShaderSnippets or from registerSnippet(). The lines are parsed as if they
+ * were in the template, so the snippet's #if blocks, #for loops and ## values are evaluated with
+ * the flags and values of each build. A snippet may include other snippets, nested up to
+ * ShaderBuilder.MAX_INCLUDE_DEPTH. A missing snippet, a snippet that includes itself, a deeper
+ * nesting and a malformed #include line make buildTemplateTree() log an error that names the
+ * #include line, the snippet the line is in if any, and the template, and return false, as a
+ * line it cannot parse does.
+ */
 export class ShaderBuilder {
 	constructor() {
 		this._LOGTAG = "ShaderBuilder: ";
@@ -59,31 +82,30 @@ export class ShaderBuilder {
 			return;
 		}
 
-		// Remove multi line comments
-		templateSource = templateSource.replace(this._multiLineCommentRegex , '');
+		templateParsed = true;
 
-		// Generate array of lines with no empty lines
-		var arrayOfLines = templateSource.match(this._lineReduceRegex);
+		// The lines of the template with the snippets it includes
+		var lines;
+		try {
+			lines = this._expandIncludes(this._sourceLines(templateSource), templateName, []);
+		}
+		catch (error) {
+			console.error(this._LOGTAG + "Exception occurred while expanding the includes (" + error.message + ")");
+			return false;
+		}
 
 		// Create root node of the template tree
 		var rootNode = new ShaderBuilder.RootNode();
 
-		for (var i = 0; i < arrayOfLines.length; i++) {
-			// Remove redundant spaces and single line comments
-			var trimmedLine = arrayOfLines[i].replace(this._prefixSuffixSpaceTrimRegex, '').replace(this._multipleSpaceMatch,' ').replace(this._singleLineCommentRegex, '');
-
-			// If there is nothing left do not bother adding the line to the tree
-			if (trimmedLine.length === 0) {
-				continue;
-			}
-
+		for (var i = 0; i < lines.length; i++) {
 			// Interpret the line of code
 			try {
-				rootNode.parseLine(trimmedLine);
+				rootNode.parseLine(lines[i].text);
 			}
 			catch (error) {
 				console.error(this._LOGTAG + "Exception occurred while building the template tree (" + error + ")\n" +
-					"Problematic line: " + arrayOfLines[i].replace(this._prefixSuffixSpaceTrimRegex, ''));
+					"Problematic line: " + lines[i].original +
+					(lines[i].snippet !== undefined ? " (snippet " + lines[i].snippet + ")" : ""));
 				return false;
 			}
 		}
@@ -98,6 +120,77 @@ export class ShaderBuilder {
 		this._templatesCache[templateName] = {cachedShaders: {}, tree: rootNode};
 
 		return true;
+	}
+
+	/**
+	 * The lines of `source` that go into the tree: block comments removed; on each line the
+	 * leading and trailing spaces trimmed, runs of spaces made one space and the line comment
+	 * removed; empty lines dropped. Each is {text, original, snippet}, with `snippet` the name of
+	 * the snippet the line is from, undefined for a template line.
+	 */
+	_sourceLines (source, snippet) {
+		// Remove multi line comments
+		source = source.replace(this._multiLineCommentRegex , '');
+
+		// Generate array of lines with no empty lines
+		var arrayOfLines = source.match(this._lineReduceRegex) || [];
+
+		var lines = [];
+		for (var i = 0; i < arrayOfLines.length; i++) {
+			// Remove redundant spaces and single line comments
+			var trimmedLine = arrayOfLines[i].replace(this._prefixSuffixSpaceTrimRegex, '').replace(this._multipleSpaceMatch,' ').replace(this._singleLineCommentRegex, '');
+
+			// If there is nothing left do not bother adding the line to the tree
+			if (trimmedLine.length === 0) {
+				continue;
+			}
+
+			lines.push({text: trimmedLine, original: arrayOfLines[i].replace(this._prefixSuffixSpaceTrimRegex, ''), snippet: snippet});
+		}
+		return lines;
+	}
+
+	/**
+	 * `lines` with each #include line replaced by the lines of its snippet, expanded in turn.
+	 * `chain` holds the snippets being expanded, the outermost first. A bad #include throws an
+	 * Error that names the line, the snippet the line is in if any, and the template.
+	 */
+	_expandIncludes (lines, templateName, chain) {
+		var expanded = [];
+		for (var i = 0; i < lines.length; i++) {
+			if (!ShaderBuilder.includeRegex.test(lines[i].text)) {
+				expanded.push(lines[i]);
+				continue;
+			}
+
+			var where = "line \"" + lines[i].original + "\" of " +
+				(chain.length > 0 ? "snippet \"" + chain[chain.length - 1] + "\" in " : "") +
+				"template \"" + templateName + "\"";
+			var groups = ShaderBuilder.includeLineRegex.exec(lines[i].text);
+			if (groups === null) {
+				throw new Error("malformed #include, at " + where);
+			}
+
+			var name = groups[1];
+			var path = chain.concat(name).join(" -> ");
+			if (chain.indexOf(name) !== -1) {
+				throw new Error("snippet \"" + name + "\" includes itself (" + path + "), at " + where);
+			}
+			if (chain.length >= ShaderBuilder.MAX_INCLUDE_DEPTH) {
+				throw new Error("snippet \"" + name + "\" is nested deeper than " + ShaderBuilder.MAX_INCLUDE_DEPTH +
+					" (" + path + "), at " + where);
+			}
+			var source = ShaderBuilder.snippet(name);
+			if (source === undefined) {
+				throw new Error("no snippet \"" + name + "\", at " + where);
+			}
+
+			var snippetLines = this._expandIncludes(this._sourceLines(source, name), templateName, chain.concat(name));
+			for (var j = 0; j < snippetLines.length; j++) {
+				expanded.push(snippetLines[j]);
+			}
+		}
+		return expanded;
 	}
 
 	// Tries to fetch the shader. If the shader it's not build jet it tries to build it
@@ -150,16 +243,55 @@ export class ShaderBuilder {
 			return undefined;
 		}
 	}
+
+	/**
+	 * Adds the snippet `name` with the GLSL `source` for templates to include, see the class
+	 * comment and ShaderSnippets. The name is an identifier ending in _decl or _stmt. Throws once
+	 * any ShaderBuilder has parsed a template, as the parsed trees and the built sources keep the
+	 * snippets they included; also for a name that is taken or malformed.
+	 */
+	static registerSnippet (name, source) {
+		if (templateParsed) {
+			throw new Error("ShaderBuilder: snippet \"" + name + "\" registered after a template was parsed");
+		}
+		if (!ShaderBuilder.snippetNameRegex.test(name)) {
+			throw new Error("ShaderBuilder: snippet name \"" + name + "\" is not an identifier ending in _decl or _stmt");
+		}
+		if (ShaderBuilder.snippet(name) !== undefined) {
+			throw new Error("ShaderBuilder: snippet \"" + name + "\" is already defined");
+		}
+		if (typeof source !== "string") {
+			throw new Error("ShaderBuilder: the source of snippet \"" + name + "\" is not a string");
+		}
+		userSnippets.set(name, source);
+	}
+
+	/** The source of the snippet `name`, from ShaderSnippets or registerSnippet(); undefined if there is none. */
+	static snippet (name) {
+		return Object.hasOwn(ShaderSnippets, name) ? ShaderSnippets[name] : userSnippets.get(name);
+	}
 };
 
 
 ShaderBuilder.STATE_OPENED = 0;
 ShaderBuilder.STATE_CLOSED = 1;
 
+// How deep snippets may include snippets: a template's snippet is at depth 1.
+ShaderBuilder.MAX_INCLUDE_DEPTH = 4;
+
 // region REGEX SECTION
 
-// Matches all available commands (#for, #endfor, #if, #else and #fi)
-ShaderBuilder.commandRegex = /#for.*|#end.*|#if.*|#else.*|#fi.*/i;
+// Matches all available commands (#for, #end, #if, #else, #fi and #include)
+ShaderBuilder.commandRegex = /#for.*|#end.*|#if.*|#else.*|#fi.*|#include.*/i;
+
+// Matches a line that starts with #include
+ShaderBuilder.includeRegex = /^#include/i;
+
+// Matches a correctly formed include line (#include name); the snippet name in group 1
+ShaderBuilder.includeLineRegex = /^#include\s+([A-Za-z_][A-Za-z0-9_]*)\s*$/i;
+
+// Matches a snippet name: an identifier ending in _decl or _stmt
+ShaderBuilder.snippetNameRegex = /^[A-Za-z_][A-Za-z0-9_]*_(?:decl|stmt)$/;
 
 // Matches #for and #if commands
 ShaderBuilder.nodeStartRegex = /#for.*|#if.*/i;
@@ -477,9 +609,10 @@ ShaderBuilder.ConditionNode = class extends ShaderBuilder.Node {
 				}
 			}
 
-			// Order is important
-			condition = condition.replace(new RegExp(falseFlagsStr, 'gi'), "false");
-			condition = condition.replace(new RegExp(trueFlagsStr, 'gi'), "true");
+			// Order is important. A flag matches only as a whole name, so INSTANCED does not
+			// match inside INSTANCED_TRANSLATION.
+			condition = condition.replace(new RegExp("(?:" + falseFlagsStr + ")\\b", 'gi'), "false");
+			condition = condition.replace(new RegExp("\\b(?:" + trueFlagsStr + ")\\b", 'gi'), "true");
 		}
 
 		// SET REMAINING FLAGS TO FALSE

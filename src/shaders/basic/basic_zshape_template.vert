@@ -63,19 +63,16 @@ out vec3 fragVPos;
 
 #if (INSTANCED)
     uniform Material material;
-    #if (PICK_MODE_UINT)
-        flat out uint InstanceID;
-    #fi
-    #if (OUTLINE)
-        uniform bool u_OutlineGivenInstances;
-        in  int  a_OutlineInstances;
-    #fi
-
+    #include pick_vert_decl
+    #include outline_instances_vert_decl
 #fi
 
-#if (OUTLINE)
-out vec3 v_normal_viewspace;
-out vec3 v_ViewDirection_viewspace;
+#include outline_vert_decl
+
+//FUNCTIONS
+//**********************************************************************************************************************
+#if (INSTANCED)
+    #include texel_index_decl
 #fi
 
 //MAIN
@@ -89,10 +86,7 @@ void main() {
 
     #if (INSTANCED)
         int iID = gl_InstanceID;
-        #if (OUTLINE)
-            if (u_OutlineGivenInstances)
-                iID = a_OutlineInstances;
-        #fi
+        #include outline_instances_vert_stmt
         #if (MAT4_PER_INSTANCE)
             int pID = 4 * iID;
         #else if (SCALE_PER_INSTANCE)
@@ -100,8 +94,7 @@ void main() {
         #else
             int pID = iID; // pixelID
         #fi
-        int   tsx = textureSize(material.instanceData0, 0).x;
-        ivec2 tc  = ivec2(pID % tsx, pID / tsx);
+        ivec2 tc  = texelAtIndex(material.instanceData0, pID);
         vec4  pos = texelFetch(material.instanceData0, tc, 0);
 
         uint rgba = floatBitsToUint(pos.w);
@@ -126,9 +119,7 @@ void main() {
             fragVNorm = vec3(NMat * mmat * VNorm);
         #fi
 
-        #if (PICK_MODE_UINT)
-            InstanceID = uint(iID);
-        #fi
+        #include pick_vert_stmt
     #else
         VPos_final = VPos_local;
         coldif = material.diffuse;

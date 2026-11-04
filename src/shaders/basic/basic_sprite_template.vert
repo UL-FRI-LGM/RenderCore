@@ -42,9 +42,6 @@ out vec2 deltaVPos;
     out vec2 fragUV;
 #fi
 
-#if (PLIGHTS)
-    out vec3 fragVPos;
-#fi
 
 #if (POINTS)
     uniform float pointSize;
@@ -116,11 +113,6 @@ void main() {
         #fi
     }
 
-
-    #if (PLIGHTS)
-        // Pass vertex position to fragment shader
-        fragVPos = vec3(VPos_viewspace) / VPos_viewspace.w;
-    #fi
 
     #if (COLORS)
         // Pass vertex color to fragment shader

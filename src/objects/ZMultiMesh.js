@@ -1,5 +1,6 @@
 import {Mesh} from './Mesh.js';
 import {Quad} from './Quad.js';
+import {Material} from '../materials/Material.js';
 import {ZMultiMeshBasicMaterial} from '../materials/ZMultiMeshBasicMaterial.js';
 import {Vector2} from '../RenderCore.js';
 import {Color} from "../math/Color.js";
@@ -12,11 +13,9 @@ export class ZMultiMesh extends Mesh {
             material = new ZMultiMeshBasicMaterial();
         }
         material.normalFlat = true;
-        let pmat = material.clone_for_picking();
-        let omat = material.clone_for_outline();
 
         //SUPER
-        super(geometry, material, pmat, omat);
+        super(geometry, material);
 
         this.type = "ZMultiMesh";
     }
@@ -34,8 +33,9 @@ export class ZMultiMesh extends Mesh {
 		const glBuffer = glManager.getGLBuffer(this.geometry.indices);
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, glBuffer);
 
+        const mode = glManager._currentMode;
 
-        if (glManager._currentMaterial === this._material)
+        if (mode === Material.MODE.COLOR && glManager._currentMaterial === this._material)
         {
             let us_col = us["material.diffuse"];
 
@@ -65,11 +65,16 @@ export class ZMultiMesh extends Mesh {
                 // if (i > 100) return;
             }
         }
-        else if (glManager._currentMaterial === this._outlineMaterial)
+        else if (mode === Material.MODE.OUTLINE)
         {
-            let draw_list = this._outlineMaterial._instanceList;
-            for (let dli = 0; dli < draw_list.length; ++dli) {
-                let i = draw_list[dli];
+            // The nodes of outlineInstances, or every visible node without a list.
+            let draw_list = this.outlineInstances;
+            let n = (draw_list !== null) ? draw_list.length : this.nodeShapeIds.length;
+            for (let dli = 0; dli < n; ++dli) {
+                let i = (draw_list !== null) ? draw_list[dli] : dli;
+                if (draw_list === null && this.nodeVisibility[i] === false) {
+                    continue;
+                }
                 // draw as above, without color setting
 
                 // node shape
@@ -84,7 +89,7 @@ export class ZMultiMesh extends Mesh {
                 gl.drawElements(this.renderingPrimitive, this.shapeIndicesSize[shapeId], gl.UNSIGNED_INT, 4*this.shapeIndicesOff[shapeId]);
             }
         }
-        else if (glManager._currentMaterial === this._pickingMaterial)
+        else if (mode === Material.MODE.PICK)
         {
             // if first pass / object selecion
             //    draw all with same uniform color (as set up by meshRenderer)

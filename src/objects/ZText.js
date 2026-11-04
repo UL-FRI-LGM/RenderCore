@@ -115,13 +115,6 @@ export class ZText extends Mesh {
 
         this.material.color = args.color;
 
-        // ZText places itself in the vertex shader from `offset`, the viewport
-        // aspect and MODE. The generic TRIANGLES picker that Mesh installs on
-        // first use of `pickable` knows none of that, so it puts the pick quad at
-        // the object origin and picking silently misses in SCREEN and MIXED modes.
-        // Compile this very program into its picking variant instead.
-        this.pickingMaterial = this.material.clone_for_picking();
-
         this._text = args.text !== undefined ? args.text : "Default text";
         if (this._fontTexture != null && this._font != null) {
             this.material.addMap(this._fontTexture);
@@ -137,7 +130,6 @@ export class ZText extends Mesh {
         this.material.setUniform("scale", font_metrics.cap_scale);
         this.material.setUniform("sdf_oo_N_pix_in_char", this._font.iy / this._font.cap_height);
         this.material.setUniform("sdf_text_size", this._fontSize);
-        this.syncPickingUniforms();
     }
 
     // Override visibility to avoid rendering of uninitialized objects.
@@ -267,19 +259,6 @@ export class ZText extends Mesh {
         this._xPos = offset[0];
         this._yPos = offset[1];
         this.material.setUniform("offset", offset);
-        this.syncPickingUniforms();
-    }
-
-    /// Keep the placement uniforms of the picking material in step with the
-    /// drawing material. Only the ones that move the quad matter; `aspect` is set
-    /// by the renderer on both.
-    syncPickingUniforms() {
-        if (!this._pickingMaterial) return;
-        // Only the uniforms that place the quad; the rest do not affect picking.
-        this._pickingMaterial.setUniform("MODE", this._mode);
-        this._pickingMaterial.setUniform("offset", [this._xPos, this._yPos]);
-        this._pickingMaterial.setUniform("scale", this.material.getUniform("scale"));
-        this._pickingMaterial.setUniform("sdf_text_size", this.material.getUniform("sdf_text_size"));
     }
 
     /// Bounding rectangle of the laid-out text box in (0,1) screen coordinates.
@@ -859,7 +838,6 @@ export class ZTextAxis extends ZText {
         this.material.setUniform("sdf_oo_N_pix_in_char", font.iy / font.cap_height);
         this.material.setUniform("sdf_text_size", this._fontSize);
         this.material.setUniform("offset", [0.0, 0.0]);   // positions are absolute
-        this.syncPickingUniforms();
     }
 
     draw(gl, glManager) {

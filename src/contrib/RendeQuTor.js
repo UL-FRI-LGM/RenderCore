@@ -1,5 +1,6 @@
 import {RenderQueue} from '../renderers/RenderQueue.js';
 import {RenderPass}  from '../renderers/RenderPass.js';
+import {Material} from '../materials/Material.js';
 import {CustomShaderMaterial} from '../materials/CustomShaderMaterial.js';
 import {FRONT_AND_BACK_SIDE, HIGHPASS_MODE_BRIGHTNESS, HIGHPASS_MODE_DIFFERENCE}
     from '../constants.js';
@@ -895,8 +896,9 @@ export class RendeQuTor
                 pthis.renderer._fillRequiredPrograms(pthis.RP_GBuffer_mat.requiredProgram(pthis.renderer));
                 pthis.renderer._fillRequiredPrograms(pthis.RP_GBuffer_mat_flat.requiredProgram(pthis.renderer));
                 for (const o3d of this.obj_list) {
-                    if (o3d.outlineMaterial)
-                        pthis.renderer._fillRequiredPrograms(o3d.outlineMaterial.requiredProgram(pthis.renderer));
+                    const mat = o3d.passMaterial(Material.MODE.OUTLINE);
+                    if (mat)
+                        pthis.renderer._fillRequiredPrograms(mat.requiredProgram(pthis.renderer, Material.MODE.OUTLINE));
                 }
                 return { scene: pthis.scene, camera: pthis.camera };
             },

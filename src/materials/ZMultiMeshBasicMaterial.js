@@ -1,12 +1,13 @@
+import {Material} from './Material.js';
 import {CustomShaderMaterial} from './CustomShaderMaterial.js';
 import {Color} from "../math/Color.js";
 import {FRONT_AND_BACK_SIDE} from '../constants.js';
-import {Int32Attribute} from "../core/BufferAttribute.js";
 import { Vector3 } from '../RenderCore.js';
 
 export class ZMultiMeshBasicMaterial extends CustomShaderMaterial {
 
     /**
+     * Has the pick and outline modes, see Material.
      * WARNING:
      * - constructor does not pass arguments to parent class
      * - evades "custom" in shader name by setting programName after super
@@ -16,6 +17,7 @@ export class ZMultiMeshBasicMaterial extends CustomShaderMaterial {
 
         this.type = "ZMultiMeshBasicMaterial";
         this.programName = "basic_zmultimesh";
+        this._passModes = [Material.MODE.PICK, Material.MODE.OUTLINE];
 
         this.color = args.color ? args.color : new Color(Math.random() * 0xffffff);
         this.emissive = args.emissive ? args.emissive : new Color(Math.random() * 0xffffff);
@@ -25,36 +27,11 @@ export class ZMultiMeshBasicMaterial extends CustomShaderMaterial {
         this.normalFlat = args.normalFlat ? args.normalFlat : false;
 
 	    //	this._specular = new Color(Math.random() * 0xffffff);
-		this._specular = new Color(0.5 * 0xffffff);
+		this._specular = new Color(0x7f7f7f);
 		this._shininess = 64;
 
         // this._clippingPlanes = [ { normal: new Vector3(0, 0.7, 0.7), constant: 0 } ];
         // this._useClippingPlanes = true;
-    }
-
-    clone_for_picking() {
-        let o = new ZMultiMeshBasicMaterial( {
-            color: this.color, emissive: this.emissive, diffuse: this.diffuse,
-            side: this.side, normalFlat: this.normalFlat,
-        } );
-        o._clippingPlanes = this._clippingPlanes;
-        o._useClippingPlanes = this._useClippingPlanes;
-        for (const m of this.maps) o.addMap(m);
-        o.addSBFlag('PICK_MODE_UINT');
-        o.setUniform("u_PickInstance", false);
-        return o;
-    }
-
-    clone_for_outline() {
-        let o = new ZMultiMeshBasicMaterial( {
-            color: this.color, emissive: this.emissive, diffuse: this.diffuse,
-            side: this.side,  normalFlat: this.normalFlat
-        } );
-        o._clippingPlanes = this._clippingPlanes;
-        o._useClippingPlanes = this._useClippingPlanes;
-        for (const m of this.maps) o.addMap(m);
-        o.addSBFlag('OUTLINE');
-        return o;
     }
 
     get color() { return this._color; }
@@ -67,15 +44,6 @@ export class ZMultiMeshBasicMaterial extends CustomShaderMaterial {
 	set specular(val) { this._specular = val; }
 	get shininess() { return this._shininess; }
 	set shininess(val) { this._shininess = val; }
-
-    // Outline - setup / reset for instance list outlining.
-    // To be called on outline version (with OUTLINE SB-flag).
-    outline_instances_setup(instance_list) {
-        this._instanceList = instance_list;
-    }
-    outline_instances_reset() {
-        this._instanceList = null;
-    }
 
     update(data) {
         super.update(data);

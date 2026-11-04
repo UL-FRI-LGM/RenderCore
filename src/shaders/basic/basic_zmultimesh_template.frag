@@ -12,6 +12,7 @@ struct Material {
     vec3 diffuse;
     vec3 specular;
     float shininess;
+    bool blinn;
     float alpha;
     #if (TEXTURE)
         #for I_TEX in 0 to NUM_TEX
@@ -19,13 +20,6 @@ struct Material {
         #end
     #fi
 };
-
-#if (CLIPPING_PLANES)
-struct ClippingPlane {
-    vec3  normal;
-    float constant;
-};
-#fi
 
 #if (DLIGHTS)
 struct DLight {
@@ -112,13 +106,15 @@ in vec3 fragVPos;
 #fi
 
 uniform vec3 ambient; // QQQQQQ how does this work
+uniform mat4 PMat;
 
 #if (CLIPPING_PLANES)
-    uniform ClippingPlane clippingPlanes[##NUM_CLIPPING_PLANES];
-    in      vec3          v_pos_for_clip;
+    in vec3 v_pos_for_clip;
 #fi
+#include clipping_decl
 
 #if (PICK_MODE_UINT)
+    // ZMultiMesh draws each node with a draw call of its own and sets the node index in u_InstanceID.
     uniform uint u_UINT_ID;
     uniform bool u_PickInstance;
     uniform uint u_InstanceID;
@@ -130,12 +126,7 @@ uniform vec3 ambient; // QQQQQQ how does this work
         in vec3 v_normal_viewspace;
     #fi
     in vec3 v_ViewDirection_viewspace;
-
-    layout (location = 0) out vec4 vn_viewspace;
-    layout (location = 1) out vec4 vd_viewspace;
-    #if (DEPTH)
-        layout (location = 2) out vec4 de_viewspace; // could be float
-    #fi
+    #include outline_frag_decl
 #else
     out vec4 outColor;
 #fi
@@ -143,99 +134,8 @@ uniform vec3 ambient; // QQQQQQ how does this work
 
 //FUNCTIONS
 //**********************************************************************************************************************
-#if (PLIGHTS || SLIGHTS)
-float calcAttenuation(float constant, float linear, float quadratic, float distance)
-{
-    //float attenuation = 1.0f / (1.0f + 0.01f * distance + 0.0001f * (distance * distance));
-    //float attenuation = light.decay / (light.decay + 0.01f * distance + 0.0001f * (distance * distance));
-    return 1.0 / (constant + linear * distance + quadratic * (distance * distance));
-}
-#fi
-
-#if (DLIGHTS)
-vec3 calcDirectLight (DLight light, vec3 normal, vec3 viewDir)
-{
-    vec3 lightDir = normalize(-light.direction);
-
-    // Difuse
-    float diffuseF = max(dot(normal, lightDir), 0.0f);
-    #if (COLORS)
-        vec3 diffuse  = light.color * diffuseF  * (fragVColor.rgb + material.diffuse);
-    #else
-        vec3 diffuse  = light.color * diffuseF  * material.diffuse;
-    #fi
-
-    // Specular - Blinn
-    vec3 halfwayDir = normalize(lightDir + viewDir);  
-    float specularF = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
-    vec3 specular = light.color * specularF * material.specular;
-
-    return (diffuse + specular);
-}
-#fi
-
-#if (PLIGHTS)
-// Calculates the point light color contribution
-vec3 calcPointLight (PLight light, vec3 normal, vec3 viewDir)
-{
-    float distance = length(light.position - fragVPos);
-    if(light.distance > 0.0 && distance > light.distance) return vec3(0.0, 0.0, 0.0);
-
-    vec3 lightDir = normalize(light.position - fragVPos);
-
-    // Attenuation - OFF
-    float attenuation = 1.0; // calcAttenuation(light.constant, light.linear, light.quadratic, distance);
-
-    // Difuse
-    float diffuseF = max(dot(lightDir, normal), 0.0f);
-    #if (COLORS)
-        vec3 diffuse  = light.color * diffuseF  * (fragVColor.rgb + material.diffuse) * attenuation;
-    #else
-        vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
-    #fi
-
-    // Specular - Blinn
-    vec3 halfwayDir = normalize(lightDir + viewDir);
-    float specularF = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
-    vec3 specular = light.color * specularF * material.specular * attenuation;
-
-    return (diffuse + specular);
-}
-#fi
-
-#if (SLIGHTS)
-vec3 calcSpotLight (SLight light, vec3 normal, vec3 viewDir)
-{
-    float distance = length(light.position - fragVPos);
-    if(light.distance > 0.0 && distance > light.distance) return vec3(0.0, 0.0, 0.0);
-
-    vec3 lightDir = normalize(light.position - fragVPos);
-
-    // Attenuation - OFF
-    float attenuation = 1.0; // calcAttenuation(light.constant, light.linear, light.quadratic, distance);
-
-    // spot
-    float theta = dot(lightDir, normalize(-light.direction));
-    float epsilon = light.cutoff - light.outerCutoff;
-    float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);
-    if(theta <= light.outerCutoff) return vec3(0.0, 0.0, 0.0);
-
-    // Difuse
-    float diffuseF = max(dot(lightDir, normal), 0.0f);
-    #if (COLORS)
-        vec3 diffuse  = light.color * diffuseF  * (fragVColor.rgb + material.diffuse) * attenuation;
-    #else
-        vec3 diffuse  = light.color * diffuseF  * material.diffuse  * attenuation;
-    #fi
-
-    // Specular - Blinn
-    vec3 halfwayDir = normalize(lightDir + viewDir);  
-    float specularF = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
-    vec3 specular = light.color * specularF * material.specular * attenuation;
-
-    return (diffuse + specular) * intensity;
-}
-#fi
+#include light_shading_decl
+#include projection_decl
 
 
 //MAIN
@@ -243,11 +143,7 @@ vec3 calcSpotLight (SLight light, vec3 normal, vec3 viewDir)
 void main()
 {
     #if (CLIPPING_PLANES)
-        bool clipped = true;
-        for(int i = 0; i < ##NUM_CLIPPING_PLANES; i++) {
-            clipped = ( dot( v_pos_for_clip, clippingPlanes[i].normal ) > clippingPlanes[i].constant ) && clipped;
-        }
-        if (clipped) discard;
+        if (clippedByPlanes(v_pos_for_clip)) discard;
     #fi
 
     #if (OUTLINE)
@@ -263,9 +159,6 @@ void main()
             vn_viewspace = vec4(-v_normal_viewspace, 0.0);
         }
         vd_viewspace = vec4(v_ViewDirection_viewspace, 0.0);
-        #if (DEPTH)
-            de_viewspace = vec4(gl_FragCoord.z, 0.0, 0.0, 1.0);
-        #fi
 
     #else if (PICK_MODE_UINT)
 
@@ -284,39 +177,26 @@ void main()
     #if (NORMAL_FLAT)
         vec3 fdx = dFdx(fragVPos);
         vec3 fdy = dFdy(fragVPos);
-        vec3 normal = normalize(cross(fdx, fdy));
+        vec3 N = normalize(cross(fdx, fdy));
     #else
-        vec3 normal = normalize(fragVNorm);
+        vec3 N = normalize(fragVNorm);
     #fi
 
-    vec3 viewDir = normalize(-fragVPos);
+    vec3 V = normalize(-fragVPos);
 
-    vec3 combined = ambient;
-
-    #if (DLIGHTS)
-    {   vec3 dLight;
-        #for lightIdx in 0 to NUM_DLIGHTS
-            dLight = calcDirectLight(dLights[##lightIdx], normal, viewDir);
-            combined += dLight;
-        #end
-    }
+    vec3 P = fragVPos;
+    vec3 kd = material.diffuse;
+    #if (COLORS)
+        kd *= fragVColor.rgb;
     #fi
-    #if (PLIGHTS)
-    {   vec3 pLight;
-        #for lightIdx in 0 to NUM_PLIGHTS
-            pLight = calcPointLight(pLights[##lightIdx], normal, viewDir);
-            combined += pLight; 
-        #end
-    }
-    #fi
-    #if (SLIGHTS)
-    {   vec3 sLight;
-        #for lightIdx in 0 to NUM_SLIGHTS
-            sLight = calcSpotLight(sLights[##lightIdx], normal, viewDir);
-            combined += sLight;
-        #end
-    }
-    #fi
+    vec3 ks = material.specular;
+    // No specular under an orthographic projection: with the same view direction everywhere, the
+    // highlight would depend on the normal alone and tint all faces of one orientation alike.
+    if (isOrthographic(PMat)) ks = vec3(0.0);
+    float shin = material.shininess;
+    bool blinn = material.blinn;
+    vec3 combined = ambient * kd;
+    #include light_shading_stmt
 
     outColor = vec4(combined, alpha);
 

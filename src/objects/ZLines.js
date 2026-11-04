@@ -3,6 +3,7 @@ import {Geometry} from './Geometry.js';
 import {Texture} from '../textures/Texture.js';
 import {Int32Attribute} from '../core/BufferAttribute.js';
 import {Matrix4} from '../math/Matrix4.js';
+import {Material} from '../materials/Material.js';
 import {ZLinesBasicMaterial} from '../materials/ZLinesBasicMaterial.js';
 import {WasmArena} from '../wasm/WasmArena.js';
 import {ZLINES_WALK_WASM} from '../wasm/zlines_walk.wasm.js';
@@ -214,15 +215,15 @@ function angleUpper(ax, ay, az, bx, by, bz) {
  * runs, one list of the visible segments instead. The plans are cached;
  * tablesChanged() invalidates them.
  *
- * Picking writes the segment index; the outline pass takes a list of segments
- * through outlineMaterial.outline_instances_setup(), split by bucket as well.
+ * Picking writes the segment index; the outline pass draws the segments in
+ * outlineInstances, split by bucket as well.
  */
 export class ZLines extends Mesh {
     constructor(material = null, args = {}) {
         if (material === null) {
             material = new ZLinesBasicMaterial(args);
         }
-        super(new Geometry(), material, material.clone_for_picking(), material.clone_for_outline());
+        super(new Geometry(), material);
         this.type = "ZLines";
 
         this.instanced = true;
@@ -349,20 +350,19 @@ export class ZLines extends Mesh {
         this._lod = this._lodAux = this._lodSlot = null;
     }
 
-    get materials() { return [this.material, this.pickingMaterial, this.outlineMaterial]; }
-
     /** The ceiling of the quads per segment. */
     get samples() { return this.material.samples; }
-    set samples(n) { for (const m of this.materials) m.samples = n; }
+    set samples(n) { this.material.samples = n; }
 
+    /** The line width of every pass, see ZLinesBasicMaterial.setLineWidth() for one pass. */
     get lineWidth() { return this.material.lineWidth; }
-    set lineWidth(w) { for (const m of this.materials) m.lineWidth = w; }
+    set lineWidth(w) { this.material.lineWidth = w; }
 
     get screenWidth() { return this.material.screenWidth; }
-    set screenWidth(b) { for (const m of this.materials) m.screenWidth = b; }
+    set screenWidth(b) { this.material.screenWidth = b; }
 
     get margin() { return this.material.margin; }
-    set margin(px) { for (const m of this.materials) m.margin = px; }
+    set margin(px) { this.material.margin = px; }
 
     /** Level of detail on or off; off draws every segment with `samples` quads. */
     get lodEnabled() { return this._lodEnabled; }
@@ -373,8 +373,7 @@ export class ZLines extends Mesh {
     set lodTolerance(px) { this._lodTolerance = px; this._applyLodUniform(); this._lodInvalidate(); }
 
     _applyLodUniform() {
-        const v = this._lodEnabled ? this._lodTolerance : 0.0;
-        for (const m of this.materials) m.lodTolerance = v;
+        this.material.lodTolerance = this._lodEnabled ? this._lodTolerance : 0.0;
     }
 
     get pointsTexture() { return this._pointsTex; }
@@ -404,10 +403,8 @@ export class ZLines extends Mesh {
         this.nStrokes = h[0];
         this.nSegs = h[1];
         this.segBase = h[2];
-        for (const m of this.materials) {
-            m._instanceData = [pointsTex, tablesTex];
-            m.segBase = this.segBase;
-        }
+        this.material._instanceData = [pointsTex, tablesTex];
+        this.material.segBase = this.segBase;
         this.instanceCount = this.nSegs;
         this._plan = null;
         this._lodRelease();
@@ -664,11 +661,11 @@ export class ZLines extends Mesh {
         return out;
     }
 
-    /** The strip's extent beyond the centre line, for the cull: [hw, margin]. */
+    /** The strip's extent beyond the centre line, for the cull: [hw, margin], hw of the widest pass. */
     _lodExtent() {
-        let hw = 0, margin = 0;
-        for (const m of this.materials) { hw = Math.max(hw, 0.5 * m.lineWidth); margin = Math.max(margin, m.margin); }
-        return [hw, margin];
+        const m = this.material, M = Material.MODE;
+        const w = Math.max(m.getLineWidth(M.COLOR), m.getLineWidth(M.PICK), m.getLineWidth(M.OUTLINE));
+        return [0.5 * w, m.margin];
     }
 
     /** The bookkeeping after a walk, either one. */
@@ -1017,9 +1014,13 @@ export class ZLines extends Mesh {
 
     // --- draw ----------------------------------------------------------------
 
+    /**
+     * The renderer has bound a_Instances and u_GivenInstances, see
+     * MeshRenderer._setup_instances(); in the outline pass of an object with
+     * outlineInstances `instance_count` is the length of the list.
+     */
     draw(gl, glManager, instance_count = 0) {
         const ceil = this.material.samples;
-        const mat = glManager._currentMaterial;
         const prog = glManager._currentProgram;
         const us = prog.uniformSetter;
         const as = prog.attributeSetter.a_Instances;
@@ -1028,27 +1029,23 @@ export class ZLines extends Mesh {
         const slot = this._lodSlot;
 
         // Instance lists through a_Instances, each with its own sample count.
-        const drawLists = (draws, wasGiven, own) => {
-            if (!wasGiven) us.u_GivenInstances.set(true);
+        const drawLists = (draws) => {
+            us.u_GivenInstances.set(true);
             setOffset(0);
             for (const d of draws) {
                 setSamples(d.n);
                 as.set(d.attr, 1, true, 1);
                 gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 2 * (d.n + 1), d.attr.count());
             }
-            if (!wasGiven) us.u_GivenInstances.set(false);
-            as.set(own, 1, true, own.divisor);
             setSamples(ceil);
         };
 
-        // A given list of segments: the outline of a selection.
-        if (!instance_count && mat && mat.getUniform("u_GivenInstances")) {
-            const own = mat.getAttribute("a_Instances");
-            if (slot !== null && slot.vw > 0) {
-                drawLists(this._lodGiven(slot, own.array), true, own);
-                return;
-            }
-            instance_count = own.count();
+        // A given list of segments: the outline of a selection. An empty list outlines nothing.
+        const given = (glManager._currentMode === Material.MODE.OUTLINE) ? this.outlineInstances : null;
+        if (given !== null && given.length === 0) return;
+        if (given !== null && slot !== null && slot.vw > 0) {
+            drawLists(this._lodGiven(slot, given));
+            return;
         }
         if (instance_count > 0) {
             setOffset(0);
@@ -1061,7 +1058,7 @@ export class ZLines extends Mesh {
         const draws = slot !== null ? this._lodPlan(slot) : [{ n: ceil, vis: true }];
         if (draws.length === 0) return;
         if (draws[0].vis !== true) {
-            drawLists(draws, false, mat.getAttribute("a_Instances"));
+            drawLists(draws);
             return;
         }
 
@@ -1069,7 +1066,7 @@ export class ZLines extends Mesh {
         const n = draws[0].n, nVert = 2 * (n + 1);
         setSamples(n);
         if (plan.list) {
-            drawLists([{ n: n, attr: plan.list }], false, mat.getAttribute("a_Instances"));
+            drawLists([{ n: n, attr: plan.list }]);
         } else {
             const r = plan.runs;
             for (let i = 0; i < r.length; i += 2) {

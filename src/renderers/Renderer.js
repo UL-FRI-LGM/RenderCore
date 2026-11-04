@@ -448,30 +448,6 @@ export class Renderer {
 
 		return ok ? { width, height, pixels } : null;
 	}
-	pickRGB(texture = undefined, pickX, pickY, renderQueue = undefined){
-		const width = (texture)? texture.width : this.getViewport().width;
-		const height = (texture)? texture.height : this.getViewport().height;
-
-		const pickedRGBA = new Uint8Array(4);
-
-		//PREP
-		if(texture){
-			const fb = this._gl.createFramebuffer();
-			this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, fb);
-			const glTexture = this._glManager._textureManager.getGLTexture(texture);
-			this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, glTexture, 0);
-		}
-
-		//READ
-		this._gl.readPixels(pickX, height-pickY, 1, 1, this._gl.RGBA, this._gl.UNSIGNED_BYTE, pickedRGBA);
-
-		//CLEAN
-		if(texture){
-			this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
-		}
-
-		return pickedRGBA;
-	}
 	pickUINT(texture = undefined, pickX, pickY, renderQueue = undefined){
 		const width = (texture)? texture.width : this.getViewport().width;
 		const height = (texture)? texture.height : this.getViewport().height;

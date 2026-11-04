@@ -12,9 +12,7 @@ in mat4 MMat;
 
 in vec3 VPos;       // Vertex position
 
-#if (PICK_MODE_UINT)
 flat out uint InstanceID;
-#fi
 
 //MAIN
 //**********************************************************************************************************************
@@ -29,11 +27,9 @@ void main() {
     gl_Position = PMat * MVMat * MMat * vec4(VPos, 1.0);
     #fi
 
-    #if (PICK_MODE_UINT)
-        #if (INSTACED)
-            InstanceID = uint(gl_InstanceID);
-        #else
-            InstanceID = uint(gl_VertexID);
-        #fi
+    #if (INSTANCED)
+        InstanceID = uint(gl_InstanceID);
+    #else
+        InstanceID = uint(gl_VertexID);
     #fi
 }

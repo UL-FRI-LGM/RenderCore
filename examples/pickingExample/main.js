@@ -16,12 +16,8 @@ const pLight = new RC.PointLight(new RC.Color("#FDB813"), 1.0);
 scene.add(pLight);
 
 let text2D;
+const cubes = [];
 populateScene();
-
-const params = {
-    "Pick mode": "RGB"
-};
-setUI();
 
 const renderQueue = new RC.RenderQueue(renderer);
 const PICK = new RC.PickerFX(
@@ -60,8 +56,10 @@ function populateScene(){
         cube.material.emissive.set(0.0, 0.0, 0.0);
         cube.position.set((Math.random() * 16) - 8, (Math.random() * 16) - 8, (Math.random() * 8) - 4);
 
-        cube.RGB_ID = cube.material.color;
-        cube.UINT_ID = i + 1;
+        // PickerFX writes UINT_ID into its pick texture; the pick reads it back as the index in cubes.
+        cube.name = "cube " + i;
+        cube.UINT_ID = i;
+        cubes.push(cube);
 
         cube.pickable = true;
     
@@ -99,21 +97,6 @@ function populateScene(){
         scene.add(text2D);
     });
 }
-function setUI(){
-    const gui = new dat.GUI();
-    gui.add(params, "Pick mode",["RGB", "UINT"]).onChange(setPickMode);
-}
-function setPickMode(){
-    text2D.text = "Click on objects.";
-
-    const pickMode = params["Pick mode"];
-    if(pickMode === "RGB"){
-        PICK.pickMode = RC.PickerFX.PICK_MODE.RGB;
-    }else if(pickMode === "UINT"){
-        PICK.pickMode = RC.PickerFX.PICK_MODE.UINT;
-    }
-}
-
 function resizeFunction() {
     canvas.updateSize();
     camera.aspect = canvas.width/canvas.height;
@@ -131,17 +114,12 @@ function mousedownFunction(event) {
         const x = event.clientX * pixelRatio;
         const y = event.clientY * pixelRatio;
 
-
-        const pickMode = params["Pick mode"];
-        if(pickMode === "RGB"){
-            const pickedColor = renderQueue.pickRGB("color_picker", x, y);
-            console.log(pickedColor);
-            text2D.text = "R:" + ("00" + pickedColor[0]).slice(-3) + " G:" + ("00" + pickedColor[1]).slice(-3) + " B:" + ("00" + pickedColor[2]).slice(-3);
-        }else if(pickMode === "UINT"){
-            const pickedColor = renderQueue.pickUINT("color_picker", x, y);
-            console.log(pickedColor);
-            text2D.text = "UINT:" + pickedColor[0];
-        }
+        // The pick texture is cleared to 0xFFFFFFFF where no cube was drawn.
+        const id = renderQueue.pickUINT("color_picker", x, y)[0];
+        const cube = (id !== 0xFFFFFFFF) ? cubes[id] : null;
+        const picked = cube ? cube.name + ", color #" + cube.material.color.getHexString() : "nothing";
+        console.log("picked " + picked);
+        text2D.text = "Picked " + picked + ".";
     }
 }
 

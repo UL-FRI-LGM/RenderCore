@@ -6,7 +6,25 @@ import {FRONT_SIDE, BACK_SIDE, FRONT_AND_BACK_SIDE, FUNC_LEQUAL, FlatShading, Sm
 
 import {_Math} from '../math/Math.js';
 
+import {MaterialProgramTemplate} from '../program_management/MaterialProgramTemplate.js';
+
+/**
+ * The base of the materials. requiredProgram(renderer, mode) gives the shader program the
+ * material draws with in the pass of `mode`, built once per mode and cached on the material.
+ *
+ * The pass modes: COLOR draws the object, PICK writes its id into the R32UI target of a pick
+ * pass, OUTLINE writes the normal and the view direction that the outline edge detection reads.
+ * A material whose shader has the pick or outline variant lists the mode in passModes. Its
+ * program for that mode is its own program with the mode's flag added, PICK_MODE_UINT or
+ * OUTLINE, and without TRANSPARENT, as the pick and outline passes do not blend. The maps and
+ * instance data are the same in every mode; a uniform is too, unless it is given a value for a
+ * mode of its own, see CustomShaderMaterial.setUniform(). A material without the mode gives its
+ * COLOR program, and the renderer draws the pass with another material, see Mesh.passMaterial().
+ */
 export class Material {
+
+	/** The pass modes; COLOR and PICK have the values of MeshRenderer.MODE. */
+	static MODE = { COLOR: 0, PICK: 4, OUTLINE: 5 };
 
 	constructor() {
 
@@ -37,8 +55,10 @@ export class Material {
 		// Should use vertex colors
 		this._useVertexColors = false;
 
-		// Shader program template
+		// Shader program templates, one per pass mode
 		this.requiredProgramTemplate = null;
+		// The pass modes other than COLOR that the program has variants of
+		this._passModes = [];
 
 		// Using points
 		this._usePoints = false;
@@ -80,8 +100,30 @@ export class Material {
 	}
 
 
-	get requiredProgramTemplate() { return this._requiredProgramTemplate; }
-	set requiredProgramTemplate(requiredProgramTemplate) { this._requiredProgramTemplate = requiredProgramTemplate; }
+	/** The COLOR program template; setting it to null drops the templates of every mode. */
+	get requiredProgramTemplate() { return this._programs[Material.MODE.COLOR] || null; }
+	set requiredProgramTemplate(requiredProgramTemplate) {
+		if (requiredProgramTemplate === null) this._programs = {};
+		else this._programs[Material.MODE.COLOR] = requiredProgramTemplate;
+	}
+
+	get passModes() { return this._passModes; }
+	hasMode(mode) { return mode === Material.MODE.COLOR || this._passModes.includes(mode); }
+
+	/**
+	 * The program template of the pass of `mode`; a mode not in passModes gives the COLOR one.
+	 * Built on first use and kept until a change of the material drops the templates.
+	 */
+	requiredProgram(renderer = undefined, mode = Material.MODE.COLOR) {
+		if (!this.hasMode(mode)) mode = Material.MODE.COLOR;
+		let template = this._programs[mode];
+		if (template === undefined) {
+			this.resetProgramFlagsAndValues(mode);
+			template = new MaterialProgramTemplate(this.programName2, this.flags, this.values, renderer);
+			this._programs[mode] = template;
+		}
+		return template;
+	}
 
 	set onChangeListener(listener) { this._onChangeListener = listener; }
 	set name(val) {
@@ -548,7 +590,7 @@ export class Material {
 	}
 	// endregion
 
-	resetProgramFlagsAndValues(){
+	resetProgramFlagsAndValues(mode = Material.MODE.COLOR){
 		this._flags = [];
 		this._values = {};
 
@@ -592,7 +634,7 @@ export class Material {
 		}else {
 			this._flags.push("FLAT_SHADING");
 		}
-		if(this._transparent === true) this._flags.push("TRANSPARENT");
+		if(this._transparent === true && mode === Material.MODE.COLOR) this._flags.push("TRANSPARENT");
 		if(this._instanced === true) this._flags.push("INSTANCED");
 		if(this._instancedTranslation === true) this._flags.push("INSTANCED_TRANSLATION");
 		if(this._diffuseMap) this._flags.push("DIFFUSE_MAP");
@@ -616,6 +658,9 @@ export class Material {
 				this.values[name] = this._valuesUSER[name];
 			}
 		}
+
+		if (mode === Material.MODE.PICK) this._flags.push("PICK_MODE_UINT");
+		else if (mode === Material.MODE.OUTLINE) this._flags.push("OUTLINE");
 	}
 
 	toJson() {
