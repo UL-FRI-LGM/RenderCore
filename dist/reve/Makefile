@@ -1,4 +1,6 @@
-NPM_DIR := /opt/npm/bin
+# rollup and terser at the versions pinned in package.json, once `npm ci` has put
+# them under node_modules here; otherwise the global installs on black.
+NPM_DIR := $(if $(wildcard node_modules/.bin/rollup),node_modules/.bin,/opt/npm/bin)
 SRC_DIR := ../../src
 CONTRIB_DIR := ${SRC_DIR}/contrib
 
