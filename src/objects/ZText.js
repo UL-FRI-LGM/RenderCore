@@ -5,10 +5,46 @@ import {Texture} from "../textures/Texture.js";
 import {ZTextMaterial} from "../materials/ZTextMaterial.js";
 import {TEXT2D_SPACE_WORLD, TEXT2D_SPACE_SCREEN, TEXT2D_SPACE_MIXED, TEXT2D_SPACE_ANCHOR} from "../constants.js";
 
-//ZText API
+/**
+ * Text laid out as one SDF glyph quad per character, in screen, world, mixed or
+ * anchored space, with an optional plate, frame and resize grip.
+ *
+ * The text is scanned for a small set of HTML markup, because the strings REve
+ * shows in its tooltip are written for an HTML element. The scan is on for every
+ * ZText and is strict: only the forms below are recognised, and anything else,
+ * an unknown tag, a lone "<" or an unknown entity, is drawn as written. So "a < b"
+ * and "x<y" are drawn exactly as typed.
+ *
+ *   <br>, <br/>, <br />     a line break, the same as "\n"
+ *   <b> ... </b>            a bold run; an unclosed <b> runs to the end of the
+ *                           text, and nesting is not counted
+ *   &amp; &lt; &gt; &quot;  the characters & < > "
+ *   &nbsp;                  a normal space
+ *   &middot;                a middle dot
+ *
+ * Tags are matched case-insensitively, entities case-sensitively. ZTextAxis and
+ * Z3DAxis lay out their labels themselves and do not scan them.
+ *
+ * Bold glyphs are drawn with the same atlas and the same shader as the rest. The
+ * vertex buffer holds the regular glyphs first and the bold glyphs after them,
+ * and draw() issues the bold glyphs as a second range with the `weight` uniform
+ * raised by BOLD_WEIGHT, which lowers the SDF threshold and so thickens every
+ * stroke. Each bold glyph also advances the pen by BOLD_ADVANCE more, so the
+ * thickened letters do not touch.
+ *
+ * A font without a middle-dot glyph draws &middot; as its period, lifted so the
+ * centre of the dot sits at half the x-height. The period's ink is taken to be
+ * as tall as it is wide, and its width is the atlas cell minus the SDF padding
+ * on either side. The dot keeps the period's advance.
+ */
 export class ZText extends Mesh {
     /// Vertices reserved before the glyphs; see the map in setText2D().
     static HDR_VERTS = 42;
+    /// Added to the font weight for the glyphs of a <b> run.
+    static BOLD_WEIGHT = 0.06;
+    /// Extra advance of a bold glyph, as a fraction of the font size (the cap
+    /// height). Half of it goes before the glyph and half after.
+    static BOLD_ADVANCE = 0.03;
     //--------------------------------------------------------------------------
     // Resize-grip tunables. The grip is a small square in the bottom-right
     // corner, drawn on hover, which starts a resize instead of a move. Its size
@@ -302,22 +338,62 @@ export class ZText extends Mesh {
         }
     }
 
-    setText2D(text, x, y, font_metrics, font) {
-        let char_count = 0;
-        for(let c = 0; c < text.length; c++) {
+    /// Decode the markup described in the class comment. Returns one entry
+    /// per character to lay out, as { ch, bold }.
+    static _scanMarkup(text) {
+        const ENT = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": "\"",
+                      "&nbsp;": " ", "&middot;": "\u{00B7}" };
+        const out = [];
+        let bold = false;
+        for (let c = 0; c < text.length; c++) {
             const schar = text.charAt(c);
-            if (schar != " " && schar != "\n")
-                ++char_count;
+            if (schar == "<") {
+                const m = /^<(br ?\/?|b|\/b)>/i.exec(text.substring(c, c + 6));
+                if (m) {
+                    const tag = m[1].toLowerCase();
+                    if (tag == "b") bold = true;
+                    else if (tag == "/b") bold = false;
+                    else out.push({ ch: "\n", bold: bold });
+                    c += m[0].length - 1;
+                    continue;
+                }
+            } else if (schar == "&") {
+                const m = /^&[a-z]+;/.exec(text.substring(c, c + 8));
+                if (m && ENT[m[0]] !== undefined) {
+                    out.push({ ch: ENT[m[0]], bold: bold });
+                    c += m[0].length - 1;
+                    continue;
+                }
+            }
+            out.push({ ch: schar, bold: bold });
         }
+        return out;
+    }
+
+    setText2D(text, x, y, font_metrics, font) {
+        const chars = ZText._scanMarkup(text);
+        const SPACES = " \n\u{2002}\u{2004}\u{2005}\u{2006}";
+        let n_regular = 0, n_bold = 0;
+        for (const e of chars) {
+            if (SPACES.includes(e.ch)) continue;
+            if (e.bold) ++n_bold; else ++n_regular;
+        }
+        const char_count = n_regular + n_bold;
         // Header vertex block, before the glyphs:
         //    0 ..  5   frame fill quad (also the pick target and the bbox)
         //    6 .. 29   four frame border quads
         //   30 .. 41   resize-grip mark at the bottom-right corner (two quads)
         // ZTEXT_HDR_VERTS must match the offsets used in draw().
+        // The glyphs follow: the regular ones first, then the bold ones, which
+        // draw() issues as a separate range.
         const verts = new Float32Array(2*ZText.HDR_VERTS + 12*char_count);
         const uvs   = new Float32Array(2*ZText.HDR_VERTS + 12*char_count);
         let vi = 2*ZText.HDR_VERTS;
         let ui = 2*ZText.HDR_VERTS;
+        let vb = 2*ZText.HDR_VERTS + 12*n_regular;
+        let ub = vb;
+        this._bold_verts = 6 * n_bold;
+        const bold_extra = ZText.BOLD_ADVANCE * font_metrics.pixel_size;
 
         let prev_char = " ";  // Used to calculate kerning
         let cpos  = [ x, y ]; // Current pen position
@@ -333,8 +409,9 @@ export class ZText extends Mesh {
             return vi;
         }
 
-        for(let c = 0; c < text.length; c++) {
-            let schar = text.charAt(c);
+        for(let c = 0; c < chars.length; c++) {
+            let schar = chars[c].ch;
+            const bold = chars[c].bold;
 
             if ( schar == "\n" ) {
                 // A newline as the very last character adds no line. Pressing
@@ -342,7 +419,7 @@ export class ZText extends Mesh {
                 // honouring it leaves an empty line inside the frame. A newline
                 // followed by anything, a space included, is kept, so a
                 // deliberate blank last line is written as "\n ".
-                if ( c == text.length - 1 ) continue;
+                if ( c == chars.length - 1 ) continue;
                 if ( cpos[0] > x_max ) x_max = cpos[0]; // Expanding the bounding rect
                 cpos[0]  = x;
                 cpos[1] -= font_metrics.line_height;
@@ -378,6 +455,12 @@ export class ZText extends Mesh {
 
             // Laying out the glyph rectangle
             let font_char = font.chars[schar];
+            let lift = 0.0; // Raises a period drawn as a middle dot, in font units
+            if ( !font_char && schar == "\u{00B7}" && font.chars["."] ) {
+                font_char = font.chars["."];
+                const ink = font.aspect * ( font_char.rect[2] - font_char.rect[0] - 2 * font.ix );
+                lift = 0.5 * ( font.x_height - ink );
+            }
             if ( !font_char ) { // Substituting unavailable characters with '?'
                 schar = "?";
                 font_char = font.chars[ "?" ];
@@ -386,27 +469,34 @@ export class ZText extends Mesh {
             let kern = font.kern[ prev_char + schar ];
             if ( !kern ) kern = 0.0;
 
-            let lowcase = ( font.chars[schar].flags & 1 ) == 1;
+            let lowcase = ( font_char.flags & 1 ) == 1;
             // Low case chars use their own scale
             let scale = lowcase ? font_metrics.low_scale : font_metrics.cap_scale;
             let baseline = cpos[1] - font_metrics.ascent;
+            if ( bold ) cpos[0] += 0.5 * bold_extra;
 
             let g      = font_char.rect;
-            let bottom = baseline - scale * ( font.descent + font.iy );
+            let bottom = baseline - scale * ( font.descent + font.iy - lift );
             let top    = bottom   + scale * ( font.row_height);
             let left   = cpos[0]  + font.aspect * scale * ( font_char.bearing_x + kern - font.ix );
             let right  = left     + font.aspect * scale * ( g[2] - g[0] );
 
             // console.log(schar, scale, top, bottom, left, right);
 
-            // POSITIONs
-            vi = fill_rect(verts, vi, left, right, top, bottom);
+            if ( bold ) {
+                vb = fill_rect(verts, vb, left, right, top, bottom);
+                ub = fill_rect(uvs, ub, g[0], g[2], 1 - g[1], 1 - g[3]);
+            } else {
+                // POSITIONs
+                vi = fill_rect(verts, vi, left, right, top, bottom);
 
-            // UVs
-            ui = fill_rect(uvs, ui, g[0], g[2], 1 - g[1], 1 - g[3])
+                // UVs
+                ui = fill_rect(uvs, ui, g[0], g[2], 1 - g[1], 1 - g[3])
+            }
 
             // Advancing pen position
             let new_pos_x = cpos[0] + font.aspect * scale * ( font_char.advance_x );
+            if ( bold ) new_pos_x += 0.5 * bold_extra;
             cpos = [ new_pos_x, cpos[1] ];
             prev_char = schar;
         }
@@ -591,8 +681,17 @@ export class ZText extends Mesh {
         }
         if (this.opacity !== 0.0) {
             gl.depthMask(this.material.opacity === 1.0);
-            gl.drawArrays(this.renderingPrimitive, ZText.HDR_VERTS,
-                          this.geometry.vertices.count() - ZText.HDR_VERTS);
+            // Regular glyphs, then the bold ones at a raised weight.
+            const n_bold = this._bold_verts || 0;
+            const n_reg  = this.geometry.vertices.count() - ZText.HDR_VERTS - n_bold;
+            if (n_reg > 0)
+                gl.drawArrays(this.renderingPrimitive, ZText.HDR_VERTS, n_reg);
+            if (n_bold > 0) {
+                const us_w = us["weight"];
+                if (us_w) us_w.set(this._fontWeight + ZText.BOLD_WEIGHT);
+                gl.drawArrays(this.renderingPrimitive, ZText.HDR_VERTS + n_reg, n_bold);
+                if (us_w) us_w.set(this._fontWeight);
+            }
         }
     }
 }
