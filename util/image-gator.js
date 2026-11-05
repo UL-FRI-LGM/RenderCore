@@ -6,6 +6,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.GATOR_PORT || 3000;
 const OUTPUT_DIR = process.env.GATOR_OUT || './captures';
+const API_KEY = process.env.GATOR_API_KEY;
 
 // Ensure capture directory exists
 if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR);
@@ -32,6 +33,11 @@ app.use((req, res, next) => {
 
 app.post('/capture', async (req, res) => {
   try {
+    // Require a shared-secret API key so unauthenticated callers cannot invoke capture.
+    if (!API_KEY || req.headers['x-api-key'] !== API_KEY) {
+      return res.status(401).send('Unauthorized');
+    }
+
     // Extract custom headers
     const width = parseInt(req.headers['x-width']);
     const height = parseInt(req.headers['x-height']);
@@ -39,8 +45,13 @@ app.post('/capture', async (req, res) => {
       return res.status(400).send('Missing dimensions in headers');
     }
 
-    const eventId = req.headers['x-event-id'] || 'unknown_event';
-    const viewType = req.headers['x-view-type'] || 'default_view';
+    // Restrict to safe characters to prevent path traversal/injection via filename.
+    const safe = (v, fallback) => {
+      const s = String(v || fallback).replace(/[^a-zA-Z0-9_-]/g, '_');
+      return s.slice(0, 64) || fallback;
+    };
+    const eventId = safe(req.headers['x-event-id'], 'unknown_event');
+    const viewType = safe(req.headers['x-view-type'], 'default_view');
     // WebGL reads bottom-left origin, so rows normally need flipping. Senders
     // that already flipped can say so with X-Flip-Y: 0.
     const flipY = req.headers['x-flip-y'] !== '0';
