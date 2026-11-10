@@ -494,6 +494,18 @@ export class ZLines extends Mesh {
         return this._lodCaps;
     }
 
+    /** Mesh.forEachResource() and the instance lists draw() binds: the visibility plan's and
+     *  those of the level of detail buckets. */
+    forEachResource(onAttribute, onTexture) {
+        super.forEachResource(onAttribute, onTexture);
+        if (this._listAttr !== null) onAttribute(this._listAttr);
+        for (const st of [this._lod, this._lodAux]) {
+            if (st === null) continue;
+            for (const a of st.lists) if (a !== null) onAttribute(a);
+            for (const a of st.givenAttrs) if (a !== null) onAttribute(a);
+        }
+    }
+
     update(glManager, camera) {
         super.update(glManager, camera);
         this._lodSlot = null;

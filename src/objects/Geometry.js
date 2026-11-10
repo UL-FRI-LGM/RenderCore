@@ -760,6 +760,17 @@ export class Geometry {
 	 *
 	 * @returns Geometry indices.
 	 */
+	/**
+	 * Call callback for every attribute this geometry holds. Reads the fields, not
+	 * the getters, as normals and wireframeIndices build what they return. Used by
+	 * Mesh.forEachResource() for the mark pass of GLManager.collectResources().
+	 */
+	forEachAttribute(callback) {
+		for (const a of [this._indices, this._vertices, this._normals, this._tangents, this._bitangents,
+		                 this._vertColor, this._uv, this._wireframeIndices, this._MMat, this._translation])
+			if (a) callback(a);
+	}
+
 	get indices() { return this._indices; }
 
 	/**

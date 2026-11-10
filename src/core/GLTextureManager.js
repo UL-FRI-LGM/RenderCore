@@ -362,6 +362,13 @@ export class GLTextureManager {
 		return entry.glTexture;
 	}
 
+	/// Clear the idle counter of this context's texture for the given texture or
+	/// cube texture, if it has one. Never creates a texture.
+	touch(texture) {
+		const entry = this._cached_textures.get(texture);
+		if (entry !== undefined) entry.idleTime = 0;
+	}
+
 	clearBoundTexture() {
 		// Clear texture color
 		let currentFramebuffer = this._gl.getParameter(this._gl.DRAW_FRAMEBUFFER_BINDING);

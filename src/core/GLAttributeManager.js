@@ -88,9 +88,10 @@ export class GLAttributeManager {
 
 	/**
 	 * Fetches this context's WebGL buffer for the given attribute, creating and
-	 * filling it if needed. Touching it also clears its idle counter, which is
-	 * the whole of the liveness bookkeeping: an attribute nothing asked for
-	 * during a rebuild is one nothing needs any more.
+	 * filling it if needed. The fetch also clears the entry's idle counter, so
+	 * whatever is drawn stays alive. Drawing is not the liveness rule when the
+	 * application passes its scenes to GLManager.collectResources(): the mark
+	 * pass there touches everything reachable from them, drawn or not.
 	 *
 	 * @param {BufferAttribute} attribute
 	 * @returns the WebGL buffer
@@ -100,6 +101,14 @@ export class GLAttributeManager {
 		entry.idleTime = 0;
 		this._sync(attribute, entry);
 		return entry.glBuffer;
+	}
+
+	/// Clear the idle counter of this context's buffer for the attribute, if it
+	/// has one. Never creates a buffer: an attribute this context has not drawn
+	/// gets its buffer at its first draw, as before.
+	touch (attribute) {
+		const entry = this._cached_buffers.get(attribute);
+		if (entry !== undefined) entry.idleTime = 0;
 	}
 
 	/// Record that this context has bound the attribute to a vertex attrib

@@ -498,6 +498,27 @@ export class Material {
 		this._flags = flags;
 	}
 
+	/**
+	 * Call onTexture for every texture and cube texture the renderer binds for this
+	 * material, and onAttribute for every custom attribute it binds, see
+	 * MeshRenderer._setup_uniforms() and _setup_attributes(). Used by the mark pass of
+	 * GLManager.collectResources().
+	 */
+	forEachResource(onAttribute, onTexture) {
+		for (const map of [this._diffuseMap, this._specularMap, this._normalMap, this._heightMap])
+			if (map) onTexture(map);
+		for (const t of this._instanceData) if (t) onTexture(t);
+		for (const t of this._maps) if (t) onTexture(t);
+		for (const t of this._cubemaps) if (t) onTexture(t);
+		const attributes = this._attributes;
+		if (attributes) {
+			for (const name in attributes) {
+				const a = attributes[name];
+				if (a) onAttribute(a);
+			}
+		}
+	}
+
 	// region MAP MANAGEMENT
 	/**
 	 * Add a UV map to the maps array.
