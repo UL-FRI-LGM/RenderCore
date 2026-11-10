@@ -264,7 +264,7 @@ void main() {
             v_ViewDirection_viewspace = normalize(-POS.xyz);
         #else
             if (u_PickInstance) {
-                vPrimitiveID = uint(gl_VertexID / 4);
+                vPrimitiveID = uint(gl_InstanceID);
             } else {
                 vPrimitiveID = 0u;
             }
