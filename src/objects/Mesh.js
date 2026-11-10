@@ -260,6 +260,17 @@ export class Mesh extends Object3D {
 
 		return r;
 	}
+	/**
+	 * Call onAttribute for every attribute and onTexture for every texture the draw path can
+	 * fetch for this mesh, in any pass: its geometry and the resources of each of its
+	 * materials. Used by the mark pass of GLManager.collectResources(); a subclass
+	 * that draws from attributes of its own extends it.
+	 */
+	forEachResource(onAttribute, onTexture) {
+		if (this._geometry) this._geometry.forEachAttribute(onAttribute);
+		for (const m of [this._material, this._pickingMaterial, this._outlineMaterial, this._GBufferMaterial])
+			if (m) m.forEachResource(onAttribute, onTexture);
+	}
 	update(glManager, camera){
 		// Derive mv and normal matrices
 		this.modelViewMatrix.multiplyMatrices(camera.matrixWorldInverse, this._matrixWorld);

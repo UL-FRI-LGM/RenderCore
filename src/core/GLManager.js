@@ -378,9 +378,33 @@ export class GLManager {
 		this._attributeManager.incrementTime();
 	}
 
-	collectResources(idleTimeDelta = 2) {
+	/// See Renderer.collectResources(). With scenes given, markResources() runs
+	/// first, so the sweep drops only what no object under them can draw from.
+	collectResources(idleTimeDelta = 2, scenes = null) {
+		if (scenes !== null) this.markResources(scenes);
 		this._textureManager.deleteTextures(true, idleTimeDelta);
 		this._attributeManager.deleteBuffers(true, idleTimeDelta);
+	}
+
+	/**
+	 * Clear the idle counter of every buffer and texture this context holds for an
+	 * object under the given roots. The traversal visits every child, whether it is
+	 * visible or not and whether it was culled or not: an invisible object keeps its
+	 * drawing and should not upload it again when it is shown. Touching creates
+	 * nothing, so an object this context has never drawn gets no GL resources here.
+	 * The objects say what they draw from in forEachResource(), see Mesh.
+	 *
+	 * @param scenes an array of Scene or Object3D roots
+	 */
+	markResources(scenes) {
+		const onAttribute = (a) => this._attributeManager.touch(a);
+		const onTexture = (t) => this._textureManager.touch(t);
+		const mark = (object) => {
+			if (typeof object.forEachResource === "function") object.forEachResource(onAttribute, onTexture);
+		};
+		for (const root of scenes) {
+			if (root) root.traverse(mark);
+		}
 	}
 
 	deleteAttributeBuffers() {
