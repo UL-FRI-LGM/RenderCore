@@ -7,7 +7,9 @@ CONTRIB_DIR := ${SRC_DIR}/contrib
 # The release version is 'revision' in src/constants.js -- the single place it
 # is recorded. Bump it there when cutting a release; the tarball names itself
 # from it and the shipped bundle then carries its own version string.
-VERSION := $(shell sed -n 's/.*revision *= *["]*\([0-9.]*\)["]*.*/\1/p' ${SRC_DIR}/constants.js)
+# A pre-release is 2.4.0-pre.1 and so on, and main between tags says 2.4.0-dev;
+# the pattern takes whatever is between the quotes.
+VERSION := $(shell sed -n 's/.*revision *= *"\([^"]*\)".*/\1/p' ${SRC_DIR}/constants.js)
 TARBALL := RenderCore-${VERSION}.tar.gz
 
 .PHONY: default dist tarball clean
@@ -37,12 +39,10 @@ tarball: REveRenderCore-min.mjs
 	    -cf RenderCore-${VERSION}.tar ../../LICENSE REveRenderCore-min.mjs
 	gzip -9nf RenderCore-${VERSION}.tar
 	sha256sum -b ${TARBALL}
-	@echo Now move the tarball to ROOT source and put the checksum into ROOT source tree
-	@echo "  " mv ${TARBALL} ROOT-SRC/builtins/rendercore/
-	@echo and remember to tag this commit in rcore:
+	@echo Tag this commit in rcore, and attach the tarball to the GitHub release of the tag:
 	@echo "  " git tag -a ${VERSION} -m \"RenderCore ${VERSION}\" \&\& git push rcore ${VERSION}
-	@echo and put the file name and the SHA256 checksum into:
-	@echo "  " ROOT-SRC/builtins/rendercore/CMakeLists.txt
+	@echo Then put the version and the SHA256 into ROOT-SRC/builtins/rendercore/CMakeLists.txt,
+	@echo and for a final release ask SPI to copy the tarball to lcgpackages.
 
 clean:
 	rm -rf REveRenderCore.mjs REveRenderCore-min.mjs shader-library.js RenderCore-*.tar.gz

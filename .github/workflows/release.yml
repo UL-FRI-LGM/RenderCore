@@ -1,12 +1,14 @@
 # Builds the REve tarball on a version tag and attaches it to the GitHub release of
 # that tag, so the asset ROOT vendors is produced by the repository and its SHA256
-# can be checked by anyone. The tag must equal `revision` in src/constants.js.
+# can be checked by anyone. The tag must equal `revision` in src/constants.js. A
+# pre-release tag, 2.4.0-pre.1 and so on, makes a GitHub pre-release.
 name: release
 on:
   push:
     tags:
       - '[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+-pre.[0-9]+'
 permissions:
   contents: write
 jobs:
@@ -25,7 +27,7 @@ jobs:
       - run: npm ci
       - name: The tag must be the revision in src/constants.js
         run: |
-          rev=$(sed -n 's/.*revision *= *"\([0-9.]*\)".*/\1/p' ../../src/constants.js)
+          rev=$(sed -n 's/.*revision *= *"\([^"]*\)".*/\1/p' ../../src/constants.js)
           test "$rev" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME, but src/constants.js says revision $rev"; exit 1; }
       - run: make dist
       - name: Release with the tarball attached
@@ -35,5 +37,6 @@ jobs:
           f=RenderCore-$GITHUB_REF_NAME.tar.gz
           sha=$(sha256sum "$f" | cut -d' ' -f1)
           echo "$f SHA256 $sha" >> "$GITHUB_STEP_SUMMARY"
-          gh release create "$GITHUB_REF_NAME" "$f" --title "RenderCore $GITHUB_REF_NAME" \
+          pre=; case "$GITHUB_REF_NAME" in *-pre.*) pre=--prerelease;; esac
+          gh release create "$GITHUB_REF_NAME" "$f" $pre --title "RenderCore $GITHUB_REF_NAME" \
             --notes "$f, SHA256 $sha. Built by the release workflow from tag $GITHUB_REF_NAME."
