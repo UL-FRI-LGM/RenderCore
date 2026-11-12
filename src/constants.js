@@ -4,7 +4,7 @@ import {Vector3} from './math/Vector3.js'
 export const singleton = Symbol();
 export const singletonEnforcer = Symbol();
 
-export const revision = "2.4.0-pre.1";
+export const revision = "2.4.0-dev";
 
 // Material side constants
 export const FRONT_SIDE = 0;
